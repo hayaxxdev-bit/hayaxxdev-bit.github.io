@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- ANIME HEADER GIF -->
-<img src="https://media1.tenor.com/m/ARBCyo_wjx0AAAAC/bofuri-maple.gif" width="200px" alt="Umaru-chan vibes"/>
+<img src="https://media1.tenor.com/m/ARBCyo_wjx0AAAAC/bofuri-maple.gif" width="600px" alt="My vibes"/>
 
 # Ohayou! I'm hayaxxdev-bit
 
