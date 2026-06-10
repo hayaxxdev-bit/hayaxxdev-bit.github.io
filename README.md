@@ -3,27 +3,26 @@
 <!-- ANIME HEADER GIF -->
 <img src="https://media.tenor.com/x8v1oNUOmg4AAAAC/umaru-umaruchan.gif" width="200px" alt="Umaru-chan vibes"/>
 
-# やあ！ Ohayou, Minna~! 👋🌸
+# Ohayou! I'm hayaxxdev-bit
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&pause=1000&color=A9FEF7&center=true&vCenter=true&width=600&lines=Lazy+Programmer+%F0%9F%92%A4+%7C+Anime+Enjoyer+%F0%9F%8E%8C;Why+do+it+in+5+mins+when+you+can;automate+it+in+5+hours%3F+%E2%9A%99%EF%B8%8F;Currently+watching%3A+too+many+anime+%F0%9F%93%BA" alt="Typing SVG" />
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&pause=1000&color=A9FEF7&center=true&vCenter=true&width=600&lines=Lazy+Programmer+%7C+Anime+Enjoyer;Why+do+it+in+5+mins+when+you+can;automate+it+in+5+hours%3F;Currently+watching%3A+too+many+anime" alt="Typing SVG" />
 
 </div>
 
 ---
 
-## 🛋️ Tentang Aku
+## System Status: Online
 
 ```txt
-> hayaxxdev-bit.exe has started...
+> hayaxxdev-bit.exe is running...
 
-🎌  Manusia yang lebih memilih debug 5 jam daripada kerja manual 5 menit.
-🤖  Kalau bisa diotomasi, kenapa harus dikerjain sendiri?
-📺  Side quest utama: nonton anime sampai mata protes.
-😴  Status: antara "productive mode" dan rebahan sambil buka laptop.
-☕  Bahan bakar: kopi + OST anime yang lo-fi vibes.
-🌙  Peak productivity: jam 1 malam entah kenapa.
+- Developer yang lebih memilih debug 5 jam daripada kerja manual 5 menit.
+- Prinsip utama: kalau bisa diotomasi, otomatisasi sekarang juga.
+- Side quest: maraton anime di sela-sela waktu kompilasi kode.
+- Bahan bakar: kopi hitam dan playlist lo-fi anime.
+- Waktu paling produktif: tengah malam, saat dunia sedang tidur.
 
-> Motto: "Work smarter, bukan harder. Tapi kalau dua-duanya susah, tonton anime dulu."
+> "Work smarter, not harder. Kalau kodenya error, tinggalin dulu dan tonton anime."
 ```
 
 ---
