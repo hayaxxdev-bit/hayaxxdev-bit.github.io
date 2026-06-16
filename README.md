@@ -76,7 +76,7 @@ const dev = {
 
 <br/>
 
-<a href="https://github.com/hayaxxdev-bit/NAMA_REPO_1">
+<!-- <a href="https://github.com/hayaxxdev-bit/NAMA_REPO_1">
   <img src="https://github-readme-stats.vercel.app/api/pin/?username=hayaxxdev-bit&repo=NAMA_REPO_1&theme=tokyonight&hide_border=true&title_color=A9FEF7&icon_color=A9FEF7" alt="Repo 1"/>
 </a>
 <a href="https://github.com/hayaxxdev-bit/NAMA_REPO_2">
@@ -87,7 +87,7 @@ const dev = {
 
 <a href="https://github.com/hayaxxdev-bit/NAMA_REPO_3">
   <img src="https://github-readme-stats.vercel.app/api/pin/?username=hayaxxdev-bit&repo=NAMA_REPO_3&theme=tokyonight&hide_border=true&title_color=A9FEF7&icon_color=A9FEF7" alt="Repo 3"/>
-</a>
+</a> -->
 
 </div>
 
