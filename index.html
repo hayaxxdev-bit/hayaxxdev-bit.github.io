@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="id">
+<<<<<<< HEAD
 
 <head>
   <meta charset="UTF-8" />
@@ -250,10 +251,209 @@
           <span>Menghubungkan ke GitHub...</span>
         </div>
         <div id="projectEmpty" style="
+=======
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hayaxxdev-bit | Portofolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="./public/css/style.css" />
+  </head>
+
+  <body>
+    <div class="bg-noise"></div>
+    <div class="bg-grid"></div>
+
+    <div class="app-container">
+      <!-- ══════════════ NAVBAR ══════════════ -->
+      <header class="navbar" id="navbar">
+        <a href="#" class="navbar__brand" data-route="home">
+          <span class="navbar__logo">NK</span>
+          <span class="navbar__dot"></span>
+        </a>
+        <nav class="navbar__menu" id="navMenu">
+          <button class="nav-link active" data-route="home">Beranda</button>
+          <button class="nav-link" data-route="project">Karya</button>
+          <button class="nav-link" data-route="gacha">Gacha</button>
+          <button class="nav-link" data-route="about">Tentang</button>
+          <button class="nav-link nav-link--cta" data-route="contact">
+            Kontak
+          </button>
+        </nav>
+        <button class="navbar__toggle" id="menuToggle" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </header>
+
+      <main class="main" id="app">
+        <!-- ══════════════ HOME ══════════════ -->
+        <section id="home" class="view view--active">
+          <div class="hero">
+            <div class="hero__left">
+              <div class="hero__eyebrow">
+                <span class="badge">Frontend Developer</span>
+                <span class="badge badge--dim">Game Designer</span>
+              </div>
+              <h1 class="hero__name">
+                Hai, Saya<br />
+                <span class="hero__name-highlight">hayaxxdev</span>
+              </h1>
+              <p class="hero__desc">
+                Membangun pengalaman web imersif dengan estetika manga dan
+                performa optimal. Spesialisasi UI interaktif, desain game, dan
+                kreasi digital yang memukau.
+              </p>
+              <div class="hero__cta">
+                <button class="btn btn--primary" data-route="project">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline points="13 17 18 12 13 7" />
+                    <polyline points="6 17 11 12 6 7" />
+                  </svg>
+                  Jelajahi Karya
+                </button>
+                <a
+                  href="https://github.com/hayaxxdev-bit"
+                  target="_blank"
+                  class="btn btn--ghost"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                    />
+                  </svg>
+                  GitHub
+                </a>
+              </div>
+              <div class="hero__stats">
+                <div class="stat">
+                  <span class="stat__n" id="repoCount">—</span>
+                  <span class="stat__l">Repository</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__n" id="starCount">—</span>
+                  <span class="stat__l">Stars Total</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__n">2+</span>
+                  <span class="stat__l">Tahun Aktif</span>
+                </div>
+              </div>
+            </div>
+            <div class="hero__right">
+              <div class="hero__avatar-wrap">
+                <div class="hero__avatar-ring ring--1"></div>
+                <div class="hero__avatar-ring ring--2"></div>
+                <img
+                  src="bofuri.jpeg"
+                  alt="hayaxxdev avatar"
+                  class="hero__avatar-img"
+                  loading="lazy"
+                  onerror="
+                    this.src =
+                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%22180%22%3E%3Crect fill=%22%2313131a%22 width=%22180%22 height=%22180%22/%3E%3Ctext fill=%22%23ff6b9d%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2240%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
+                  "
+                />
+                <div class="hero__avatar-glow"></div>
+              </div>
+              <div class="hero__avatar-label">
+                <span class="dot-blink"></span>
+                <span>Available for work</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Featured Carousel -->
+          <div class="featured">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title">Sorotan Karya</h2>
+                <div class="section-rule"></div>
+              </div>
+              <div class="carousel-nav">
+                <button class="car-btn" id="carPrev" aria-label="Sebelumnya">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <button class="car-btn" id="carNext" aria-label="Selanjutnya">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="carousel">
+              <div class="carousel__track" id="carTrack">
+                <div class="car-placeholder">Memuat sorotan karya...</div>
+              </div>
+              <div class="carousel__dots" id="carDots"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════ PROJECT ══════════════ -->
+        <section id="project" class="view">
+          <div class="section-head section-head--stacked">
+            <div>
+              <h2 class="section-title">Semua Karya</h2>
+              <p class="section-sub">
+                Data langsung dari GitHub · diperbarui otomatis
+              </p>
+              <div class="section-rule"></div>
+            </div>
+            <div class="filter-tabs" id="filterTabs">
+              <button class="filter-tab filter-tab--active" data-filter="all">
+                Semua
+              </button>
+              <button class="filter-tab" data-filter="web">Web</button>
+              <button class="filter-tab" data-filter="game">Game</button>
+              <button class="filter-tab" data-filter="design">Design</button>
+              <button class="filter-tab" data-filter="other">Lainnya</button>
+            </div>
+          </div>
+
+          <!-- ══ GACHA BANNER (baru) ══ -->
+
+          <div class="project-grid" id="projectGrid"></div>
+          <div class="loader" id="projectLoader">
+            <div class="loader__spinner"></div>
+            <span>Menghubungkan ke GitHub...</span>
+          </div>
+          <div
+            id="projectEmpty"
+            style="
+>>>>>>> 5ae68e6b11b1236908d466d08e1b4924f38760a0
               display: none;
               text-align: center;
               padding: 40px;
               color: var(--text-secondary);
+<<<<<<< HEAD
             ">
           <p>Tidak ada karya ditemukan untuk filter ini.</p>
         </div>
@@ -447,3 +647,495 @@
 </body>
 
 </html>
+=======
+            "
+          >
+            <p>Tidak ada karya ditemukan untuk filter ini.</p>
+          </div>
+        </section>
+
+        <!-- ══════════════ GACHA ══════════════ -->
+        <section id="gacha" class="view">
+          <div class="gacha-main">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title">🎰 Gacha Simulator</h2>
+                <p class="section-sub">Summon karakter anime favoritmu!</p>
+                <div class="section-rule"></div>
+              </div>
+            </div>
+
+            <!-- Banner & summon buttons di halaman Gacha -->
+            <div class="gacha-panel">
+              <div id="gachaButtons" class="gacha-panel" style="display: none">
+                <div class="gacha-panel__banner">
+                  <div class="gacha-panel__banner-glow"></div>
+                  <div class="gacha-panel__banner-text">
+                    <div class="gacha-panel__title">
+                      ✨ Waifu &amp; Husbando Summon
+                    </div>
+                    <div class="gacha-panel__sub">
+                      Dapatkan karakter anime favoritmu dari koleksi JSON!
+                    </div>
+                    <div class="gacha-panel__rates">
+                      <span class="rate-badge rate-badge--ssr">⭐ SSR 3%</span>
+                      <span class="rate-badge rate-badge--sr">💜 SR 25%</span>
+                      <span class="rate-badge rate-badge--r">📦 R 72%</span>
+                    </div>
+                  </div>
+                  <div class="gacha-panel__preview" id="gachaPeek"></div>
+                </div>
+                <div class="gacha-panel__actions">
+                  <button class="gacha-btn gacha-btn--single" id="summon1x">
+                    <span class="gacha-btn__icon">💫</span>
+                    <span class="gacha-btn__label">Summon 1x</span>
+                  </button>
+                  <button class="gacha-btn gacha-btn--multi" id="summon10x">
+                    <span class="gacha-btn__icon">🌟</span>
+                    <span class="gacha-btn__label">Summon 10x</span>
+                    <span class="gacha-btn__note">Guaranteed SR+</span>
+                  </button>
+                  <button class="gacha-btn gacha-btn--add" id="openAddChar">
+                    <span class="gacha-btn__icon">➕</span>
+                    <span class="gacha-btn__label">Tambah Karakter</span>
+                  </button>
+                </div>
+                <div class="gacha-panel__counter" id="gachaCounter">
+                  📊 Total Pulls:
+                  <span id="totalPullsSpan">0</span> &nbsp;·&nbsp; 🎯 Pity:
+                  <span id="pityCounterSpan">0</span>/90 &nbsp;·&nbsp; 📚
+                  Karakter: <span id="charCountSpan">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════ ABOUT ══════════════ -->
+        <section id="about" class="view">
+          <div class="about-layout">
+            <div class="about__visual">
+              <div class="about__img-frame">
+                <img
+                  src="bofuri.jpeg"
+                  alt="hayaxxdev"
+                  class="about__img"
+                  loading="lazy"
+                  onerror="
+                    this.src =
+                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22%3E%3Crect fill=%22%2313131a%22 width=%22160%22 height=%22160%22/%3E%3Ctext fill=%22%23ff6b9d%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2236%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
+                  "
+                />
+              </div>
+              <div class="about__social">
+                <a
+                  href="https://github.com/hayaxxdev-bit"
+                  target="_blank"
+                  class="social-pill"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                    />
+                  </svg>
+                  GitHub
+                </a>
+              </div>
+            </div>
+            <div class="about__content">
+              <h2 class="section-title">Tentang Saya</h2>
+              <div class="section-rule"></div>
+              <p class="about__bio">
+                Developer & kreator digital yang berfokus pada perpaduan
+                estetika manga/anime dengan teknologi web modern. Dari membangun
+                UI yang responsif hingga mendesain elemen game, saya percaya
+                bahwa kode dan seni bisa hidup berdampingan.
+              </p>
+              <p class="about__bio">
+                Saat tidak sedang coding, saya mengeksplorasi dunia desain game,
+                karakter, dan visual storytelling. Terbuka untuk kolaborasi
+                kreatif dan proyek freelance.
+              </p>
+              <h3 class="about__skills-title">Tech Stack</h3>
+              <div class="skills-grid">
+                <div class="skill-group">
+                  <span class="skill-group__label">Frontend</span>
+                  <div class="skill-tags">
+                    <span class="skill-tag">HTML5</span>
+                    <span class="skill-tag">CSS3</span>
+                    <span class="skill-tag">JavaScript</span>
+                    <span class="skill-tag">React</span>
+                  </div>
+                </div>
+                <div class="skill-group">
+                  <span class="skill-group__label">Design</span>
+                  <div class="skill-tags">
+                    <span class="skill-tag">UI/UX</span>
+                    <span class="skill-tag">Figma</span>
+                    <span class="skill-tag">Game Art</span>
+                  </div>
+                </div>
+                <div class="skill-group">
+                  <span class="skill-group__label">Backend</span>
+                  <div class="skill-tags">
+                    <span class="skill-tag">Node.js</span>
+                    <span class="skill-tag">Git</span>
+                    <span class="skill-tag">GitHub Pages</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════ CONTACT ══════════════ -->
+        <section id="contact" class="view">
+          <div class="contact-wrap">
+            <div class="contact-card">
+              <div class="contact-card__head">
+                <img
+                  src="bofuri.jpeg"
+                  alt="avatar"
+                  class="contact-card__avatar"
+                  loading="lazy"
+                  onerror="
+                    this.src =
+                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22%3E%3Crect fill=%22%2313131a%22 width=%2256%22 height=%2256%22/%3E%3Ctext fill=%22%23ff6b9d%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2220%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
+                  "
+                />
+                <div>
+                  <h2 class="section-title">Hubungi Saya</h2>
+                  <p class="section-sub">
+                    Terbuka untuk kolaborasi & freelance
+                  </p>
+                </div>
+              </div>
+              <div class="section-rule"></div>
+              <div class="contact-links">
+                <a href="mailto:email@example.com" class="contact-item">
+                  <span class="contact-item__icon">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                      />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                  </span>
+                  <div>
+                    <span class="contact-item__label">Email</span>
+                    <span class="contact-item__value">email@example.com</span>
+                  </div>
+                  <span class="contact-item__arrow">→</span>
+                </a>
+                <a
+                  href="https://github.com/hayaxxdev-bit"
+                  target="_blank"
+                  class="contact-item"
+                >
+                  <span class="contact-item__icon">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <span class="contact-item__label">GitHub</span>
+                    <span class="contact-item__value">hayaxxdev-bit</span>
+                  </div>
+                  <span class="contact-item__arrow">→</span>
+                </a>
+                <a href="#" target="_blank" class="contact-item">
+                  <span class="contact-item__icon">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <span class="contact-item__label">LinkedIn</span>
+                    <span class="contact-item__value"
+                      >Hubungi via LinkedIn</span
+                    >
+                  </div>
+                  <span class="contact-item__arrow">→</span>
+                </a>
+              </div>
+              <p class="contact-note">
+                Biasanya membalas dalam 1–2 hari kerja.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>
+          © <span id="year"></span> hayaxxdev · Dibangun dengan HTML/CSS/JS ·
+          Deploy via GitHub Pages
+        </p>
+      </footer>
+    </div>
+
+    <!-- ══════════════ FITUR 1: AUTO-PLAY BUTTON ══════════════ -->
+    <button id="lazyModeBtn" class="lazy-mode-btn" title="Lazy Autopilot Mode">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M6 3h2v18H6V3zm10 0h2v18h-2V3zM3 6h2v12H3V6zm16 0h2v12h-2V6z"
+        />
+      </svg>
+    </button>
+
+    <!-- ══════════════ FITUR 1: AUTO-QUEST FLOATING TEXT ══════════════ -->
+    <div id="autoQuestIndicator" class="auto-quest-indicator">
+      <span class="auto-quest-spinner"></span>
+      [Auto-Questing...]
+    </div>
+
+    <!-- ══════════════════ GACHA OVERLAY (baru) ══════════════════ -->
+    <div id="gachaOverlay" class="gacha-overlay">
+      <div class="gacha-overlay__backdrop"></div>
+      <div class="gacha-overlay__content">
+        <canvas id="gachaCanvas" class="gacha-canvas"></canvas>
+        <div class="gacha-result" id="gachaResult"></div>
+        <div class="gacha-overlay__footer">
+          <button class="gacha-overlay__close" id="gachaClose">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+            Tutup
+          </button>
+          <button
+            class="gacha-overlay__again"
+            id="gachaAgain"
+            style="display: none"
+          >
+            🎲 Summon Lagi
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ ADD CHARACTER MODAL ══════════════════ -->
+    <div id="addCharModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-box__head">
+          <h3 class="modal-box__title">➕ Tambah Karakter Baru</h3>
+          <button class="modal-box__close" id="closeAddChar">✕</button>
+        </div>
+        <div class="modal-box__body" id="addCharForm">
+          <div class="form-row form-row--2">
+            <div class="form-field">
+              <label class="form-label">Nama Karakter *</label>
+              <input
+                class="form-input"
+                id="cf_name"
+                type="text"
+                placeholder="Contoh: Rem"
+              />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Series / Anime *</label>
+              <input
+                class="form-input"
+                id="cf_series"
+                type="text"
+                placeholder="Contoh: Re:Zero"
+              />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-label">URL Gambar *</label>
+            <input
+              class="form-input"
+              id="cf_image"
+              type="url"
+              placeholder="https://..."
+            />
+            <span class="form-hint"
+              >Pakai URL gambar dari AniList, MAL, atau hosting manapun</span
+            >
+          </div>
+          <div class="form-row form-row--3">
+            <div class="form-field">
+              <label class="form-label">Rarity</label>
+              <select class="form-input" id="cf_rarity">
+                <option value="SSR">⭐ SSR</option>
+                <option value="SR" selected>💜 SR</option>
+                <option value="R">📦 R</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Tipe</label>
+              <select class="form-input" id="cf_type">
+                <option value="Waifu">Waifu 👧</option>
+                <option value="Husbando">Husbando 🧑</option>
+                <option value="Other">Other ✨</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Elemen</label>
+              <select class="form-input" id="cf_element">
+                <option value="Fire">🔥 Fire</option>
+                <option value="Water">💧 Water</option>
+                <option value="Wind">🌬️ Wind</option>
+                <option value="Earth">🌿 Earth</option>
+                <option value="Light">✨ Light</option>
+                <option value="Dark">🌑 Dark</option>
+                <option value="Thunder">⚡ Thunder</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Deskripsi Singkat</label>
+            <textarea
+              class="form-input form-textarea"
+              id="cf_desc"
+              placeholder="Ceritain sedikit tentang karakter ini..."
+            ></textarea>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Abilities (pisah dengan koma)</label>
+            <input
+              class="form-input"
+              id="cf_abilities"
+              type="text"
+              placeholder="Contoh: Oni Mode, Water Magic, Morning Star"
+            />
+          </div>
+          <div class="form-row form-row--4 form-row--stats">
+            <div class="form-field">
+              <label class="form-label">ATK</label>
+              <input
+                class="form-input"
+                id="cf_atk"
+                type="number"
+                min="1"
+                max="100"
+                value="70"
+              />
+            </div>
+            <div class="form-field">
+              <label class="form-label">DEF</label>
+              <input
+                class="form-input"
+                id="cf_def"
+                type="number"
+                min="1"
+                max="100"
+                value="70"
+              />
+            </div>
+            <div class="form-field">
+              <label class="form-label">SPD</label>
+              <input
+                class="form-input"
+                id="cf_spd"
+                type="number"
+                min="1"
+                max="100"
+                value="70"
+              />
+            </div>
+            <div class="form-field">
+              <label class="form-label">HP</label>
+              <input
+                class="form-input"
+                id="cf_hp"
+                type="number"
+                min="1"
+                max="100"
+                value="70"
+              />
+            </div>
+          </div>
+          <div id="addCharPreview" class="add-char-preview"></div>
+          <div class="form-actions">
+            <button class="btn btn--ghost" id="previewChar">
+              👁️ Preview Kartu
+            </button>
+            <button class="btn btn--primary" id="saveChar">
+              💾 Simpan Karakter
+            </button>
+          </div>
+          <div id="addCharMsg" class="form-msg" style="display: none"></div>
+
+          <!-- Daftar karakter custom yang sudah disimpan -->
+          <div id="savedCharsList" class="saved-chars-list">
+            <div class="saved-chars-list__head">
+              <h4>Karakter Tersimpan (Custom)</h4>
+              <span id="savedCount" class="saved-count">0 karakter</span>
+            </div>
+            <div id="savedCharsGrid" class="saved-chars-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════ FITUR 3: VISUAL NOVEL DIALOGUE BOX ══════════════ -->
+    <div id="vnContainer" class="vn-container">
+      <button id="vnClose" class="vn-close" title="Tutup dialog">✕</button>
+      <div class="vn-avatar">
+        <img src="bofuri.jpeg" alt="hayaxx-bot" class="vn-avatar-img" />
+      </div>
+      <div class="vn-textbox">
+        <div class="vn-name">hayaxx-bot</div>
+        <div class="vn-message" id="vnMessage"></div>
+        <button class="vn-next" id="vnNext">▼ Next</button>
+      </div>
+    </div>
+
+    <!-- ══════════════ FITUR 4: BGM PLAYER WIDGET ══════════════ -->
+    <div id="bgmPlayer" class="bgm-player">
+      <button id="bgmToggle" class="bgm-toggle" title="Play/Pause BGM">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </button>
+      <div class="bgm-label">🎵 Lo-Fi Anime Beats</div>
+    </div>
+
+    <!-- ══════════════ FITUR 5: EASTER EGG OVERLAY ══════════════ -->
+    <div id="secretOverlay" class="secret-overlay">
+      <div class="secret-content">
+        <h1 class="secret-title">⚡ LIMIT BREAK ⚡</h1>
+        <p class="secret-sub">Super Saiyan Mode Activated!</p>
+        <div id="secretProject" class="secret-project"></div>
+        <button id="secretClose" class="secret-close">Return to Normal</button>
+      </div>
+    </div>
+
+    <script src="./public/js/script.js"></script>
+  </body>
+</html>
+>>>>>>> 5ae68e6b11b1236908d466d08e1b4924f38760a0
