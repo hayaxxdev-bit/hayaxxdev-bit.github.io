@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hayaxxdev-bit | Portofolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="./public/css/style.css" />
+</head>
+
+<body>
+  <div class="bg-noise"></div>
+  <div class="bg-grid"></div>
+
+  <!-- ══════════════ PET SYRUP ══════════════ -->
+  <div class="syrup-pet" title="Syrup - Guardian Turtle">🐢</div>
+
+  <div class="app-container">
+    <!-- ══════════════ NAVBAR ══════════════ -->
+    <header class="navbar" id="navbar">
+      <a href="#" class="navbar__brand" data-route="home">
+        <span class="navbar__logo">NK</span>
+        <span class="navbar__dot"></span>
+      </a>
+      <nav class="navbar__menu" id="navMenu">
+        <button class="nav-link active" data-route="home">Beranda</button>
+        <button class="nav-link" data-route="maple">Maple's Vault</button>
+        <button class="nav-link" data-route="project">Karya</button>
+        <button class="nav-link" data-route="about">Tentang</button>
+        <button class="nav-link nav-link--cta" data-route="contact">
+          Kontak
+        </button>
+      </nav>
+      <button class="navbar__toggle" id="menuToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <main class="main" id="app">
+      <!-- ══════════════ HOME ══════════════ -->
+      <section id="home" class="view view--active">
+        <div class="hero">
+          <div class="hero__left">
+            <div class="hero__eyebrow">
+              <span class="badge">Frontend Developer</span>
+              <span class="badge badge--dim">Game Designer</span>
+            </div>
+            <h1 class="hero__name">
+              Hai, Saya<br />
+              <span class="hero__name-highlight">hayaxxdev</span>
+            </h1>
+            <p class="hero__desc">
+              Membangun pengalaman web imersif dengan estetika manga dan
+              performa optimal. Spesialisasi UI interaktif, desain game, dan
+              kreasi digital yang memukau.
+            </p>
+            <div class="hero__cta">
+              <button class="btn btn--primary" data-route="project">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="13 17 18 12 13 7" />
+                  <polyline points="6 17 11 12 6 7" />
+                </svg>
+                Jelajahi Karya
+              </button>
+              <a href="https://github.com/hayaxxdev-bit" target="_blank" class="btn btn--ghost">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                GitHub
+              </a>
+            </div>
+            <div class="hero__stats">
+              <div class="stat">
+                <span class="stat__n" id="repoCount">—</span>
+                <span class="stat__l">Repository</span>
+              </div>
+              <div class="stat">
+                <span class="stat__n" id="starCount">—</span>
+                <span class="stat__l">Stars Total</span>
+              </div>
+              <div class="stat">
+                <span class="stat__n">2+</span>
+                <span class="stat__l">Tahun Aktif</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero__right">
+            <div class="hero__avatar-wrap">
+              <div class="hero__avatar-ring ring--1"></div>
+              <div class="hero__avatar-ring ring--2"></div>
+              <img src="bofuri.jpeg" alt="hayaxxdev avatar" class="hero__avatar-img" loading="lazy" onerror="
+                    this.src =
+                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%22180%22%3E%3Crect fill=%22%23141414%22 width=%22180%22 height=%22180%22/%3E%3Ctext fill=%22%23c9a84c%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2240%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
+                  " />
+              <div class="hero__avatar-glow"></div>
+            </div>
+            <div class="hero__avatar-label">
+              <span class="dot-blink"></span>
+              <span>Available for work</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Carousel -->
+        <div class="featured">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Sorotan Karya</h2>
+              <div class="section-rule"></div>
+            </div>
+            <div class="carousel-nav">
+              <button class="car-btn" id="carPrev" aria-label="Sebelumnya">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button class="car-btn" id="carNext" aria-label="Selanjutnya">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="carousel">
+            <div class="carousel__track" id="carTrack">
+              <div class="car-placeholder">Memuat sorotan karya...</div>
+            </div>
+            <div class="carousel__dots" id="carDots"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════ MAPLE'S VAULT - ENSIKLOPEDIA BOFURI ══════════════ -->
+      <section id="maple" class="view">
+        <!-- ══════════════ KARAKTER CARDS ══════════════ -->
+        <div class="card-stage card-stage--row">
+          <!-- MAPLE CARD -->
+          <article class="char-card" data-char="maple" onclick="window.location.href='./character-info/maple-detail.html';">
+            <img class="card-art" src="./public/image/Maple_Character.webp" alt="Maple in Ankoku Kishi (Dark Knight) form"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22448%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%231d1020%22/%3E%3Cstop offset=%2255%25%22 stop-color=%22%23120a16%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23060508%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22448%22 fill=%22url(%23g)%22/%3E%3Ctext x=%2250%25%22 y=%2252%25%22 text-anchor=%22middle%22 font-size=%22120%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E'" />
+            <div class="card-art-scrim"></div>
+
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="card-top-text">
+                  <h2 class="card-name">Maple<small>Ankoku Kishi · 暗黒騎士</small></h2>
+                  <p class="card-synopsis">
+                    VIT-maxed shield maiden. Nothing gets through. Nothing ever has.
+                  </p>
+                </div>
+                <div class="card-pfp">
+                  <img src="bofuri.jpeg" alt="Maple portrait"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22%3E%3Crect fill=%22%23120a16%22 width=%2260%22 height=%2260%22/%3E%3Ctext fill=%22%23d4af37%22 x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2226%22%3E%F0%9F%8D%81%3C/text%3E%3C/svg%3E'" />
+                </div>
+              </div>
+
+              <div class="card-bottom">
+                <p class="card-class">Shielder · Unkillable Tank</p>
+                <div class="card-stats-row">
+                  <div class="card-stat card-stat--role">
+                    <span class="stat-ico">🛡️</span>
+                    <span class="stat-val">Tank</span>
+                    <span class="stat-tag">Role</span>
+                  </div>
+                  <div class="card-stat card-stat--hp">
+                    <span class="stat-ico">❤️</span>
+                    <span class="stat-val">9999</span>
+                    <span class="stat-tag">HP</span>
+                  </div>
+                  <div class="card-stat card-stat--atk">
+                    <span class="stat-ico">⚔️</span>
+                    <span class="stat-val">15</span>
+                    <span class="stat-tag">ATK</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- SALLY CARD -->
+          <article class="char-card" data-char="sally" onclick="window.location.href='./character-info/sally-detail.html';">
+            <img class="card-art" src="./public/image/sally-full-body.webp" alt="Sally the Blue Flash"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22448%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%230a1a2e%22/%3E%3Cstop offset=%2255%25%22 stop-color=%22%2306121f%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23020508%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22448%22 fill=%22url(%23g)%22/%3E%3Ctext x=%2250%25%22 y=%2252%25%22 text-anchor=%22middle%22 font-size=%22120%22%3E%F0%9F%92%A8%3C/text%3E%3C/svg%3E'" />
+            <div class="card-art-scrim"></div>
+
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="card-top-text">
+                  <h2 class="card-name">Sally<small>Blue Flash · 蒼き閃光</small></h2>
+                  <p class="card-synopsis">
+                    AGI-maxed duelist. Faster than the server tick rate.
+                  </p>
+                </div>
+                <div class="card-pfp">
+                  <img src="./public/image/sally.jpg" alt="Sally portrait"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22%3E%3Crect fill=%22%2306121f%22 width=%2260%22 height=%2260%22/%3E%3Ctext fill=%22%2344aaff%22 x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2226%22%3E%F0%9F%92%A8%3C/text%3E%3C/svg%3E'" />
+                </div>
+              </div>
+
+              <div class="card-bottom">
+                <p class="card-class">Swashbuckler · Evasion Tank</p>
+                <div class="card-stats-row">
+                  <div class="card-stat card-stat--role">
+                    <span class="stat-ico">💨</span>
+                    <span class="stat-val">DPS</span>
+                    <span class="stat-tag">Role</span>
+                  </div>
+                  <div class="card-stat card-stat--hp">
+                    <span class="stat-ico">❤️</span>
+                    <span class="stat-val">1200</span>
+                    <span class="stat-tag">HP</span>
+                  </div>
+                  <div class="card-stat card-stat--atk">
+                    <span class="stat-ico">⚔️</span>
+                    <span class="stat-val">850</span>
+                    <span class="stat-tag">ATK</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ══════════════ PROJECT ══════════════ -->
+      <section id="project" class="view">
+        <div class="section-head section-head--stacked">
+          <div>
+            <h2 class="section-title">Semua Karya</h2>
+            <p class="section-sub">
+              Data langsung dari GitHub · diperbarui otomatis
+            </p>
+            <div class="section-rule"></div>
+          </div>
+          <div class="filter-tabs" id="filterTabs">
+            <button class="filter-tab filter-tab--active" data-filter="all">
+              Semua
+            </button>
+            <button class="filter-tab" data-filter="web">Web</button>
+            <button class="filter-tab" data-filter="game">Game</button>
+            <button class="filter-tab" data-filter="design">Design</button>
+            <button class="filter-tab" data-filter="other">Lainnya</button>
+          </div>
+        </div>
+        <div class="project-grid" id="projectGrid"></div>
+        <div class="loader" id="projectLoader">
+          <div class="loader__spinner"></div>
+          <span>Menghubungkan ke GitHub...</span>
+        </div>
+        <div id="projectEmpty" style="
+              display: none;
+              text-align: center;
+              padding: 40px;
+              color: var(--text-secondary);
+            ">
+          <p>Tidak ada karya ditemukan untuk filter ini.</p>
+        </div>
+      </section>
+
+      <!-- ══════════════ ABOUT ══════════════ -->
+      <section id="about" class="view">
+        <div class="about-layout">
+          <div class="about__visual">
+            <div class="about__img-frame">
+              <img src="bofuri.jpeg" alt="hayaxxdev" class="about__img" loading="lazy" onerror="
+                    this.src =
+                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22%3E%3Crect fill=%22%23141414%22 width=%22160%22 height=%22160%22/%3E%3Ctext fill=%22%23c9a84c%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2236%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
+                  " />
+            </div>
+            <div class="about__social">
+              <a href="https://github.com/hayaxxdev-bit" target="_blank" class="social-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                GitHub
+              </a>
+            </div>
+          </div>
+          <div class="about__content">
+            <h2 class="section-title">Tentang Saya</h2>
+            <div class="section-rule"></div>
+            <p class="about__bio">
+              Developer & kreator digital yang berfokus pada perpaduan
+              estetika manga/anime dengan teknologi web modern. Dari membangun
+              UI yang responsif hingga mendesain elemen game, saya percaya
+              bahwa kode dan seni bisa hidup berdampingan.
+            </p>
+            <p class="about__bio">
+              Saat tidak sedang coding, saya mengeksplorasi dunia desain game,
+              karakter, dan visual storytelling. Terbuka untuk kolaborasi
+              kreatif dan proyek freelance.
+            </p>
+            <h3 class="about__skills-title">Tech Stack</h3>
+            <div class="skills-grid">
+              <div class="skill-group">
+                <span class="skill-group__label">Frontend</span>
+                <div class="skill-tags">
+                  <span class="skill-tag">HTML5</span>
+                  <span class="skill-tag">CSS3</span>
+                  <span class="skill-tag">JavaScript</span>
+                  <span class="skill-tag">React</span>
+                </div>
+              </div>
+              <div class="skill-group">
+                <span class="skill-group__label">Design</span>
+                <div class="skill-tags">
+                  <span class="skill-tag">UI/UX</span>
+                  <span class="skill-tag">Figma</span>
+                  <span class="skill-tag">Game Art</span>
+                </div>
+              </div>
+              <div class="skill-group">
+                <span class="skill-group__label">Backend</span>
+                <div class="skill-tags">
+                  <span class="skill-tag">Node.js</span>
+                  <span class="skill-tag">Git</span>
+                  <span class="skill-tag">GitHub Pages</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════ CONTACT ══════════════ -->
+      <section id="contact" class="view">
+        <div class="contact-wrap">
+          <div class="contact-card">
+            <div class="contact-card__head">
+              <img src="bofuri.jpeg" alt="avatar" class="contact-card__avatar" loading="lazy" onerror="
+                    this.src =
+                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22%3E%3Crect fill=%22%23141414%22 width=%2256%22 height=%2256%22/%3E%3Ctext fill=%22%23c9a84c%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2220%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
+                  " />
+              <div>
+                <h2 class="section-title">Hubungi Saya</h2>
+                <p class="section-sub">
+                  Terbuka untuk kolaborasi & freelance
+                </p>
+              </div>
+            </div>
+            <div class="section-rule"></div>
+            <div class="contact-links">
+              <a href="mailto:email@example.com" class="contact-item">
+                <span class="contact-item__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </span>
+                <div>
+                  <span class="contact-item__label">Email</span>
+                  <span class="contact-item__value">email@example.com</span>
+                </div>
+                <span class="contact-item__arrow">→</span>
+              </a>
+              <a href="https://github.com/hayaxxdev-bit" target="_blank" class="contact-item">
+                <span class="contact-item__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                </span>
+                <div>
+                  <span class="contact-item__label">GitHub</span>
+                  <span class="contact-item__value">hayaxxdev-bit</span>
+                </div>
+                <span class="contact-item__arrow">→</span>
+              </a>
+              <a href="#" target="_blank" class="contact-item">
+                <span class="contact-item__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                  </svg>
+                </span>
+                <div>
+                  <span class="contact-item__label">LinkedIn</span>
+                  <span class="contact-item__value">Hubungi via LinkedIn</span>
+                </div>
+                <span class="contact-item__arrow">→</span>
+              </a>
+            </div>
+            <p class="contact-note">
+              Biasanya membalas dalam 1–2 hari kerja.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        © <span id="year"></span> hayaxxdev · Dibangun dengan HTML/CSS/JS ·
+        Deploy via GitHub Pages
+      </p>
+    </footer>
+  </div>
+
+  <!-- ══════════════ BGM PLAYER WIDGET ══════════════ -->
+  <div id="bgmPlayer" class="bgm-player">
+    <button id="bgmToggle" class="bgm-toggle" title="Play/Pause BGM">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z" />
+      </svg>
+    </button>
+    <button id="bgmNext" class="bgm-next" title="Next Track">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 5v14l11-7zM18 5v14h2V5h-2z" />
+      </svg>
+    </button>
+    <span class="bgm-label" id="bgmLabel">🎵 Lo-Fi Anime Beats</span>
+  </div>
+
+  <!-- ══════════════ MAPLE'S GUIDE BUTTON ══════════════ -->
+  <button id="guideModeBtn" class="guide-mode-btn" title="Maple's Guide Tour">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  </button>
+
+  <!-- ══════════════ MAPLE'S GUIDE INDICATOR ══════════════ -->
+  <div id="guideIndicator" class="guide-indicator">
+    <span class="auto-quest-spinner"></span>
+    [Maple's Guiding... 🍁]
+  </div>
+
+  <!-- ══════════════ VISUAL NOVEL DIALOGUE BOX ══════════════ -->
+  <div id="vnContainer" class="vn-container">
+    <button id="vnClose" class="vn-close" title="Tutup dialog">✕</button>
+    <div class="vn-avatar">
+      <img src="bofuri.jpeg" alt="hayaxx-bot" class="vn-avatar-img" />
+    </div>
+    <div class="vn-textbox">
+      <div class="vn-name">hayaxx-bot</div>
+      <div class="vn-message" id="vnMessage"></div>
+      <button class="vn-next" id="vnNext">▼ Next</button>
+    </div>
+  </div>
+
+  <script src="./public/js/script.js"></script>
+</body>
+
+</html>
