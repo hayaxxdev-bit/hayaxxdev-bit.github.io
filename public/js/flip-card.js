@@ -7,7 +7,7 @@
   function initCharCardFlip(root = document) {
     root.querySelectorAll('.char-card-flip').forEach(setupCard);
   }
-
+ 
   function setupCard(card) {
     if (card.dataset.flipReady === 'true') return;
     card.dataset.flipReady = 'true';

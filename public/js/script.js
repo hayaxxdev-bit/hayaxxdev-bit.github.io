@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ═══════════════════════════════════════════
   document.getElementById("year").textContent = new Date().getFullYear();
   const USERNAME = "hayaxxdev-bit";
-  let allRepos = [];
+  let allRepos = []; 
 
   // ═══════════════════════════════════════════
   // VN DIALOGUES (TEMA MAPLE - BOFURI)

@@ -569,7 +569,7 @@ function drawPlayer(){
     ctx.fillStyle='#ffbbcc';
     ctx.beginPath();ctx.arc(sx-8,sy-13,3,0,Math.PI*2);ctx.fill();
     ctx.beginPath();ctx.arc(sx+8,sy-13,3,0,Math.PI*2);ctx.fill();
-    // Tiny dagger
+    // Tiny dagger 
     ctx.strokeStyle='#ffaaaa';ctx.lineWidth=2;
     const daggerAngle=Math.sin(tick*0.1)*0.3;
     ctx.save();ctx.translate(sx+10,sy-5);ctx.rotate(daggerAngle);

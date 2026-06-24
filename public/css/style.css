@@ -799,7 +799,7 @@ body {
 .project-card__title {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1rem; 
   word-break: break-word;
   color: var(--accent-gold);
 }
