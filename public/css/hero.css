@@ -1,0 +1,562 @@
+/* ═══════════════════════════════════════════
+   HERO SECTION - MASTER STYLES
+   ═══════════════════════════════════════════ */
+
+/* ─── 1. Container ─── */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 60px;
+  align-items: center;
+  min-height: calc(100vh - 200px);
+  padding: 40px 0;
+  position: relative;
+}
+
+/* ─── 2. Background Decorations ─── */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero::before {
+  top: -50%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.08), transparent 70%);
+}
+
+.hero::after {
+  bottom: -30%;
+  left: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(204, 17, 51, 0.05), transparent 70%);
+}
+
+/* ─── 3. Left Content ─── */
+.hero__left {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── 3a. Eyebrow / Badges ─── */
+.hero__eyebrow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.hero__eyebrow .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.hero__eyebrow .badge:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.hero__eyebrow .badge .badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.hero__eyebrow .badge .badge-dot.green {
+  background: #10b981;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ─── 3b. Name & Title ─── */
+.hero__name {
+  font-family: var(--font-mono);
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  letter-spacing: -2px;
+}
+
+.hero__name-highlight {
+  background: linear-gradient(135deg, #7c3aed 0%, #cc1133 40%, #6d28d9 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  display: inline-block;
+}
+
+.hero__name-highlight::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #7c3aed, #cc1133, #6d28d9);
+  border-radius: 3px;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: expandLine 1.5s ease forwards;
+}
+
+@keyframes expandLine {
+  to { transform: scaleX(1); }
+}
+
+.hero__title-role {
+  display: inline-block;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  font-family: var(--font-mono);
+}
+
+.hero__title-role .role-highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─── 3c. Description ─── */
+.hero__desc {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 540px;
+  margin-bottom: 32px;
+  line-height: 1.8;
+  position: relative;
+  padding-left: 20px;
+  border-left: 3px solid var(--accent);
+}
+
+.hero__desc .highlight {
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+/* ─── 3d. CTA Buttons ─── */
+.hero__cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+
+.hero__cta .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Primary Button */
+.hero__cta .btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.hero__cta .btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+}
+
+.hero__cta .btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.hero__cta .btn-primary:hover::before {
+  left: 100%;
+}
+
+/* Secondary Button */
+.hero__cta .btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.hero__cta .btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+}
+
+.hero__cta .btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+.hero__cta .btn:hover svg {
+  transform: translateX(4px);
+}
+
+/* ─── 4. Stats Section ─── */
+.hero__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.hero__stats:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── 4a. Stat Item ─── */
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.stat:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -0.75rem;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background: var(--border-color);
+  opacity: 0.5;
+}
+
+/* ─── 4b. Stat Value ─── */
+.stat__value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+.stat__value.accent {
+  color: var(--accent-gold);
+}
+
+.stat__value.gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── 4c. Stat Label ─── */
+.stat__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.stat__subtext {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* ─── 4d. Stat Tooltip ─── */
+.stat__tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-weight: 500;
+  z-index: 10;
+}
+
+.stat__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border-color);
+}
+
+.stat:hover .stat__tooltip {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ─── 4e. Stat Hover Effects ─── */
+.stat:hover {
+  transform: translateY(-2px);
+}
+
+.stat:hover .stat__value {
+  color: var(--accent);
+  transform: scale(1.05);
+}
+
+.stat:hover .stat__value.gradient {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── 4f. Stat Animation ─── */
+.stat__value.animate {
+  animation: countUp 0.8s ease-out forwards;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── 4g. Stat Variations ─── */
+.stat--sm .stat__value { font-size: 1.5rem; }
+.stat--lg .stat__value { font-size: 2.8rem; }
+
+.stat--primary .stat__value { color: var(--accent); }
+.stat--gold .stat__value { color: var(--accent-gold); }
+.stat--success .stat__value { color: #10b981; }
+.stat--info .stat__value { color: #3b82f6; }
+.stat--warning .stat__value { color: #f59e0b; }
+
+.stat--inline {
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+.stat--inline .stat__label { margin-top: 0; }
+
+.stat--center { text-align: center; align-items: center; }
+.stat--left { text-align: left; align-items: flex-start; }
+.stat--right { text-align: right; align-items: flex-end; }
+
+/* ─── 5. Avatar Section ─── */
+.hero__right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero__avatar-wrap {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── 5a. Avatar Rings ─── */
+.hero__avatar-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  will-change: transform;
+}
+
+.ring--1 {
+  width: 110%;
+  height: 110%;
+  border-top-color: #7c3aed;
+  border-right-color: #6d28d9;
+  animation: spin 10s linear infinite;
+}
+
+.ring--2 {
+  width: 120%;
+  height: 120%;
+  border-bottom-color: #cc1133;
+  border-left-color: #6d28d9;
+  animation: spin 14s linear infinite reverse;
+}
+
+.ring--3 {
+  width: 130%;
+  height: 130%;
+  border-top-color: rgba(124, 58, 237, 0.2);
+  border-left-color: rgba(204, 17, 51, 0.2);
+  animation: spin 18s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 5b. Avatar Image ─── */
+.hero__avatar-img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-card);
+  position: relative;
+  z-index: 2;
+  box-shadow: 
+    0 0 60px rgba(124, 58, 237, 0.25),
+    0 0 100px rgba(204, 17, 51, 0.1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero__avatar-img:hover {
+  transform: scale(1.05) rotate(-2deg);
+  box-shadow: 
+    0 0 80px rgba(124, 58, 237, 0.35),
+    0 0 120px rgba(204, 17, 51, 0.15);
+}
+
+/* ─── 5c. Avatar Glow ─── */
+.hero__avatar-glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(
+    circle,
+    rgba(124, 58, 237, 0.2) 0%,
+    rgba(204, 17, 51, 0.1) 30%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  filter: blur(30px);
+  z-index: 1;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ─── 5d. Avatar Label ─── */
+.hero__avatar-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #a78bfa;
+  background: var(--bg-card);
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.hero__avatar-label:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.1);
+}
+
+.hero__avatar-label .status-text {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+/* ─── 5e. Status Dot ─── */
+.dot-blink {
+  width: 10px;
+  height: 10px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ─── 6. Floating Particles ─── */
+.hero__particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: floatParticle 20s linear infinite;
+}
+
+

@@ -1,0 +1,227 @@
+/* ══════════════════════════════
+   BGM PLAYER (Enterprise Style)
+   ══════════════════════════════ */
+
+.bgm-player {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 8, 15, 0.92);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 48px;
+  padding: 4px 4px 4px 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 180px;
+  height: 52px;
+}
+
+.bgm-player:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.7),
+    0 0 40px rgba(212, 175, 55, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.bgm-toggle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-poison));
+  border: none;
+  color: #f0f0f2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(216, 30, 54, 0.3);
+}
+
+.bgm-toggle::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--accent-gold), transparent, var(--accent-poison));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bgm-toggle:hover::before {
+  opacity: 1;
+}
+
+.bgm-toggle:hover {
+  transform: scale(1.08) rotate(-5deg);
+  box-shadow: 0 6px 24px rgba(216, 30, 54, 0.5);
+}
+
+.bgm-toggle--playing {
+  background: linear-gradient(135deg, var(--accent-poison), #5a2d8a);
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.5);
+}
+
+.bgm-toggle--playing::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(124, 58, 237, 0.3);
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.3; }
+}
+
+.bgm-toggle svg {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.bgm-next {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  color: var(--accent-gold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.bgm-next:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--accent-gold);
+  transform: scale(1.1) rotate(10deg);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+.bgm-next:active {
+  transform: scale(0.92);
+}
+
+.bgm-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+  flex: 1;
+  min-width: 0;
+}
+
+.bgm-label::before {
+  content: '♪ ';
+  color: var(--accent-gold);
+}
+
+.bgm-volume-indicator {
+  width: 32px;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.bgm-volume-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-poison));
+  border-radius: 4px;
+  width: 65%;
+  transition: width 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .bgm-player {
+    bottom: 80px;
+    left: 12px;
+    padding: 4px 4px 4px 12px;
+    height: 44px;
+    min-width: 140px;
+  }
+  
+  .bgm-toggle {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .bgm-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .bgm-label {
+    font-size: 0.6rem;
+  }
+  
+  .bgm-next {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bgm-player {
+    bottom: 72px;
+    left: 8px;
+    padding: 3px 3px 3px 10px;
+    height: 38px;
+    min-width: 120px;
+  }
+  
+  .bgm-toggle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .bgm-toggle svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .bgm-label {
+    font-size: 0.55rem;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .bgm-next {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bgm-next svg {
+    width: 12px;
+    height: 12px;
+  }
+}

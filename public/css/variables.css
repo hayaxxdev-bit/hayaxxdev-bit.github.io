@@ -1,0 +1,66 @@
+:root {
+  /* Core Base - Deep Void Black */
+  --bg: #050308;
+  --bg-card: #0d0818;
+  --bg-card-hover: #160c24;
+  
+  /* Typography */
+  --text: #f0eaff;
+  --text-secondary: #b098cc;
+  
+  /* Deep Crimson Red */
+  --accent: #cc1133;
+  --accent-glow: rgba(204, 17, 51, 0.5);
+  
+  /* Deep Purple */
+  --accent-gold: #7c3aed;
+  --accent-gold-glow: rgba(124, 58, 237, 0.5);
+  
+  /* Dark Amethyst */
+  --accent-poison: #6d28d9;
+  --accent-poison-glow: rgba(109, 40, 217, 0.4);
+  
+  /* Void Depths - Deep Black */
+  --bg-void: #030108;
+  --bg-deep: #0a0418;
+  --bg-panel: #10081f;
+  --bg-panel-2: #160c2b;
+
+  /* Deep Purple & Crimson Colors */
+  --crimson: #99112a;
+  --crimson-bright: #cc1133;
+  --purple-deep: #5b21b6;
+  --purple-bright: #7c3aed;
+  --purple-soft: #a78bfa;
+  --amethyst: #6d28d9;
+  --silver: #b8b0cc;
+  --ink: #ece8f5;
+  --ink-dim: #8c849a;
+
+  /* Glow Effects */
+  --accent-glowd: 0 0 24px rgba(124, 58, 237, 0.5), 0 0 60px rgba(204, 17, 51, 0.3);
+  --glass-bg: rgba(16, 8, 31, 0.6);
+  --glass-border: rgba(124, 58, 237, 0.3);
+
+  /* Typography */
+  --font-display: 'Cinzel Decorative', serif;
+  --font-head: 'Cinzel', serif;
+  --font-body: 'EB Garamond', serif;
+  --font-stat: 'Spectral SC', serif;
+
+  /* UI Elements */
+  --border: rgba(204, 17, 51, 0.2);
+  --border-active: rgba(124, 58, 237, 0.4);
+  --radius: 16px;
+  --radius-sm: 10px;
+  
+  /* Animation & Fonts */
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --navbar-height: 70px;
+
+  /* Full Screen Spacing */
+  --section-padding: 80px 0;
+  --content-max-width: 1400px;
+}

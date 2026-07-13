@@ -1,0 +1,202 @@
+/* ══════════════════════════════
+   MAPLE'S GUIDE BUTTON & INDICATOR
+   ══════════════════════════════ */
+
+.guide-mode-btn {
+  position: fixed;
+  bottom: 92px;
+  right: 24px;
+  z-index: 200;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(10, 8, 15, 0.92);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: var(--accent-poison);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.guide-mode-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.3);
+}
+
+.guide-mode-btn:active {
+  transform: scale(0.92);
+}
+
+.guide-mode-btn--active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-poison));
+  color: #f0f0f2;
+  border-color: var(--accent-gold);
+  animation: guide-pulse 2s ease-in-out infinite;
+}
+
+@keyframes guide-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(216, 30, 54, 0.3), 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(216, 30, 54, 0.5), 0 8px 40px rgba(124, 58, 237, 0.4);
+  }
+}
+
+.guide-mode-btn svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.guide-mode-btn .tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(10, 8, 15, 0.95);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.04em;
+}
+
+.guide-mode-btn:hover .tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+/* Guide Indicator */
+.guide-indicator {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  background: rgba(10, 8, 15, 0.92);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 40px;
+  padding: 10px 24px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-poison);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.03em;
+}
+
+.guide-indicator--active {
+  display: flex;
+  animation: slide-down-guide 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes slide-down-guide {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.guide-indicator .auto-quest-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(124, 58, 237, 0.15);
+  border-top-color: var(--accent-poison);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.guide-indicator .guide-progress {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.guide-indicator .guide-progress .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  transition: all 0.4s ease;
+}
+
+.guide-indicator .guide-progress .dot.active {
+  background: var(--accent-poison);
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+  transform: scale(1.2);
+}
+
+.guide-indicator .guide-progress .dot.completed {
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+@media (max-width: 768px) {
+  .guide-mode-btn {
+    bottom: 148px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+  }
+  
+  .guide-mode-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .guide-indicator {
+    top: 80px;
+    padding: 6px 16px;
+    font-size: 0.65rem;
+    gap: 8px;
+  }
+  
+  .guide-indicator .auto-quest-spinner {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .guide-mode-btn .tooltip {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .guide-mode-btn {
+    bottom: 130px;
+    right: 8px;
+    width: 38px;
+    height: 38px;
+  }
+  
+  .guide-mode-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}

@@ -1,0 +1,21 @@
+/* ══════════════════════════════
+   FOOTER
+   ══════════════════════════════ */
+
+.footer {
+  text-align: center;
+  padding: 24px 0;
+  border-top: 1px solid rgba(124, 58, 237, 0.15);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 40px;
+}
+
+.footer p {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.footer p:hover {
+  opacity: 1;
+}
