@@ -323,28 +323,21 @@
     <div class="bg-noise" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
 
-    <!-- ═══════════════════════════════════════════
-         SYRUP PET - FLOATING TURTLE
-         ═══════════════════════════════════════════ -->
-    <div
-      class="syrup-pet"
-      title="Syrup - Guardian Turtle"
-      role="img"
-      aria-label="Syrup the Guardian Turtle mascot"
-      id="syrupPet"
-    >
-      <img
-        src="./public/image/character/syrup.gif"
-        alt="Syrup - Guardian Turtle"
-        width="100"
-        height="100"
-        loading="lazy"
-        id="syrupGif"
-        onerror="
-          this.src = './public/image/syrup.png';
-          console.log('GIF gagal load, pakai PNG');
-        "
-      />
+    <div class="bg-syrup-container" aria-hidden="true">
+      <div class="syrup-bg" id="syrupBg">
+        <img
+          src="./public/image/character/syrup.gif"
+          alt=""
+          width="150"
+          height="150"
+          loading="lazy"
+          onerror="this.src = './public/image/character/syrup.png'"
+        />
+        <!-- Reverb/Shadow trail -->
+        <div class="syrup-reverb"></div>
+        <div class="syrup-reverb syrup-reverb--2"></div>
+        <div class="syrup-reverb syrup-reverb--3"></div>
+      </div>
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════
@@ -563,7 +556,7 @@
           <!-- ════════════════════════════════════════════════════════════════
                FEATURED CAROUSEL
                ════════════════════════════════════════════════════════════════ -->
-          <div class="featured">
+         <div class="featured">
             <div class="section-head">
               <div>
                 <h2 class="section-title">Sorotan Karya</h2>

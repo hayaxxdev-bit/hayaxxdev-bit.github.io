@@ -445,6 +445,7 @@
           },
           {
             speaker: "🔥 Maple",
+            text: "Fun fact: Kalau kamu pencet kombinasi tombol legendaris Konami Code, aku bakal keluarin skill rahasia! 🔥",
           },
         ],
       };
@@ -748,535 +749,826 @@
   // ═══════════════════════════════════════════
   // 5. REPOSITORY MANAGER
   // ═══════════════════════════════════════════
-  class RepositoryManager {
-    constructor() {
-      this.username = CONFIG.USERNAME;
-      this.repositories = [];
-      this.isLoaded = false;
-      this.filter = "all";
-      this.cache = {};
+// ═══════════════════════════════════════════
+// NEW: Language colors & time helpers (letakkan sebelum class RepositoryManager)
+// ═══════════════════════════════════════════
+const LANGUAGE_COLORS = {
+  JavaScript: "#f1e05a",
+  TypeScript: "#3178c6",
+  Python: "#3572A5",
+  HTML: "#e34c26",
+  CSS: "#563d7c",
+  Java: "#b07219",
+  "C++": "#f34b7d",
+  C: "#555555",
+  "C#": "#178600",
+  PHP: "#4F5D95",
+  Ruby: "#701516",
+  Go: "#00ADD8",
+  Rust: "#dea584",
+  Swift: "#F05138",
+  Kotlin: "#A97BFF",
+  Dart: "#00B4AB",
+  Shell: "#89e051",
+  Vue: "#41b883",
+  Lua: "#000080",
+};
+
+function getLanguageColor(lang) {
+  return LANGUAGE_COLORS[lang] || "#8b949e";
+}
+
+// Format relatif waktu ala "3 hari lalu"
+function timeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffSec = Math.floor((now - date) / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  const diffMonth = Math.floor(diffDay / 30);
+  const diffYear = Math.floor(diffDay / 365);
+
+  if (diffSec < 60) return "Baru saja";
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+  if (diffHour < 24) return `${diffHour} jam lalu`;
+  if (diffDay < 30) return `${diffDay} hari lalu`;
+  if (diffMonth < 12) return `${diffMonth} bulan lalu`;
+  return `${diffYear} tahun lalu`;
+}
+
+// Ikon SVG kecil dipakai berulang di slide/card
+const ICONS = {
+  star: `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/></svg>`,
+  fork: `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0zM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0z"/></svg>`,
+  clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  repo: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>`,
+  demo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+};
+
+class RepositoryManager {
+  constructor() {
+    this.username = CONFIG.USERNAME;
+    this.repositories = [];
+    this.isLoaded = false;
+    this.filter = "all";
+    this.cache = {};
+  }
+
+  // ─── Fetch Methods ───
+
+  async fetchRepos() {
+    try {
+      const response = await fetch(
+        `https://api.github.com/users/${this.username}/repos?sort=updated&per_page=30`,
+      );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      this.repositories = await response.json();
+      this.isLoaded = true;
+      return this.repositories;
+    } catch (error) {
+      console.error("GitHub fetch failed:", error);
+      throw error;
     }
+  }
 
-    // ─── Fetch Methods ───
-
-    async fetchRepos() {
-      try {
-        const response = await fetch(
-          `https://api.github.com/users/${this.username}/repos?sort=updated&per_page=30`,
-        );
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        this.repositories = await response.json();
-        this.isLoaded = true;
-        return this.repositories;
-      } catch (error) {
-        console.error("GitHub fetch failed:", error);
-        throw error;
-      }
+  async fetchUserStats() {
+    try {
+      const response = await fetch(
+        `https://api.github.com/users/${this.username}`,
+      );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch user stats:", error);
+      return null;
     }
+  }
 
-    async fetchUserStats() {
-      try {
-        const response = await fetch(
-          `https://api.github.com/users/${this.username}`,
-        );
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        console.error("Failed to fetch user stats:", error);
-        return null;
-      }
-    }
+  async fetchCommitStats() {
+    try {
+      let totalCommits = 0;
+      const repos = this.repositories.length
+        ? this.repositories
+        : await this.fetchRepos();
 
-    async fetchCommitStats() {
-      try {
-        let totalCommits = 0;
-        const repos = this.repositories.length
-          ? this.repositories
-          : await this.fetchRepos();
-
-        for (const repo of repos) {
-          try {
-            const response = await fetch(
-              `https://api.github.com/repos/${this.username}/${repo.name}/commits?per_page=1`,
-            );
-            if (response.ok) {
-              const linkHeader = response.headers.get("link");
-              if (linkHeader) {
-                const match = linkHeader.match(/&page=(\d+)>; rel="last"/);
-                if (match) {
-                  totalCommits += parseInt(match[1]);
-                }
+      for (const repo of repos) {
+        try {
+          const response = await fetch(
+            `https://api.github.com/repos/${this.username}/${repo.name}/commits?per_page=1`,
+          );
+          if (response.ok) {
+            const linkHeader = response.headers.get("link");
+            if (linkHeader) {
+              const match = linkHeader.match(/&page=(\d+)>; rel="last"/);
+              if (match) {
+                totalCommits += parseInt(match[1]);
               }
             }
-          } catch (e) {
-            continue;
           }
+        } catch (e) {
+          continue;
         }
-
-        return totalCommits;
-      } catch (error) {
-        console.error("Failed to fetch commit stats:", error);
-        return 0;
-      }
-    }
-
-    // ─── Stats Update with Animation ───
-
-    async updateStats() {
-      try {
-        // Get all data
-        const userData = await this.fetchUserStats();
-        const totalCommits = await this.fetchCommitStats();
-
-        // Prepare stats data
-        const statsData = {
-          repoCount: {
-            value: this.repositories.length,
-            suffix: "",
-            label: "Repository",
-          },
-          starCount: {
-            value: this.getTotalStars(),
-            suffix: "",
-            label: "Total Stars",
-          },
-          projectCount: {
-            value: this.repositories.length,
-            suffix: "+",
-            label: "Total Proyek",
-          },
-          commitCount: {
-            value: totalCommits,
-            suffix: "+",
-            label: "Total Commit",
-          },
-        };
-
-        // Update each stat with animation
-        Object.entries(statsData).forEach(([id, data]) => {
-          const element = document.getElementById(id);
-          if (element) {
-            this.animateCounter(element, data.value, data.suffix);
-          }
-        });
-
-        // Update non-animated stats
-        if (userData) {
-          this.updateStaticStats(userData);
-        }
-      } catch (error) {
-        console.error("Failed to update stats:", error);
-        this.setFallbackStats();
-      }
-    }
-
-    // ─── Counter Animation ───
-
-    animateCounter(element, target, suffix = "") {
-      if (!element) return;
-
-      const duration = 1500;
-      const startTime = performance.now();
-      const startValue = 0;
-
-      // Clear previous animation
-      element.classList.remove("count-up");
-      element.textContent = "0" + suffix;
-
-      const updateCounter = (currentTime) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        // Easing function (easeOutCubic)
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.floor(eased * target);
-
-        element.textContent = current + suffix;
-
-        if (progress < 1) {
-          requestAnimationFrame(updateCounter);
-        } else {
-          element.textContent = target + suffix;
-          element.classList.add("count-up");
-        }
-      };
-
-      requestAnimationFrame(updateCounter);
-    }
-
-    // ─── Static Stats Update ───
-
-    updateStaticStats(userData) {
-      // Update aktif sejak
-      const createdDate = new Date(userData.created_at);
-      const activeSinceEl = document.getElementById("activeSince");
-      if (activeSinceEl) {
-        activeSinceEl.textContent = createdDate.getFullYear();
-        activeSinceEl.classList.add("count-up");
       }
 
-      // Update last active
-      const lastActiveEl = document.getElementById("lastActive");
-      if (lastActiveEl && userData.updated_at) {
-        const lastUpdate = new Date(userData.updated_at);
-        const now = new Date();
-        const diffDays = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
-
-        let text;
-        if (diffDays === 0) {
-          text = "Today";
-        } else if (diffDays === 1) {
-          text = "Yesterday";
-        } else if (diffDays < 7) {
-          text = `${diffDays}d ago`;
-        } else if (diffDays < 30) {
-          text = `${Math.floor(diffDays / 7)}w ago`;
-        } else if (diffDays < 365) {
-          text = `${Math.floor(diffDays / 30)}mo ago`;
-        } else {
-          text = `${Math.floor(diffDays / 365)}y ago`;
-        }
-
-        lastActiveEl.textContent = text;
-        lastActiveEl.classList.add("count-up");
-      }
+      return totalCommits;
+    } catch (error) {
+      console.error("Failed to fetch commit stats:", error);
+      return 0;
     }
+  }
 
-    // ─── Fallback Stats ───
+  // ─── Stats Update with Animation ───
 
-    setFallbackStats() {
-      const fallbackData = {
-        repoCount: { value: 0, suffix: "" },
-        starCount: { value: 0, suffix: "" },
-        projectCount: { value: 0, suffix: "+" },
-        commitCount: { value: 0, suffix: "+" },
-        activeSince: "2022",
-        lastActive: "Recently",
-      };
+  async updateStats() {
+    try {
+      // Get all data
+      const userData = await this.fetchUserStats();
+      const totalCommits = await this.fetchCommitStats();
 
-      Object.entries(fallbackData).forEach(([id, data]) => {
-        const element = document.getElementById(id);
-        if (element) {
-          if (typeof data === "object") {
-            element.textContent = data.value + data.suffix;
-          } else {
-            element.textContent = data;
-          }
-          element.classList.add("count-up");
-        }
-      });
-    }
-
-    // ─── Enhanced Update with Queue ───
-
-    async updateStatsWithQueue() {
-      const statsQueue = [
-        { id: "repoCount", value: this.repositories.length, suffix: "" },
-        { id: "starCount", value: this.getTotalStars(), suffix: "" },
-        { id: "projectCount", value: this.repositories.length, suffix: "+" },
-      ];
-
-      // Update commit stats with delay
-      const commitCountEl = document.getElementById("commitCount");
-      if (commitCountEl) {
-        commitCountEl.textContent = "0+";
-        const totalCommits = await this.fetchCommitStats();
-        statsQueue.push({
-          id: "commitCount",
+      // Prepare stats data
+      const statsData = {
+        repoCount: {
+          value: this.repositories.length,
+          suffix: "",
+          label: "Repository",
+        },
+        starCount: {
+          value: this.getTotalStars(),
+          suffix: "",
+          label: "Total Stars",
+        },
+        projectCount: {
+          value: this.repositories.length,
+          suffix: "+",
+          label: "Total Proyek",
+        },
+        commitCount: {
           value: totalCommits,
           suffix: "+",
-        });
-      }
+          label: "Total Commit",
+        },
+      };
 
-      // Animate stats sequentially
-      for (let i = 0; i < statsQueue.length; i++) {
-        const stat = statsQueue[i];
-        const element = document.getElementById(stat.id);
+      // Update each stat with animation
+      Object.entries(statsData).forEach(([id, data]) => {
+        const element = document.getElementById(id);
         if (element) {
-          this.animateCounter(element, stat.value, stat.suffix);
-          // Delay between animations for visual effect
-          await new Promise((resolve) => setTimeout(resolve, 200));
+          this.animateCounter(element, data.value, data.suffix);
         }
-      }
+      });
 
-      // Update static stats
-      const userData = await this.fetchUserStats();
+      // Update non-animated stats
       if (userData) {
         this.updateStaticStats(userData);
       }
-    }
-
-    // ─── Categorization ───
-
-    categorizeRepo(repo) {
-      const combined = [
-        repo.name,
-        repo.description || "",
-        repo.language || "",
-        ...(repo.topics || []),
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      if (
-        combined.includes("game") ||
-        combined.includes("unity") ||
-        combined.includes("godot")
-      )
-        return "game";
-      if (
-        combined.includes("design") ||
-        combined.includes("figma") ||
-        combined.includes("ui") ||
-        combined.includes("art")
-      )
-        return "design";
-      if (
-        repo.language &&
-        [
-          "html",
-          "css",
-          "javascript",
-          "typescript",
-          "jsx",
-          "tsx",
-          "vue",
-          "react",
-        ].includes(repo.language.toLowerCase())
-      )
-        return "web";
-      if (repo.homepage || repo.has_pages) return "web";
-      return "other";
-    }
-
-    getFilteredRepos(filter) {
-      if (filter === "all") return this.repositories;
-      return this.repositories.filter((r) => this.categorizeRepo(r) === filter);
-    }
-
-    getTotalStars() {
-      return this.repositories.reduce((sum, r) => sum + r.stargazers_count, 0);
-    }
-
-    getLanguageStats() {
-      const stats = {};
-      this.repositories.forEach((repo) => {
-        if (repo.language) {
-          stats[repo.language] = (stats[repo.language] || 0) + 1;
-        }
-      });
-      return stats;
+    } catch (error) {
+      console.error("Failed to update stats:", error);
+      this.setFallbackStats();
     }
   }
-  // ═══════════════════════════════════════════
-  // 6. UI RENDERER
-  // ═══════════════════════════════════════════
-  class UIRenderer {
-    constructor() {
-      this.repoManager = null;
-      this.carouselTrack = document.getElementById("carTrack");
-      this.carouselDots = document.getElementById("carDots");
-      this.projectGrid = document.getElementById("projectGrid");
-      this.projectLoader = document.getElementById("projectLoader");
-      this.projectEmpty = document.getElementById("projectEmpty");
-      this.filterTabs = document.querySelectorAll("#filterTabs .filter-tab");
-      this.repoCount = document.getElementById("repoCount");
-      this.starCount = document.getElementById("starCount");
-      this.currentCarouselIndex = 0;
+
+  // ─── Counter Animation ───
+
+  animateCounter(element, target, suffix = "") {
+    if (!element) return;
+
+    const duration = 1500;
+    const startTime = performance.now();
+    const startValue = 0;
+
+    // Clear previous animation
+    element.classList.remove("count-up");
+    element.textContent = "0" + suffix;
+
+    const updateCounter = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Easing function (easeOutCubic)
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(eased * target);
+
+      element.textContent = current + suffix;
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCounter);
+      } else {
+        element.textContent = target + suffix;
+        element.classList.add("count-up");
+      }
+    };
+
+    requestAnimationFrame(updateCounter);
+  }
+
+  // ─── Static Stats Update ───
+
+  updateStaticStats(userData) {
+    // Update aktif sejak
+    const createdDate = new Date(userData.created_at);
+    const activeSinceEl = document.getElementById("activeSince");
+    if (activeSinceEl) {
+      activeSinceEl.textContent = createdDate.getFullYear();
+      activeSinceEl.classList.add("count-up");
     }
 
-    // ─── Private Methods ───
-    _createSlideHTML(repo) {
-      return `
-        <h4 class="slide__title">${repo.name}</h4>
-        <p class="slide__desc">${repo.description || "Tidak ada deskripsi."}</p>
-        <div class="slide__tags">
-          ${repo.language ? `<span class="slide__tag">${repo.language}</span>` : ""}
-          <span class="slide__tag">⭐ ${repo.stargazers_count}</span>
-          <span class="slide__tag">🔄 ${new Date(repo.updated_at).toLocaleDateString("id-ID")}</span>
+    // Update last active
+    const lastActiveEl = document.getElementById("lastActive");
+    if (lastActiveEl && userData.updated_at) {
+      lastActiveEl.textContent = timeAgo(userData.updated_at);
+      lastActiveEl.classList.add("count-up");
+    }
+  }
+
+  // ─── Fallback Stats ───
+
+  setFallbackStats() {
+    const fallbackData = {
+      repoCount: { value: 0, suffix: "" },
+      starCount: { value: 0, suffix: "" },
+      projectCount: { value: 0, suffix: "+" },
+      commitCount: { value: 0, suffix: "+" },
+      activeSince: "2022",
+      lastActive: "Recently",
+    };
+
+    Object.entries(fallbackData).forEach(([id, data]) => {
+      const element = document.getElementById(id);
+      if (element) {
+        if (typeof data === "object") {
+          element.textContent = data.value + data.suffix;
+        } else {
+          element.textContent = data;
+        }
+        element.classList.add("count-up");
+      }
+    });
+  }
+
+  // ─── Enhanced Update with Queue ───
+
+  async updateStatsWithQueue() {
+    const statsQueue = [
+      { id: "repoCount", value: this.repositories.length, suffix: "" },
+      { id: "starCount", value: this.getTotalStars(), suffix: "" },
+      { id: "projectCount", value: this.repositories.length, suffix: "+" },
+    ];
+
+    // Update commit stats with delay
+    const commitCountEl = document.getElementById("commitCount");
+    if (commitCountEl) {
+      commitCountEl.textContent = "0+";
+      const totalCommits = await this.fetchCommitStats();
+      statsQueue.push({
+        id: "commitCount",
+        value: totalCommits,
+        suffix: "+",
+      });
+    }
+
+    // Animate stats sequentially
+    for (let i = 0; i < statsQueue.length; i++) {
+      const stat = statsQueue[i];
+      const element = document.getElementById(stat.id);
+      if (element) {
+        this.animateCounter(element, stat.value, stat.suffix);
+        // Delay between animations for visual effect
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+    }
+
+    // Update static stats
+    const userData = await this.fetchUserStats();
+    if (userData) {
+      this.updateStaticStats(userData);
+    }
+  }
+
+  // ─── Categorization ───
+
+  categorizeRepo(repo) {
+    const combined = [
+      repo.name,
+      repo.description || "",
+      repo.language || "",
+      ...(repo.topics || []),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    if (
+      combined.includes("game") ||
+      combined.includes("unity") ||
+      combined.includes("godot")
+    )
+      return "game";
+    if (
+      combined.includes("design") ||
+      combined.includes("figma") ||
+      combined.includes("ui") ||
+      combined.includes("art")
+    )
+      return "design";
+    if (
+      repo.language &&
+      [
+        "html",
+        "css",
+        "javascript",
+        "typescript",
+        "jsx",
+        "tsx",
+        "vue",
+        "react",
+      ].includes(repo.language.toLowerCase())
+    )
+      return "web";
+    if (repo.homepage || repo.has_pages) return "web";
+    return "other";
+  }
+
+  getFilteredRepos(filter) {
+    if (filter === "all") return this.repositories;
+    return this.repositories.filter((r) => this.categorizeRepo(r) === filter);
+  }
+
+  getTotalStars() {
+    return this.repositories.reduce((sum, r) => sum + r.stargazers_count, 0);
+  }
+
+  getLanguageStats() {
+    const stats = {};
+    this.repositories.forEach((repo) => {
+      if (repo.language) {
+        stats[repo.language] = (stats[repo.language] || 0) + 1;
+      }
+    });
+    return stats;
+  }
+
+  // NEW: warna resmi bahasa pemrograman (dipakai UIRenderer untuk dot penanda)
+  getLanguageColor(lang) {
+    return getLanguageColor(lang);
+  }
+
+  // NEW: 6 repo teratas untuk carousel, diurutkan pakai kombinasi stars + terbaru
+  getFeaturedRepos(count = 6) {
+    return [...this.repositories]
+      .sort((a, b) => {
+        const scoreA = a.stargazers_count * 2 + (a.forks_count || 0);
+        const scoreB = b.stargazers_count * 2 + (b.forks_count || 0);
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return new Date(b.updated_at) - new Date(a.updated_at);
+      })
+      .slice(0, count);
+  }
+}
+
+// ═══════════════════════════════════════════
+// 6. UI RENDERER
+// ═══════════════════════════════════════════
+class UIRenderer {
+  constructor() {
+    this.repoManager = null;
+    this.carouselTrack = document.getElementById("carTrack");
+    this.carouselDots = document.getElementById("carDots");
+    this.projectGrid = document.getElementById("projectGrid");
+    this.projectLoader = document.getElementById("projectLoader");
+    this.projectEmpty = document.getElementById("projectEmpty");
+    this.filterTabs = document.querySelectorAll("#filterTabs .filter-tab");
+    this.repoCount = document.getElementById("repoCount");
+    this.starCount = document.getElementById("starCount");
+    this.currentCarouselIndex = 0;
+
+    // NEW: autoplay & swipe state
+    this.autoplayTimer = null;
+    this.autoplayDelay = CONFIG.AUTOPLAY_DELAY || 4500;
+    this.isHovering = false;
+    this.totalCarouselSlides = 0;
+  }
+
+  // ─── Private Methods ───
+
+  // UPDATED: slide sekarang menampilkan header+ikon, rank, bahasa+warna,
+  // stars, forks, last-updated relatif, dan tombol aksi (Repo / Live Demo)
+  _createSlideHTML(repo, index = 0) {
+    const initial = repo.name.charAt(0);
+    const hasPages = repo.has_pages || repo.homepage;
+    const pagesUrl =
+      repo.homepage || `https://${this.repoManager.username}.github.io/${repo.name}`;
+
+    const langBadge = repo.language
+      ? `<span class="slide__tag slide__tag--language">
+           <span class="slide__lang-dot" style="background:${getLanguageColor(repo.language)}"></span>${repo.language}
+         </span>`
+      : "";
+
+    const demoLink = hasPages
+      ? `<a class="slide__link slide__link--demo" href="${pagesUrl}" target="_blank" rel="noopener">${ICONS.demo} Demo</a>`
+      : "";
+
+    return `
+      <span class="slide__rank">#${String(index + 1).padStart(2, "0")}</span>
+      <div class="slide__header">
+        <div class="slide__icon" aria-hidden="true">${initial}</div>
+        <h4 class="slide__title"><a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a></h4>
+      </div>
+      <p class="slide__desc">${repo.description || "Tidak ada deskripsi."}</p>
+      <div class="slide__stats">
+        ${langBadge}
+        <span class="slide__stat slide__stat--stars">${ICONS.star} ${repo.stargazers_count}</span>
+        <span class="slide__stat slide__stat--forks">${ICONS.fork} ${repo.forks_count}</span>
+        <span class="slide__stat slide__stat--updated">${ICONS.clock} ${timeAgo(repo.updated_at)}</span>
+      </div>
+      <div class="slide__actions">
+        <a class="slide__link slide__link--repo" href="${repo.html_url}" target="_blank" rel="noopener">${ICONS.repo} Repo</a>
+        ${demoLink}
+      </div>
+    `;
+  }
+
+  // NEW: satu slide skeleton (dipakai saat data masih fetching)
+  _createSkeletonSlideHTML() {
+    return `
+      <div class="skeleton skeleton--icon"></div>
+      <div class="skeleton skeleton--title"></div>
+      <div class="skeleton skeleton--text"></div>
+      <div class="skeleton skeleton--text short"></div>
+      <div class="skeleton skeleton--tags"></div>
+    `;
+  }
+
+  _createProjectCardHTML(repo) {
+    const created = new Date(repo.created_at);
+    const updated = new Date(repo.updated_at);
+    const dateStr = created.toLocaleDateString("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const hasPages = repo.has_pages || repo.homepage;
+    const pagesUrl =
+      repo.homepage ||
+      `https://${this.repoManager.username}.github.io/${repo.name}`;
+    const category = this.repoManager.categorizeRepo(repo);
+
+    const categoryLabels = {
+      web: "🌐 Web",
+      game: "🎮 Game",
+      design: "🎨 Design",
+      other: "📦 Lainnya",
+    };
+    const categoryLabel = categoryLabels[category] || "📦 Lainnya";
+
+    return `
+      <article class="project-card">
+        <h3 class="project-card__title">${repo.name}</h3>
+        <p class="project-card__desc">${repo.description || "Tidak ada deskripsi."}</p>
+        <span class="project-card__date">📅 Dibuat: ${dateStr} | Diperbarui: ${timeAgo(repo.updated_at)}</span>
+        <div class="project-card__meta">
+          ${repo.language ? `<span class="project-card__tag">${repo.language}</span>` : ""}
+          <span class="project-card__tag">⭐ ${repo.stargazers_count}</span>
+          <span class="project-card__tag">🍴 ${repo.forks_count}</span>
+          <span class="project-card__tag">${categoryLabel}</span>
         </div>
-      `;
-    }
+        <div class="project-card__actions">
+          <a href="${repo.html_url}" target="_blank" rel="noopener" class="project-card__link">
+            ${ICONS.repo}
+            Repo
+          </a>
+          ${
+            hasPages
+              ? `
+            <a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__view">
+              ${ICONS.demo}
+              View Page
+            </a>`
+              : ""
+          }
+        </div>
+      </article>
+    `;
+  }
 
-    _createProjectCardHTML(repo) {
-      const created = new Date(repo.created_at);
-      const updated = new Date(repo.updated_at);
-      const dateStr = created.toLocaleDateString("id-ID", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      const hasPages = repo.has_pages || repo.homepage;
-      const pagesUrl =
-        repo.homepage ||
-        `https://${this.repoManager.username}.github.io/${repo.name}`;
-      const category = this.repoManager.categorizeRepo(repo);
+  // ─── Public Methods ───
+  setRepoManager(manager) {
+    this.repoManager = manager;
+  }
 
-      const categoryLabels = {
-        web: "🌐 Web",
-        game: "🎮 Game",
-        design: "🎨 Design",
-        other: "📦 Lainnya",
-      };
-      const categoryLabel = categoryLabels[category] || "📦 Lainnya";
+  // NEW: tampilkan skeleton sebelum data GitHub selesai di-fetch
+  renderSkeleton(count = 3) {
+    if (!this.carouselTrack) return;
+    this.stopAutoplay();
+    this.carouselTrack.innerHTML = "";
+    if (this.carouselDots) this.carouselDots.innerHTML = "";
 
-      return `
-        <article class="project-card">
-          <h3 class="project-card__title">${repo.name}</h3>
-          <p class="project-card__desc">${repo.description || "Tidak ada deskripsi."}</p>
-          <span class="project-card__date">📅 Dibuat: ${dateStr} | Diperbarui: ${updated.toLocaleDateString("id-ID")}</span>
-          <div class="project-card__meta">
-            ${repo.language ? `<span class="project-card__tag">${repo.language}</span>` : ""}
-            <span class="project-card__tag">⭐ ${repo.stargazers_count}</span>
-            <span class="project-card__tag">${categoryLabel}</span>
-          </div>
-          <div class="project-card__actions">
-            <a href="${repo.html_url}" target="_blank" rel="noopener" class="project-card__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              Repo
-            </a>
-            ${
-              hasPages
-                ? `
-              <a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__view">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                View Page
-              </a>`
-                : ""
-            }
-          </div>
-        </article>
-      `;
-    }
-
-    // ─── Public Methods ───
-    setRepoManager(manager) {
-      this.repoManager = manager;
-    }
-
-    renderCarousel(repos) {
-      if (!this.carouselTrack || !this.carouselDots) return;
-
-      const slides = repos.slice(0, 6);
-      this.carouselTrack.innerHTML = "";
-      this.carouselDots.innerHTML = "";
-
-      slides.forEach((repo, i) => {
-        const slide = document.createElement("div");
-        slide.className = "carousel__slide";
-        slide.innerHTML = this._createSlideHTML(repo);
-        this.carouselTrack.appendChild(slide);
-
-        const dot = document.createElement("div");
-        dot.className = "carousel__dot";
-        if (i === 0) dot.classList.add("carousel__dot--active");
-        dot.addEventListener("click", () => this.goToCarouselSlide(i));
-        this.carouselDots.appendChild(dot);
-      });
-
-      this._setupCarouselNavigation(slides.length);
-    }
-
-    _setupCarouselNavigation(totalSlides) {
-      const prevBtn = document.getElementById("carPrev");
-      const nextBtn = document.getElementById("carNext");
-      const slides = this.carouselTrack.querySelectorAll(".carousel__slide");
-      const dots = this.carouselDots.querySelectorAll(".carousel__dot");
-
-      const updateDots = (index) => {
-        dots.forEach((d, i) =>
-          d.classList.toggle("carousel__dot--active", i === index),
-        );
-      };
-
-      const goToSlide = (index) => {
-        if (!slides.length) return;
-        const slideWidth = slides[0].offsetWidth + 16;
-        this.carouselTrack.scrollTo({
-          left: index * slideWidth,
-          behavior: "smooth",
-        });
-        this.currentCarouselIndex = index;
-        updateDots(index);
-      };
-
-      prevBtn?.addEventListener("click", () => {
-        const newIndex = Math.max(this.currentCarouselIndex - 1, 0);
-        goToSlide(newIndex);
-      });
-
-      nextBtn?.addEventListener("click", () => {
-        const newIndex = Math.min(
-          this.currentCarouselIndex + 1,
-          totalSlides - 1,
-        );
-        goToSlide(newIndex);
-      });
-
-      this.carouselTrack.addEventListener("scroll", () => {
-        if (!slides.length) return;
-        const slideWidth = slides[0].offsetWidth + 16;
-        const newIndex = Math.round(this.carouselTrack.scrollLeft / slideWidth);
-        if (
-          newIndex !== this.currentCarouselIndex &&
-          newIndex >= 0 &&
-          newIndex < totalSlides
-        ) {
-          this.currentCarouselIndex = newIndex;
-          updateDots(this.currentCarouselIndex);
-        }
-      });
-
-      this.goToCarouselSlide = goToSlide;
-    }
-
-    renderProjects(filter = "all") {
-      if (!this.projectGrid || !this.repoManager) return;
-
-      const repos = this.repoManager.getFilteredRepos(filter);
-
-      if (!repos.length) {
-        this.projectGrid.innerHTML = "";
-        if (this.projectEmpty) this.projectEmpty.style.display = "block";
-        return;
-      }
-      if (this.projectEmpty) this.projectEmpty.style.display = "none";
-
-      this.projectGrid.innerHTML = repos
-        .map((repo) => this._createProjectCardHTML(repo))
-        .join("");
-    }
-
-    setupFilterTabs() {
-      this.filterTabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-          this.filterTabs.forEach((t) =>
-            t.classList.remove("filter-tab--active"),
-          );
-          tab.classList.add("filter-tab--active");
-          const filter = tab.dataset.filter;
-          this.renderProjects(filter);
-          window.playSFX?.("menuSelect");
-        });
-      });
-    }
-
-    updateStats(repos) {
-      if (this.repoCount) this.repoCount.textContent = repos.length;
-      if (this.starCount) {
-        const total = repos.reduce((sum, r) => sum + r.stargazers_count, 0);
-        this.starCount.textContent = total;
-      }
-    }
-
-    showLoader(show) {
-      if (this.projectLoader) {
-        this.projectLoader.style.display = show ? "flex" : "none";
-      }
+    for (let i = 0; i < count; i++) {
+      const slide = document.createElement("div");
+      slide.className = "carousel__slide carousel__slide--skeleton";
+      slide.innerHTML = this._createSkeletonSlideHTML();
+      this.carouselTrack.appendChild(slide);
     }
   }
 
+  // NEW: tampilkan state error dengan tombol retry
+  renderError(message = "Gagal memuat data dari GitHub.", onRetry = null) {
+    if (!this.carouselTrack) return;
+    this.stopAutoplay();
+    this.carouselTrack.innerHTML = `
+      <div class="car-error">
+        <span class="car-error__icon" aria-hidden="true">⚠️</span>
+        <p class="car-error__msg">${message}</p>
+        <button class="car-error__retry" id="carRetryBtn" type="button">Coba Lagi</button>
+      </div>
+    `;
+    if (this.carouselDots) this.carouselDots.innerHTML = "";
+
+    const retryBtn = document.getElementById("carRetryBtn");
+    if (retryBtn && typeof onRetry === "function") {
+      retryBtn.addEventListener("click", onRetry);
+    }
+  }
+
+  renderCarousel(repos) {
+    if (!this.carouselTrack || !this.carouselDots) return;
+
+    this.stopAutoplay();
+
+    const slides = this.repoManager.getFeaturedRepos(6);
+    this.totalCarouselSlides = slides.length;
+    this.carouselTrack.innerHTML = "";
+    this.carouselDots.innerHTML = "";
+
+    if (!slides.length) {
+      this.renderError("Belum ada repository untuk ditampilkan.");
+      return;
+    }
+
+    slides.forEach((repo, i) => {
+      const slide = document.createElement("div");
+      slide.className = "carousel__slide";
+      slide.setAttribute("role", "listitem");
+      slide.setAttribute("tabindex", "0");
+      slide.innerHTML = this._createSlideHTML(repo, i);
+      this.carouselTrack.appendChild(slide);
+
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "carousel__dot";
+      dot.setAttribute("role", "tab");
+      dot.setAttribute("aria-label", `Ke slide ${i + 1}`);
+      if (i === 0) dot.classList.add("carousel__dot--active");
+      dot.addEventListener("click", () => {
+        this.goToCarouselSlide(i);
+        this._restartAutoplay();
+      });
+      this.carouselDots.appendChild(dot);
+    });
+
+    const totalSlideNumEl = document.getElementById("totalSlideNum");
+    if (totalSlideNumEl) totalSlideNumEl.textContent = slides.length;
+
+    this._setupCarouselNavigation(slides.length);
+    this.setupSwipeSupport();
+    this.setupAutoplayPause();
+    this.startAutoplay();
+  }
+
+  _setupCarouselNavigation(totalSlides) {
+    const prevBtn = document.getElementById("carPrev");
+    const nextBtn = document.getElementById("carNext");
+    const slides = this.carouselTrack.querySelectorAll(".carousel__slide");
+    const dots = this.carouselDots.querySelectorAll(".carousel__dot");
+
+    const updateDots = (index) => {
+      dots.forEach((d, i) =>
+        d.classList.toggle("carousel__dot--active", i === index),
+      );
+    };
+
+    const updateCounter = (index) => {
+      const cur = document.getElementById("currentSlideNum");
+      if (cur) cur.textContent = index + 1;
+    };
+
+    const updateProgress = (index) => {
+      const fill = document.getElementById("carProgressFill");
+      if (fill) fill.style.width = `${((index + 1) / totalSlides) * 100}%`;
+    };
+
+    const updateNavButtons = (index) => {
+      if (prevBtn) prevBtn.disabled = index === 0;
+      if (nextBtn) nextBtn.disabled = index === totalSlides - 1;
+    };
+
+    const goToSlide = (index) => {
+      if (!slides.length) return;
+      index = Math.max(0, Math.min(index, totalSlides - 1));
+      const slideWidth = slides[0].offsetWidth + 18;
+      this.carouselTrack.scrollTo({
+        left: index * slideWidth,
+        behavior: "smooth",
+      });
+      this.currentCarouselIndex = index;
+      updateDots(index);
+      updateCounter(index);
+      updateProgress(index);
+      updateNavButtons(index);
+    };
+
+    prevBtn?.addEventListener("click", () => {
+      goToSlide(Math.max(this.currentCarouselIndex - 1, 0));
+      this._restartAutoplay();
+    });
+
+    nextBtn?.addEventListener("click", () => {
+      goToSlide(Math.min(this.currentCarouselIndex + 1, totalSlides - 1));
+      this._restartAutoplay();
+    });
+
+    this.carouselTrack.addEventListener("scroll", () => {
+      if (!slides.length) return;
+      const slideWidth = slides[0].offsetWidth + 18;
+      const newIndex = Math.round(this.carouselTrack.scrollLeft / slideWidth);
+      if (
+        newIndex !== this.currentCarouselIndex &&
+        newIndex >= 0 &&
+        newIndex < totalSlides
+      ) {
+        this.currentCarouselIndex = newIndex;
+        updateDots(this.currentCarouselIndex);
+        updateCounter(this.currentCarouselIndex);
+        updateProgress(this.currentCarouselIndex);
+        updateNavButtons(this.currentCarouselIndex);
+      }
+    });
+
+    // init state
+    updateCounter(0);
+    updateProgress(0);
+    updateNavButtons(0);
+
+    this.goToCarouselSlide = goToSlide;
+  }
+
+  // NEW: autoplay ─────────────────────────────
+  startAutoplay() {
+    this.stopAutoplay();
+    if (this.totalCarouselSlides <= 1) return;
+
+    this.autoplayTimer = setInterval(() => {
+      if (this.isHovering) return;
+      const next = (this.currentCarouselIndex + 1) % this.totalCarouselSlides;
+      this.goToCarouselSlide(next);
+    }, this.autoplayDelay);
+  }
+
+  stopAutoplay() {
+    if (this.autoplayTimer) {
+      clearInterval(this.autoplayTimer);
+      this.autoplayTimer = null;
+    }
+  }
+
+  _restartAutoplay() {
+    if (this.totalCarouselSlides > 1) this.startAutoplay();
+  }
+
+  setupAutoplayPause() {
+    const carousel = this.carouselTrack?.closest(".carousel");
+    if (!carousel || carousel.dataset.autoplayBound) return;
+    carousel.dataset.autoplayBound = "true";
+
+    carousel.addEventListener("mouseenter", () => {
+      this.isHovering = true;
+    });
+    carousel.addEventListener("mouseleave", () => {
+      this.isHovering = false;
+    });
+    carousel.addEventListener("focusin", () => {
+      this.isHovering = true;
+    });
+    carousel.addEventListener("focusout", () => {
+      this.isHovering = false;
+    });
+  }
+
+  // NEW: swipe support untuk mobile ───────────
+  setupSwipeSupport() {
+    const track = this.carouselTrack;
+    if (!track || track.dataset.swipeBound) return;
+    track.dataset.swipeBound = "true";
+
+    let startX = 0;
+    let startY = 0;
+    let isSwiping = false;
+
+    track.addEventListener(
+      "touchstart",
+      (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isSwiping = true;
+        this.isHovering = true;
+      },
+      { passive: true },
+    );
+
+    track.addEventListener(
+      "touchend",
+      (e) => {
+        if (!isSwiping) return;
+        isSwiping = false;
+        this.isHovering = false;
+
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX > 0) {
+            this.goToCarouselSlide(
+              Math.min(this.currentCarouselIndex + 1, this.totalCarouselSlides - 1),
+            );
+          } else {
+            this.goToCarouselSlide(Math.max(this.currentCarouselIndex - 1, 0));
+          }
+          this._restartAutoplay();
+        }
+      },
+      { passive: true },
+    );
+  }
+
+  renderProjects(filter = "all") {
+    if (!this.projectGrid || !this.repoManager) return;
+
+    const repos = this.repoManager.getFilteredRepos(filter);
+
+    if (!repos.length) {
+      this.projectGrid.innerHTML = "";
+      if (this.projectEmpty) this.projectEmpty.style.display = "block";
+      return;
+    }
+    if (this.projectEmpty) this.projectEmpty.style.display = "none";
+
+    this.projectGrid.innerHTML = repos
+      .map((repo) => this._createProjectCardHTML(repo))
+      .join("");
+  }
+
+  setupFilterTabs() {
+    this.filterTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        this.filterTabs.forEach((t) =>
+          t.classList.remove("filter-tab--active"),
+        );
+        tab.classList.add("filter-tab--active");
+        const filter = tab.dataset.filter;
+        this.renderProjects(filter);
+        window.playSFX?.("menuSelect");
+      });
+    });
+  }
+
+  updateStats(repos) {
+    if (this.repoCount) this.repoCount.textContent = repos.length;
+    if (this.starCount) {
+      const total = repos.reduce((sum, r) => sum + r.stargazers_count, 0);
+      this.starCount.textContent = total;
+    }
+  }
+
+  showLoader(show) {
+    if (this.projectLoader) {
+      this.projectLoader.style.display = show ? "flex" : "none";
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// NEW: Contoh alur inisialisasi lengkap (skeleton -> fetch -> render/error)
+// Sesuaikan dengan orkestrasi app Anda yang sudah ada; ini hanya referensi.
+// ═══════════════════════════════════════════
+async function initFeaturedCarousel(repoManager, uiRenderer) {
+  uiRenderer.setRepoManager(repoManager);
+  uiRenderer.renderSkeleton(3);
+
+  try {
+    const repos = await repoManager.fetchRepos();
+    uiRenderer.renderCarousel(repos);
+    uiRenderer.renderProjects("all");
+    uiRenderer.updateStats(repos);
+  } catch (error) {
+    uiRenderer.renderError(
+      "Gagal memuat data dari GitHub. Periksa koneksi Anda.",
+      () => initFeaturedCarousel(repoManager, uiRenderer),
+    );
+  }
+}
   // ═══════════════════════════════════════════
   // 7. NAVIGATION SYSTEM
   // ═══════════════════════════════════════════
@@ -1622,6 +1914,7 @@
     }
 
     console.log("🍁 Maple's Portfolio initialized!");
+    console.log("🛡️ System ready. Konami Code: ↑↑↓↓←→←→BA");
   });
 })();
 // PWA Install Prompt

@@ -1,293 +1,911 @@
 /* ═══════════════════════════════════════════
-   SYRUP PET - RESPONSIVE NO SCROLL
+   BACKGROUND SYRUP - FIXED & NO SCROLL
+   ═══════════════════════════════════════════ */
+.bg-syrup-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  /* Mencegah scroll/geser */
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+.syrup-bg {
+  position: absolute;
+  opacity: 0;
+  filter: drop-shadow(0 0 50px rgba(212, 175, 55, 0.2));
+  /* Posisi absolute di dalam container fixed */
+  top: 50%;
+  left: auto;
+  right: -80px;
+  transform: translateY(-50%) scale(0.5);
+  will-change: transform, opacity;
+  /* Mencegah overflow */
+  max-width: 100vw;
+  max-height: 100vh;
+  /* Mencegah selection/drag */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* Mencegah touch action */
+  touch-action: none;
+}
+
+.syrup-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: syrupBreath 3s ease-in-out infinite;
+  /* Mencegah drag */
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-drag: none;
+  pointer-events: none;
+  touch-action: none;
+}
+
+/* ─── REVERB EFFECTS ─── */
+.syrup-reverb {
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(212, 175, 55, 0.1) 0%,
+    rgba(212, 175, 55, 0.04) 40%,
+    transparent 70%
+  );
+  animation: reverbTrail 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.syrup-reverb--2 {
+  inset: -30px;
+  animation-delay: 0.6s;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(139, 63, 207, 0.06) 0%,
+    rgba(212, 175, 55, 0.03) 50%,
+    transparent 75%
+  );
+}
+
+.syrup-reverb--3 {
+  inset: -45px;
+  animation-delay: 1.2s;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(212, 175, 55, 0.04) 0%,
+    rgba(139, 63, 207, 0.02) 60%,
+    transparent 80%
+  );
+}
+
+/* ─── GLOW RING ─── */
+.syrup-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50px;
+  border: 2px solid rgba(212, 175, 55, 0.08);
+  border-radius: 50%;
+  animation: glowRing 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ─── PARTICLE TRAIL ─── */
+.syrup-bg::after {
+  content: '✦ ✧ ❋ ✶ ✦';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  letter-spacing: 20px;
+  color: rgba(212, 175, 55, 0.15);
+  animation: particleTrail 3s linear infinite;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE ANIMATIONS - FIXED POSITION
    ═══════════════════════════════════════════ */
 
-/* ─── Pastikan tidak ada overflow ─── */
+/* ─── 4K+ (2560px+) ─── */
+@media (min-width: 2560px) {
+  .syrup-bg {
+    right: -120px;
+    animation: syrupRandomSwim4K 28s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .syrup-reverb {
+    inset: -25px;
+  }
+  
+  .syrup-reverb--2 {
+    inset: -50px;
+  }
+  
+  .syrup-reverb--3 {
+    inset: -75px;
+  }
+  
+  .syrup-bg::before {
+    inset: -80px;
+  }
+}
+
+/* ─── Large Desktop (1920px - 2559px) ─── */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .syrup-bg {
+    right: -100px;
+    animation: syrupRandomSwimDesktop 26s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .syrup-reverb {
+    inset: -20px;
+  }
+  
+  .syrup-reverb--2 {
+    inset: -40px;
+  }
+  
+  .syrup-reverb--3 {
+    inset: -60px;
+  }
+  
+  .syrup-bg::before {
+    inset: -60px;
+  }
+}
+
+/* ─── Desktop (1200px - 1919px) ─── */
+@media (min-width: 1200px) and (max-width: 1919px) {
+  .syrup-bg {
+    right: -80px;
+    animation: syrupRandomSwimDesktop 24s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+/* ─── Small Desktop / Laptop (992px - 1199px) ─── */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .syrup-bg {
+    right: -70px;
+    animation: syrupRandomSwimTablet 22s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 130px;
+    height: 130px;
+  }
+  
+  .syrup-reverb {
+    inset: -12px;
+  }
+  
+  .syrup-reverb--2 {
+    inset: -25px;
+  }
+  
+  .syrup-reverb--3 {
+    inset: -38px;
+  }
+  
+  .syrup-bg::before {
+    inset: -40px;
+  }
+  
+  .syrup-bg::after {
+    font-size: 12px;
+    letter-spacing: 15px;
+  }
+}
+
+/* ─── Tablet Landscape (768px - 991px) ─── */
+@media (min-width: 768px) and (max-width: 991px) {
+  .syrup-bg {
+    right: -60px;
+    animation: syrupRandomSwimTablet 20s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .syrup-reverb {
+    inset: -10px;
+  }
+  
+  .syrup-reverb--2 {
+    inset: -20px;
+  }
+  
+  .syrup-reverb--3 {
+    inset: -30px;
+  }
+  
+  .syrup-bg::before {
+    inset: -35px;
+    border-width: 1.5px;
+  }
+  
+  .syrup-bg::after {
+    font-size: 10px;
+    letter-spacing: 12px;
+  }
+}
+
+/* ─── Tablet Portrait (576px - 767px) ─── */
+@media (min-width: 576px) and (max-width: 767px) {
+  .syrup-bg {
+    right: -50px;
+    animation: syrupRandomSwimMobile 18s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .syrup-reverb {
+    inset: -8px;
+  }
+  
+  .syrup-reverb--2 {
+    inset: -16px;
+  }
+  
+  .syrup-reverb--3 {
+    display: none;
+  }
+  
+  .syrup-bg::before {
+    inset: -30px;
+    border-width: 1px;
+  }
+  
+  .syrup-bg::after {
+    font-size: 8px;
+    letter-spacing: 10px;
+    content: '✦ ✧ ✦';
+  }
+}
+
+/* ─── Mobile Landscape (480px - 575px) ─── */
+@media (min-width: 480px) and (max-width: 575px) {
+  .syrup-bg {
+    right: -40px;
+    animation: syrupRandomSwimMobile 16s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 75px;
+    height: 75px;
+  }
+  
+  .syrup-reverb {
+    inset: -6px;
+  }
+  
+  .syrup-reverb--2 {
+    inset: -12px;
+  }
+  
+  .syrup-reverb--3 {
+    display: none;
+  }
+  
+  .syrup-bg::before {
+    inset: -25px;
+    border-width: 1px;
+    animation-duration: 4s;
+  }
+  
+  .syrup-bg::after {
+    font-size: 7px;
+    letter-spacing: 8px;
+    content: '✦ ✧ ✦';
+    animation-duration: 2.5s;
+  }
+}
+
+/* ─── Mobile Portrait (< 480px) ─── */
+@media (max-width: 479px) {
+  .syrup-bg {
+    right: -30px;
+    animation: syrupRandomSwimSmall 14s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .syrup-reverb {
+    display: none;
+  }
+  
+  .syrup-reverb--2 {
+    display: none;
+  }
+  
+  .syrup-reverb--3 {
+    display: none;
+  }
+  
+  .syrup-bg::before {
+    inset: -20px;
+    border-width: 0.5px;
+    animation-duration: 3s;
+  }
+  
+  .syrup-bg::after {
+    font-size: 6px;
+    letter-spacing: 6px;
+    content: '✦ ✧';
+    animation-duration: 2s;
+  }
+}
+
+/* ─── Very Small Screen (< 360px) ─── */
+@media (max-width: 359px) {
+  .syrup-bg {
+    right: -25px;
+    animation: syrupRandomSwimSmall 12s ease-in-out infinite;
+  }
+  
+  .syrup-bg img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .syrup-bg::before {
+    display: none;
+  }
+  
+  .syrup-bg::after {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION KEYFRAMES
+   ═══════════════════════════════════════════ */
+
+/* ─── DESKTOP KEYFRAMES ─── */
+@keyframes syrupRandomSwimDesktop {
+  0% {
+    right: -80px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.3);
+    opacity: 0;
+  }
+  4% {
+    right: 8%;
+    top: 50%;
+    transform: translateY(-50%) scale(5);
+    opacity: 0.9;
+  }
+  8% {
+    right: 15%;
+    top: 45%;
+    transform: translateY(-50%) scale(3);
+    opacity: 0.8;
+  }
+  16% {
+    right: 28%;
+    top: 18%;
+    transform: translateY(-50%) scale(2) rotate(-5deg);
+    opacity: 0.7;
+  }
+  24% {
+    right: 45%;
+    top: 72%;
+    transform: translateY(-50%) scale(1) rotate(8deg);
+    opacity: 0.85;
+  }
+  32% {
+    right: 38%;
+    top: 38%;
+    transform: translateY(-50%) scale(1.1) rotate(-3deg);
+    opacity: 0.75;
+  }
+  40% {
+    right: 18%;
+    top: 82%;
+    transform: translateY(-50%) scale(0.8) rotate(6deg);
+    opacity: 0.8;
+  }
+  50% {
+    right: 55%;
+    top: 12%;
+    transform: translateY(-50%) scale(1.2) rotate(-8deg);
+    opacity: 0.9;
+  }
+  58% {
+    right: 42%;
+    top: 68%;
+    transform: translateY(-50%) scale(0.85) rotate(4deg);
+    opacity: 0.7;
+  }
+  66% {
+    right: 8%;
+    top: 28%;
+    transform: translateY(-50%) scale(2) rotate(-2deg);
+    opacity: 0.85;
+  }
+  75% {
+    right: 68%;
+    top: 55%;
+    transform: translateY(-50%) scale(0.75) rotate(7deg);
+    opacity: 0.75;
+  }
+  83% {
+    right: 32%;
+    top: 8%;
+    transform: translateY(-50%) scale(1.05) rotate(-6deg);
+    opacity: 0.8;
+  }
+  92% {
+    right: -2%;
+    top: 42%;
+    transform: translateY(-50%) scale(1.5) rotate(10deg);
+    opacity: 0.6;
+  }
+  100% {
+    right: -120px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* ─── 4K KEYFRAMES ─── */
+@keyframes syrupRandomSwim4K {
+  0% {
+    right: -120px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.3);
+    opacity: 0;
+  }
+  5% {
+    right: 8%;
+    top: 50%;
+    transform: translateY(-50%) scale(1.4);
+    opacity: 0.9;
+  }
+  10% {
+    right: 18%;
+    top: 42%;
+    transform: translateY(-50%) scale(1.15);
+    opacity: 0.8;
+  }
+  20% {
+    right: 32%;
+    top: 15%;
+    transform: translateY(-50%) scale(0.85) rotate(-6deg);
+    opacity: 0.7;
+  }
+  30% {
+    right: 48%;
+    top: 75%;
+    transform: translateY(-50%) scale(1.05) rotate(9deg);
+    opacity: 0.85;
+  }
+  40% {
+    right: 40%;
+    top: 35%;
+    transform: translateY(-50%) scale(1.15) rotate(-4deg);
+    opacity: 0.75;
+  }
+  50% {
+    right: 20%;
+    top: 85%;
+    transform: translateY(-50%) scale(0.75) rotate(7deg);
+    opacity: 0.8;
+  }
+  60% {
+    right: 58%;
+    top: 10%;
+    transform: translateY(-50%) scale(1.25) rotate(-9deg);
+    opacity: 0.9;
+  }
+  70% {
+    right: 45%;
+    top: 70%;
+    transform: translateY(-50%) scale(0.8) rotate(5deg);
+    opacity: 0.7;
+  }
+  80% {
+    right: 8%;
+    top: 25%;
+    transform: translateY(-50%) scale(1.5) rotate(-3deg);
+    opacity: 0.85;
+  }
+  90% {
+    right: -2%;
+    top: 45%;
+    transform: translateY(-50%) scale(1.6) rotate(12deg);
+    opacity: 0.5;
+  }
+  100% {
+    right: -160px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.15);
+    opacity: 0;
+  }
+}
+
+/* ─── TABLET KEYFRAMES ─── */
+@keyframes syrupRandomSwimTablet {
+  0% {
+    right: -60px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.3);
+    opacity: 0;
+  }
+  5% {
+    right: 5%;
+    top: 50%;
+    transform: translateY(-50%) scale(1.2);
+    opacity: 0.85;
+  }
+  12% {
+    right: 18%;
+    top: 40%;
+    transform: translateY(-50%) scale(0.95);
+    opacity: 0.7;
+  }
+  25% {
+    right: 38%;
+    top: 70%;
+    transform: translateY(-50%) scale(1.05);
+    opacity: 0.8;
+  }
+  38% {
+    right: 48%;
+    top: 25%;
+    transform: translateY(-50%) scale(1.1) rotate(-6deg);
+    opacity: 0.75;
+  }
+  50% {
+    right: 25%;
+    top: 80%;
+    transform: translateY(-50%) scale(0.8) rotate(6deg);
+    opacity: 0.8;
+  }
+  62% {
+    right: 55%;
+    top: 15%;
+    transform: translateY(-50%) scale(0.9) rotate(-4deg);
+    opacity: 0.7;
+  }
+  75% {
+    right: 15%;
+    top: 55%;
+    transform: translateY(-50%) scale(1.15) rotate(3deg);
+    opacity: 0.85;
+  }
+  85% {
+    right: 35%;
+    top: 10%;
+    transform: translateY(-50%) scale(0.85) rotate(-7deg);
+    opacity: 0.7;
+  }
+  95% {
+    right: -2%;
+    top: 45%;
+    transform: translateY(-50%) scale(1.3) rotate(8deg);
+    opacity: 0.5;
+  }
+  100% {
+    right: -80px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* ─── MOBILE KEYFRAMES ─── */
+@keyframes syrupRandomSwimMobile {
+  0% {
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.3);
+    opacity: 0;
+  }
+  6% {
+    right: 3%;
+    top: 50%;
+    transform: translateY(-50%) scale(1.1);
+    opacity: 0.8;
+  }
+  18% {
+    right: 20%;
+    top: 65%;
+    transform: translateY(-50%) scale(0.9);
+    opacity: 0.7;
+  }
+  32% {
+    right: 40%;
+    top: 20%;
+    transform: translateY(-50%) scale(1);
+    opacity: 0.75;
+  }
+  45% {
+    right: 50%;
+    top: 70%;
+    transform: translateY(-50%) scale(0.85) rotate(-5deg);
+    opacity: 0.8;
+  }
+  58% {
+    right: 30%;
+    top: 30%;
+    transform: translateY(-50%) scale(1.05) rotate(5deg);
+    opacity: 0.7;
+  }
+  72% {
+    right: 15%;
+    top: 75%;
+    transform: translateY(-50%) scale(0.8) rotate(-3deg);
+    opacity: 0.75;
+  }
+  85% {
+    right: 45%;
+    top: 15%;
+    transform: translateY(-50%) scale(0.9) rotate(4deg);
+    opacity: 0.7;
+  }
+  95% {
+    right: 0%;
+    top: 40%;
+    transform: translateY(-50%) scale(1.2) rotate(-6deg);
+    opacity: 0.5;
+  }
+  100% {
+    right: -60px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* ─── SMALL SCREEN KEYFRAMES ─── */
+@keyframes syrupRandomSwimSmall {
+  0% {
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.3);
+    opacity: 0;
+  }
+  8% {
+    right: 2%;
+    top: 50%;
+    transform: translateY(-50%) scale(0.9);
+    opacity: 0.7;
+  }
+  20% {
+    right: 25%;
+    top: 70%;
+    transform: translateY(-50%) scale(0.75);
+    opacity: 0.6;
+  }
+  35% {
+    right: 45%;
+    top: 25%;
+    transform: translateY(-50%) scale(0.85);
+    opacity: 0.7;
+  }
+  50% {
+    right: 55%;
+    top: 65%;
+    transform: translateY(-50%) scale(0.7) rotate(-4deg);
+    opacity: 0.65;
+  }
+  65% {
+    right: 20%;
+    top: 35%;
+    transform: translateY(-50%) scale(0.8) rotate(4deg);
+    opacity: 0.6;
+  }
+  80% {
+    right: 35%;
+    top: 75%;
+    transform: translateY(-50%) scale(0.65) rotate(-2deg);
+    opacity: 0.7;
+  }
+  92% {
+    right: 2%;
+    top: 45%;
+    transform: translateY(-50%) scale(0.9) rotate(3deg);
+    opacity: 0.5;
+  }
+  100% {
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SUPPORTING ANIMATIONS
+   ═══════════════════════════════════════════ */
+@keyframes syrupBreath {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.08) rotate(3deg);
+  }
+  50% {
+    transform: scale(0.92) rotate(-2deg);
+  }
+  75% {
+    transform: scale(1.05) rotate(2deg);
+  }
+}
+
+@keyframes reverbTrail {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  25% {
+    transform: scale(1.4);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(0.7);
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(1.6);
+    opacity: 0.1;
+  }
+}
+
+@keyframes glowRing {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.3;
+  }
+  25% {
+    transform: scale(1.8) rotate(60deg);
+    opacity: 0.05;
+  }
+  50% {
+    transform: scale(0.5) rotate(120deg);
+    opacity: 0.5;
+  }
+  75% {
+    transform: scale(2.2) rotate(180deg);
+    opacity: 0.02;
+  }
+}
+
+@keyframes particleTrail {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+    opacity: 0.3;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.5) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TOUCH & HOVER OPTIMIZATION
+   ═══════════════════════════════════════════ */
+@media (hover: hover) {
+  .bg-syrup-container:hover .syrup-bg {
+    animation-duration: 15s;
+    opacity: 0.9;
+  }
+  
+  .bg-syrup-container:hover .syrup-bg img {
+    animation-duration: 2s;
+  }
+}
+
+/* Touch devices - lebih halus */
+@media (hover: none) {
+  .syrup-bg {
+    animation-duration: 20s;
+  }
+  
+  .syrup-bg img {
+    animation-duration: 4s;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .syrup-bg {
+    animation: none !important;
+    opacity: 0.04 !important;
+    right: 50% !important;
+    top: 50% !important;
+    transform: translate(50%, -50%) scale(0.5) !important;
+  }
+  
+  .syrup-bg img {
+    animation: none !important;
+  }
+  
+  .syrup-reverb,
+  .syrup-reverb--2,
+  .syrup-reverb--3,
+  .syrup-bg::before,
+  .syrup-bg::after {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DARK MODE
+   ═══════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  .syrup-bg {
+    filter: drop-shadow(0 0 60px rgba(212, 175, 55, 0.25));
+  }
+}
+
+/* ═══════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════ */
+@media print {
+  .bg-syrup-container {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FIX: MENCEGAH SCROLL/GESER
+   ═══════════════════════════════════════════ */
 html,
 body {
   overflow-x: hidden !important;
   max-width: 100% !important;
 }
 
-/* ─── Container utama ─── */
-.syrup-pet {
-  position: fixed;
-  z-index: 9999;
-  pointer-events: auto;
-  cursor: pointer;
-  user-select: none;
-  animation: syrupFloat 4s ease-in-out infinite;
-  
-  /* Posisi aman - selalu di dalam layar */
-  bottom: 100px;
-  right: 30px;
-  
-  /* Mencegah overflow */
-  max-width: 100vw;
-  overflow: visible;
-}
-
-/* ─── Image/GIF Styles ─── */
-.syrup-pet img {
-  display: block;
-  object-fit: contain;
-  
-  /* Hapus semua efek */
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  
-  /* Ukuran default */
-  width: 100px;
-  height: 100px;
-  
-  /* Mencegah overflow */
-  max-width: 100%;
-}
-
-/* ─── Floating Animation ─── */
-@keyframes syrupFloat {
-  0%, 100% {
-    transform: translateY(0px) rotate(-3deg) scale(1);
-  }
-  25% {
-    transform: translateY(-12px) rotate(0deg) scale(1.05);
-  }
-  50% {
-    transform: translateY(-6px) rotate(3deg) scale(0.98);
-  }
-  75% {
-    transform: translateY(-18px) rotate(-2deg) scale(1.03);
-  }
-}
-
-/* ─── Hover Effect ─── */
-.syrup-pet:hover img {
-  animation: syrupHappy 0.8s ease-in-out infinite;
-  cursor: pointer;
-}
-
-@keyframes syrupHappy {
-  0%, 100% { 
-    transform: scale(1) rotate(0deg); 
-  }
-  25% { 
-    transform: scale(1.2) rotate(-10deg); 
-  }
-  75% { 
-    transform: scale(1.2) rotate(10deg); 
-  }
-}
-
-/* ─── Sleep Mode ─── */
-.syrup-pet.sleeping {
-  animation: syrupSleepFloat 5s ease-in-out infinite;
-  opacity: 0.7;
-}
-
-.syrup-pet.sleeping img {
-  animation: none;
-}
-
-@keyframes syrupSleepFloat {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(-8px) rotate(-2deg);
-    opacity: 0.6;
-  }
-}
-
-/* ═══════════════════════════════════════════
-   RESPONSIVE - TANPA SCROLL
-   ═══════════════════════════════════════════ */
-
-/* ─── Large Desktop (1200px+) ─── */
-@media (min-width: 1200px) {
-  .syrup-pet {
-    bottom: 120px;
-    right: 40px;
-  }
-  
-  .syrup-pet img {
-    width: 120px;
-    height: 120px;
-  }
-}
-
-/* ─── Desktop (992px - 1199px) ─── */
-@media (min-width: 992px) and (max-width: 1199px) {
-  .syrup-pet {
-    bottom: 100px;
-    right: 35px;
-  }
-  
-  .syrup-pet img {
-    width: 100px;
-    height: 100px;
-  }
-}
-
-/* ─── Tablet Landscape (768px - 991px) ─── */
-@media (min-width: 768px) and (max-width: 991px) {
-  .syrup-pet {
-    bottom: 80px;
-    right: 30px;
-  }
-  
-  .syrup-pet img {
-    width: 80px;
-    height: 80px;
-  }
-}
-
-/* ─── Tablet Portrait (576px - 767px) ─── */
-@media (min-width: 576px) and (max-width: 767px) {
-  .syrup-pet {
-    bottom: 70px;
-    right: 25px;
-  }
-  
-  .syrup-pet img {
-    width: 65px;
-    height: 65px;
-  }
-  
-  @keyframes syrupFloat {
-    0%, 100% {
-      transform: translateY(0px) rotate(-2deg) scale(1);
-    }
-    25% {
-      transform: translateY(-8px) rotate(0deg) scale(1.04);
-    }
-    50% {
-      transform: translateY(-4px) rotate(2deg) scale(0.98);
-    }
-    75% {
-      transform: translateY(-12px) rotate(-1deg) scale(1.02);
-    }
-  }
-}
-
-/* ─── Mobile Landscape (480px - 575px) ─── */
-@media (min-width: 480px) and (max-width: 575px) {
-  .syrup-pet {
-    bottom: 60px;
-    right: 20px;
-  }
-  
-  .syrup-pet img {
-    width: 55px;
-    height: 55px;
-  }
-  
-  @keyframes syrupFloat {
-    0%, 100% {
-      transform: translateY(0px) rotate(-2deg) scale(1);
-    }
-    25% {
-      transform: translateY(-6px) rotate(0deg) scale(1.03);
-    }
-    50% {
-      transform: translateY(-3px) rotate(2deg) scale(0.98);
-    }
-    75% {
-      transform: translateY(-10px) rotate(-1deg) scale(1.02);
-    }
-  }
-}
-
-/* ─── Mobile Portrait (< 480px) ─── */
-@media (max-width: 479px) {
-  .syrup-pet {
-    bottom: 50px;
-    right: 15px;
-  }
-  
-  .syrup-pet img {
-    width: 45px;
-    height: 45px;
-  }
-  
-  @keyframes syrupFloat {
-    0%, 100% {
-      transform: translateY(0px) rotate(-1deg) scale(1);
-    }
-    25% {
-      transform: translateY(-5px) rotate(0deg) scale(1.02);
-    }
-    50% {
-      transform: translateY(-2px) rotate(1deg) scale(0.98);
-    }
-    75% {
-      transform: translateY(-8px) rotate(-1deg) scale(1.01);
-    }
-  }
-}
-
-/* ─── Very Small Screen (< 360px) ─── */
-@media (max-width: 359px) {
-  .syrup-pet {
-    bottom: 40px;
-    right: 10px;
-  }
-  
-  .syrup-pet img {
-    width: 38px;
-    height: 38px;
-  }
-}
-
-/* ─── Touch Device Optimization ─── */
-@media (hover: none) {
-  .syrup-pet {
-    padding: 8px;
-    /* Touch target minimal 44px */
-    min-width: 44px;
-    min-height: 44px;
-  }
-  
-  .syrup-pet img {
-    pointer-events: auto;
-  }
-}
-
-/* ─── Dark Mode Support ─── */
-@media (prefers-color-scheme: dark) {
-  .syrup-pet img {
-    filter: brightness(0.95) !important;
-  }
-}
-
-/* ─── Reduced Motion Preference ─── */
-@media (prefers-reduced-motion: reduce) {
-  .syrup-pet {
-    animation: none !important;
-  }
-  
-  .syrup-pet img {
-    animation: none !important;
-  }
-  
-  .syrup-pet:hover img {
-    animation: none !important;
-  }
-  
-  .syrup-pet.sleeping {
-    animation: none !important;
-  }
-}
-
-/* ─── Print Styles ─── */
-@media print {
-  .syrup-pet {
-    display: none !important;
-  }
+/* Pastikan container tidak menyebabkan scroll */
+.bg-syrup-container {
+  overflow: hidden !important;
+  position: fixed !important;
 }
