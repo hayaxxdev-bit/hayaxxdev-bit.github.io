@@ -1536,6 +1536,94 @@
     }
   }
 
+  // ════════════════════════════════════════════════════════════════
+// PAGE LOADER - MAPLE SHIELD STYLE
+// ════════════════════════════════════════════════════════════════
+class PageLoader {
+  constructor() {
+    this.loader = document.getElementById('pageLoader');
+    this.progressFill = document.querySelector('.loader-progress__fill');
+    this.progressGlow = document.querySelector('.loader-progress__glow');
+    this.percentText = document.getElementById('loaderPercent');
+    this.progress = 0;
+    this.isComplete = false;
+  }
+
+  init() {
+    if (!this.loader) return;
+    
+    // Simulate loading progress
+    this.simulateProgress();
+    
+    // Listen for page load
+    window.addEventListener('load', () => {
+      this.complete();
+    });
+
+    // Fallback: hide after 5 seconds max
+    setTimeout(() => {
+      if (!this.isComplete) {
+        console.warn('⚠️ Loader timeout - force hiding');
+        this.complete();
+      }
+    }, 5000);
+  }
+
+  simulateProgress() {
+    const steps = [
+      { progress: 15, delay: 200 },
+      { progress: 35, delay: 400 },
+      { progress: 55, delay: 600 },
+      { progress: 75, delay: 800 },
+      { progress: 90, delay: 1000 },
+    ];
+
+    steps.forEach((step, index) => {
+      setTimeout(() => {
+        this.setProgress(step.progress);
+      }, step.delay);
+    });
+  }
+
+  setProgress(value) {
+    this.progress = Math.min(value, 90); // Max 90% until actually loaded
+    if (this.progressFill) {
+      this.progressFill.style.width = `${this.progress}%`;
+    }
+    if (this.progressGlow) {
+      this.progressGlow.style.left = `${this.progress}%`;
+    }
+    if (this.percentText) {
+      this.percentText.textContent = `${Math.round(this.progress)}%`;
+    }
+  }
+
+  complete() {
+    if (this.isComplete) return;
+    this.isComplete = true;
+
+    // Set to 100%
+    this.setProgress(100);
+    
+    // Small delay for the 100% to show
+    setTimeout(() => {
+      this.loader?.classList.add('hidden');
+      
+      // Remove from DOM after transition
+      setTimeout(() => {
+        this.loader?.remove();
+        console.log('🍁 Page loaded successfully!');
+      }, 600);
+    }, 400);
+  }
+}
+
+// Initialize loader
+document.addEventListener('DOMContentLoaded', () => {
+  const pageLoader = new PageLoader();
+  pageLoader.init();
+});
+
   // ═══════════════════════════════════════════
   // SYRUP PET - NO HORIZONTAL SCROLL
   // ═══════════════════════════════════════════

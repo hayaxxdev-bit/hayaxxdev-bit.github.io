@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a0a2e"/>
+      <stop offset="100%" style="stop-color:#050308"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
+  
+  <!-- Decorative ring -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#c9a84c" stroke-width="3" opacity="0.3"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.5"/>
+  
+  <!-- Maple Leaf -->
+  <text x="256" y="300" text-anchor="middle" font-size="220">🍁</text>
+  
+  <!-- DEV text -->
+  <text x="256" y="440" text-anchor="middle" font-family="Arial,sans-serif" font-size="36" fill="#c9a84c" font-weight="bold" letter-spacing="4">DEV</text>
+</svg>
