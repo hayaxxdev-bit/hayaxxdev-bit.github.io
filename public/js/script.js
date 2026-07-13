@@ -1537,243 +1537,269 @@
   }
 
   // ═══════════════════════════════════════════
-// SYRUP PET - NO HORIZONTAL SCROLL
-// ═══════════════════════════════════════════
+  // SYRUP PET - NO HORIZONTAL SCROLL
+  // ═══════════════════════════════════════════
 
-class SyrupPet {
-  constructor() {
-    this.element = document.getElementById('syrupPet');
-    this.img = document.getElementById('syrupGif');
-    this.isSleeping = false;
-    this.isVisible = true;
-    this.clickCount = 0;
-    this.audioManager = window.audioManager;
-    this.screenWidth = window.innerWidth;
-    
-    if (!this.element || !this.img) {
-      console.error('❌ Syrup element not found!');
-      return;
-    }
+  class SyrupPet {
+    constructor() {
+      this.element = document.getElementById("syrupPet");
+      this.img = document.getElementById("syrupGif");
+      this.isSleeping = false;
+      this.isVisible = true;
+      this.clickCount = 0;
+      this.audioManager = window.audioManager;
+      this.screenWidth = window.innerWidth;
 
-    // Cegah scroll horizontal
-    this.preventHorizontalScroll();
-    
-    this.init();
-    this.handleResize();
-  }
-
-  // ─── Cegah Scroll Horizontal ───
-  preventHorizontalScroll() {
-    // Pastikan body tidak overflow
-    document.body.style.overflowX = 'hidden';
-    document.body.style.maxWidth = '100%';
-    
-    // Cegah scroll dengan touch
-    document.addEventListener('touchmove', (e) => {
-      if (e.target.closest('.syrup-pet')) {
+      if (!this.element || !this.img) {
+        console.error("❌ Syrup element not found!");
         return;
       }
-      
-      const scrollable = e.target.closest('.scrollable');
-      if (!scrollable) {
-        // Cegah scroll horizontal
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - (this._lastTouchX || touch.clientX);
-        this._lastTouchX = touch.clientX;
-        
-        if (Math.abs(deltaX) > Math.abs(e.touches[0].clientY - (this._lastTouchY || e.touches[0].clientY))) {
-          e.preventDefault();
-        }
+
+      // Cegah scroll horizontal
+      this.preventHorizontalScroll();
+
+      this.init();
+      this.handleResize();
+    }
+
+    // ─── Cegah Scroll Horizontal ───
+    preventHorizontalScroll() {
+      // Pastikan body tidak overflow
+      document.body.style.overflowX = "hidden";
+      document.body.style.maxWidth = "100%";
+
+      // Cegah scroll dengan touch
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (e.target.closest(".syrup-pet")) {
+            return;
+          }
+
+          const scrollable = e.target.closest(".scrollable");
+          if (!scrollable) {
+            // Cegah scroll horizontal
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - (this._lastTouchX || touch.clientX);
+            this._lastTouchX = touch.clientX;
+
+            if (
+              Math.abs(deltaX) >
+              Math.abs(
+                e.touches[0].clientY -
+                  (this._lastTouchY || e.touches[0].clientY),
+              )
+            ) {
+              e.preventDefault();
+            }
+          }
+        },
+        { passive: false },
+      );
+    }
+
+    init() {
+      console.log("🐢 Syrup GIF loaded!");
+
+      // Event listeners
+      this.element.addEventListener("click", (e) => this.onClick(e));
+      this.element.addEventListener("dblclick", () => this.doSpin());
+      this.element.addEventListener("mouseenter", () => this.onHover());
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "s" || e.key === "S") this.toggleSleep();
+        if (e.key === "h" || e.key === "H") this.toggleVisibility();
+        if (e.key === "r" || e.key === "R") this.reloadGif();
+      });
+
+      // Window resize
+      window.addEventListener("resize", () => this.handleResize());
+
+      console.log("🐢 Syrup Pet Ready!");
+      console.log("🎮 Controls: S - Sleep, H - Hide/Show, R - Reload GIF");
+      console.log(`📱 Screen: ${this.screenWidth}px`);
+    }
+
+    // ─── Handle Resize ───
+    handleResize() {
+      this.screenWidth = window.innerWidth;
+
+      // Posisi aman di dalam layar
+      let size = 100;
+      let bottom = 100;
+      let right = 30;
+
+      if (this.screenWidth >= 1200) {
+        size = 120;
+        bottom = 120;
+        right = 40;
+      } else if (this.screenWidth >= 992) {
+        size = 100;
+        bottom = 100;
+        right = 35;
+      } else if (this.screenWidth >= 768) {
+        size = 80;
+        bottom = 80;
+        right = 30;
+      } else if (this.screenWidth >= 576) {
+        size = 65;
+        bottom = 70;
+        right = 25;
+      } else if (this.screenWidth >= 480) {
+        size = 55;
+        bottom = 60;
+        right = 20;
+      } else if (this.screenWidth >= 360) {
+        size = 45;
+        bottom = 50;
+        right = 15;
+      } else {
+        size = 38;
+        bottom = 40;
+        right = 10;
       }
-    }, { passive: false });
-  }
 
-  init() {
-    console.log('🐢 Syrup GIF loaded!');
+      // Update ukuran - pastikan tidak overflow
+      this.img.style.width = Math.min(size, this.screenWidth * 0.15) + "px";
+      this.img.style.height = Math.min(size, this.screenWidth * 0.15) + "px";
+      this.element.style.bottom =
+        Math.min(bottom, window.innerHeight * 0.15) + "px";
+      this.element.style.right =
+        Math.min(right, this.screenWidth * 0.05) + "px";
 
-    // Event listeners
-    this.element.addEventListener('click', (e) => this.onClick(e));
-    this.element.addEventListener('dblclick', () => this.doSpin());
-    this.element.addEventListener('mouseenter', () => this.onHover());
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 's' || e.key === 'S') this.toggleSleep();
-      if (e.key === 'h' || e.key === 'H') this.toggleVisibility();
-      if (e.key === 'r' || e.key === 'R') this.reloadGif();
-    });
-
-    // Window resize
-    window.addEventListener('resize', () => this.handleResize());
-
-    console.log('🐢 Syrup Pet Ready!');
-    console.log('🎮 Controls: S - Sleep, H - Hide/Show, R - Reload GIF');
-    console.log(`📱 Screen: ${this.screenWidth}px`);
-  }
-
-  // ─── Handle Resize ───
-  handleResize() {
-    this.screenWidth = window.innerWidth;
-    
-    // Posisi aman di dalam layar
-    let size = 100;
-    let bottom = 100;
-    let right = 30;
-    
-    if (this.screenWidth >= 1200) {
-      size = 120;
-      bottom = 120;
-      right = 40;
-    } else if (this.screenWidth >= 992) {
-      size = 100;
-      bottom = 100;
-      right = 35;
-    } else if (this.screenWidth >= 768) {
-      size = 80;
-      bottom = 80;
-      right = 30;
-    } else if (this.screenWidth >= 576) {
-      size = 65;
-      bottom = 70;
-      right = 25;
-    } else if (this.screenWidth >= 480) {
-      size = 55;
-      bottom = 60;
-      right = 20;
-    } else if (this.screenWidth >= 360) {
-      size = 45;
-      bottom = 50;
-      right = 15;
-    } else {
-      size = 38;
-      bottom = 40;
-      right = 10;
-    }
-    
-    // Update ukuran - pastikan tidak overflow
-    this.img.style.width = Math.min(size, this.screenWidth * 0.15) + 'px';
-    this.img.style.height = Math.min(size, this.screenWidth * 0.15) + 'px';
-    this.element.style.bottom = Math.min(bottom, window.innerHeight * 0.15) + 'px';
-    this.element.style.right = Math.min(right, this.screenWidth * 0.05) + 'px';
-    
-    // Update atribut
-    const finalSize = Math.min(size, this.screenWidth * 0.15);
-    this.img.setAttribute('width', finalSize);
-    this.img.setAttribute('height', finalSize);
-  }
-
-  // ─── Sleep Toggle ───
-  toggleSleep() {
-    this.isSleeping = !this.isSleeping;
-    
-    if (this.isSleeping) {
-      this.element.classList.add('sleeping');
-      this.img.style.animationPlayState = 'paused';
-      this.showMessage('😴 Zzz...');
-      this.playSound('sleep');
-    } else {
-      this.element.classList.remove('sleeping');
-      this.img.style.animationPlayState = 'running';
-      this.showMessage('😊 Syrup bangun!');
-      this.playSound('click');
-    }
-  }
-
-  // ─── Visibility Toggle ───
-  toggleVisibility() {
-    this.isVisible = !this.isVisible;
-    this.element.style.display = this.isVisible ? 'block' : 'none';
-    this.showMessage(this.isVisible ? '👋 Syrup kembali!' : '👻 Syrup menghilang!');
-  }
-
-  // ─── Reload GIF ───
-  reloadGif() {
-    const src = this.img.src;
-    this.img.src = '';
-    setTimeout(() => {
-      this.img.src = src;
-      this.showMessage('🔄 GIF di-reload!');
-    }, 100);
-  }
-
-  // ─── Click Event ───
-  onClick(e) {
-    this.clickCount++;
-    
-    if (this.clickCount === 3) {
-      this.doHappyDance();
-      this.clickCount = 0;
-      return;
+      // Update atribut
+      const finalSize = Math.min(size, this.screenWidth * 0.15);
+      this.img.setAttribute("width", finalSize);
+      this.img.setAttribute("height", finalSize);
     }
 
-    const count = this.screenWidth < 480 ? 6 : 10;
-    for (let i = 0; i < count; i++) {
-      setTimeout(() => this.createHeart(e), i * 80);
+    // ─── Sleep Toggle ───
+    toggleSleep() {
+      this.isSleeping = !this.isSleeping;
+
+      if (this.isSleeping) {
+        this.element.classList.add("sleeping");
+        this.img.style.animationPlayState = "paused";
+        this.showMessage("😴 Zzz...");
+        this.playSound("sleep");
+      } else {
+        this.element.classList.remove("sleeping");
+        this.img.style.animationPlayState = "running";
+        this.showMessage("😊 Syrup bangun!");
+        this.playSound("click");
+      }
     }
-    
-    const messages = [
-      '❤️ Syrup sayang kamu!',
-      '💕 Kamu teman baik!',
-      '✨ Syrup senang!',
-      '🐢 *Syrup melambai*',
-      '💜 Love you!',
-      '🌟 Kamu hebat!'
-    ];
-    this.showMessage(messages[Math.floor(Math.random() * messages.length)]);
-    this.playSound('click');
-  }
 
-  // ─── Hover Event ───
-  onHover() {
-    if (!this.isSleeping) {
-      this.showMessage('🐢 Hai!');
+    // ─── Visibility Toggle ───
+    toggleVisibility() {
+      this.isVisible = !this.isVisible;
+      this.element.style.display = this.isVisible ? "block" : "none";
+      this.showMessage(
+        this.isVisible ? "👋 Syrup kembali!" : "👻 Syrup menghilang!",
+      );
     }
-  }
 
-  // ─── Spin Animation ───
-  doSpin() {
-    this.img.style.transition = 'transform 1s ease';
-    this.img.style.transform = 'rotate(720deg) scale(1.5)';
-    this.playSound('spin');
-    this.showMessage('🌀 Syrup berputar!');
-    
-    setTimeout(() => {
-      this.img.style.transform = 'rotate(0deg) scale(1)';
-    }, 1000);
-  }
+    // ─── Reload GIF ───
+    reloadGif() {
+      const src = this.img.src;
+      this.img.src = "";
+      setTimeout(() => {
+        this.img.src = src;
+        this.showMessage("🔄 GIF di-reload!");
+      }, 100);
+    }
 
-  // ─── Happy Dance ───
-  doHappyDance() {
-    this.img.style.animation = 'none';
-    this.img.style.animation = 'syrupHappy 0.5s ease-in-out infinite';
-    this.playSound('happy');
-    this.showMessage('🎉 Syrup senang!');
-    
-    this.createConfetti();
-    
-    setTimeout(() => {
-      this.img.style.animation = '';
-      this.img.style.animation = 'syrupFloat 4s ease-in-out infinite';
-    }, 3000);
-  }
+    // ─── Click Event ───
+    onClick(e) {
+      this.clickCount++;
 
-  // ─── Heart Particles ───
-  createHeart(e) {
-    const rect = this.element.getBoundingClientRect();
-    const heart = document.createElement('div');
-    const emojis = ['❤️', '💜', '💛', '💚', '💙', '🧡', '💕', '💗', '💖', '💝'];
-    heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    
-    const x = e ? e.clientX : rect.left + rect.width/2;
-    const y = e ? e.clientY : rect.top + rect.height/2;
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 50 + Math.random() * 100;
-    const tx = Math.cos(angle) * distance;
-    const ty = -Math.sin(angle) * distance - 80;
-    
-    const size = this.screenWidth < 480 ? '1rem' : `${1.2 + Math.random() * 0.8}rem`;
-    
-    heart.style.cssText = `
+      if (this.clickCount === 3) {
+        this.doHappyDance();
+        this.clickCount = 0;
+        return;
+      }
+
+      const count = this.screenWidth < 480 ? 6 : 10;
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => this.createHeart(e), i * 80);
+      }
+
+      const messages = [
+        "❤️ Syrup sayang kamu!",
+        "💕 Kamu teman baik!",
+        "✨ Syrup senang!",
+        "🐢 *Syrup melambai*",
+        "💜 Love you!",
+        "🌟 Kamu hebat!",
+      ];
+      this.showMessage(messages[Math.floor(Math.random() * messages.length)]);
+      this.playSound("click");
+    }
+
+    // ─── Hover Event ───
+    onHover() {
+      if (!this.isSleeping) {
+        this.showMessage("🐢 Hai!");
+      }
+    }
+
+    // ─── Spin Animation ───
+    doSpin() {
+      this.img.style.transition = "transform 1s ease";
+      this.img.style.transform = "rotate(720deg) scale(1.5)";
+      this.playSound("spin");
+      this.showMessage("🌀 Syrup berputar!");
+
+      setTimeout(() => {
+        this.img.style.transform = "rotate(0deg) scale(1)";
+      }, 1000);
+    }
+
+    // ─── Happy Dance ───
+    doHappyDance() {
+      this.img.style.animation = "none";
+      this.img.style.animation = "syrupHappy 0.5s ease-in-out infinite";
+      this.playSound("happy");
+      this.showMessage("🎉 Syrup senang!");
+
+      this.createConfetti();
+
+      setTimeout(() => {
+        this.img.style.animation = "";
+        this.img.style.animation = "syrupFloat 4s ease-in-out infinite";
+      }, 3000);
+    }
+
+    // ─── Heart Particles ───
+    createHeart(e) {
+      const rect = this.element.getBoundingClientRect();
+      const heart = document.createElement("div");
+      const emojis = [
+        "❤️",
+        "💜",
+        "💛",
+        "💚",
+        "💙",
+        "🧡",
+        "💕",
+        "💗",
+        "💖",
+        "💝",
+      ];
+      heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+      const x = e ? e.clientX : rect.left + rect.width / 2;
+      const y = e ? e.clientY : rect.top + rect.height / 2;
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 50 + Math.random() * 100;
+      const tx = Math.cos(angle) * distance;
+      const ty = -Math.sin(angle) * distance - 80;
+
+      const size =
+        this.screenWidth < 480 ? "1rem" : `${1.2 + Math.random() * 0.8}rem`;
+
+      heart.style.cssText = `
       position: fixed;
       left: ${Math.min(x, window.innerWidth - 20)}px;
       top: ${Math.min(y, window.innerHeight - 20)}px;
@@ -1785,55 +1811,66 @@ class SyrupPet {
       --ty: ${ty}px;
       user-select: none;
     `;
-    document.body.appendChild(heart);
-    setTimeout(() => heart.remove(), 1800);
-  }
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 1800);
+    }
 
-  // ─── Confetti ───
-  createConfetti() {
-    const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#7c3aed'];
-    const rect = this.element.getBoundingClientRect();
-    const count = this.screenWidth < 480 ? 20 : 40;
-    
-    for (let i = 0; i < count; i++) {
-      const confetti = document.createElement('div');
-      const tx = (Math.random() - 0.5) * Math.min(500, window.innerWidth * 0.6);
-      const ty = -200 - Math.random() * 400;
-      
-      confetti.style.cssText = `
+    // ─── Confetti ───
+    createConfetti() {
+      const colors = [
+        "#ff6b6b",
+        "#feca57",
+        "#48dbfb",
+        "#ff9ff3",
+        "#54a0ff",
+        "#7c3aed",
+      ];
+      const rect = this.element.getBoundingClientRect();
+      const count = this.screenWidth < 480 ? 20 : 40;
+
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement("div");
+        const tx =
+          (Math.random() - 0.5) * Math.min(500, window.innerWidth * 0.6);
+        const ty = -200 - Math.random() * 400;
+
+        confetti.style.cssText = `
         position: fixed;
-        left: ${rect.left + rect.width/2}px;
-        top: ${rect.top + rect.height/2}px;
+        left: ${rect.left + rect.width / 2}px;
+        top: ${rect.top + rect.height / 2}px;
         width: ${4 + Math.random() * 6}px;
         height: ${4 + Math.random() * 6}px;
         background: ${colors[Math.floor(Math.random() * colors.length)]};
         pointer-events: none;
         z-index: 99999;
-        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        border-radius: ${Math.random() > 0.5 ? "50%" : "2px"};
         animation: confettiFall ${2 + Math.random() * 2}s ease-out forwards;
         --tx: ${tx}px;
         --ty: ${ty}px;
         transform: rotate(${Math.random() * 360}deg);
       `;
-      document.body.appendChild(confetti);
-      setTimeout(() => confetti.remove(), 4000);
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 4000);
+      }
     }
-  }
 
-  // ─── Show Message ───
-  showMessage(text) {
-    const rect = this.element.getBoundingClientRect();
-    const msg = document.createElement('div');
-    msg.textContent = text;
-    
-    const fontSize = this.screenWidth < 480 ? '0.75rem' : '0.9rem';
-    const padding = this.screenWidth < 480 ? '6px 14px' : '8px 20px';
-    
-    // Posisi aman di dalam layar
-    const left = Math.max(10, Math.min(rect.left + rect.width/2, window.innerWidth - 20));
-    const top = Math.max(10, rect.top - 50);
-    
-    msg.style.cssText = `
+    // ─── Show Message ───
+    showMessage(text) {
+      const rect = this.element.getBoundingClientRect();
+      const msg = document.createElement("div");
+      msg.textContent = text;
+
+      const fontSize = this.screenWidth < 480 ? "0.75rem" : "0.9rem";
+      const padding = this.screenWidth < 480 ? "6px 14px" : "8px 20px";
+
+      // Posisi aman di dalam layar
+      const left = Math.max(
+        10,
+        Math.min(rect.left + rect.width / 2, window.innerWidth - 20),
+      );
+      const top = Math.max(10, rect.top - 50);
+
+      msg.style.cssText = `
       position: fixed;
       top: ${top}px;
       left: ${left}px;
@@ -1857,28 +1894,28 @@ class SyrupPet {
       overflow: hidden;
       text-overflow: ellipsis;
     `;
-    document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 2000);
-  }
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 2000);
+    }
 
-  // ─── Play Sound ───
-  playSound(type) {
-    if (this.audioManager) {
-      const sounds = {
-        click: 'menuSelect',
-        happy: 'guideStart',
-        sleep: 'close',
-        eat: 'dialogue',
-        spin: 'konami'
-      };
-      this.audioManager.playSFX(sounds[type] || 'menuSelect');
+    // ─── Play Sound ───
+    playSound(type) {
+      if (this.audioManager) {
+        const sounds = {
+          click: "menuSelect",
+          happy: "guideStart",
+          sleep: "close",
+          eat: "dialogue",
+          spin: "konami",
+        };
+        this.audioManager.playSFX(sounds[type] || "menuSelect");
+      }
     }
   }
-}
 
-// ─── CSS Animations ───
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
+  // ─── CSS Animations ───
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = `
   @keyframes heartBurst {
     0% {
       opacity: 1;
@@ -1923,13 +1960,13 @@ styleSheet.textContent = `
     }
   }
 `;
-document.head.appendChild(styleSheet);
+  document.head.appendChild(styleSheet);
 
-// ─── Initialize ───
-document.addEventListener('DOMContentLoaded', () => {
-  const syrup = new SyrupPet();
-  window.syrupPet = syrup;
-});
+  // ─── Initialize ───
+  document.addEventListener("DOMContentLoaded", () => {
+    const syrup = new SyrupPet();
+    window.syrupPet = syrup;
+  });
   // ═══════════════════════════════════════════
   // 9. INITIALIZATION
   // ═══════════════════════════════════════════
@@ -2058,6 +2095,39 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("🛡️ System ready. Konami Code: ↑↑↓↓←→←→BA");
   });
 })();
+// PWA Install Prompt
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('PWA installation prompt available');
+  
+  // Show install button
+  const installBtn = document.getElementById('installApp');
+  if (installBtn) {
+    installBtn.style.display = 'block';
+    installBtn.addEventListener('click', () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+      });
+    });
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('PWA installed successfully');
+  // Track installation
+  if (window.gtag) {
+    gtag('event', 'pwa_installed');
+  }
+});
 
 window.refreshStats = async () => {
   try {
