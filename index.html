@@ -113,21 +113,39 @@
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <!-- Preconnect & Preload -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Preload font kritis dengan display swap -->
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Spectral+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      onload="
+        this.onload = null;
+        this.rel = 'stylesheet';
+      "
     />
 
-    <!-- Fonts -->
+    <!-- Font sekunder dengan media query -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Spectral+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
+      media="print"
+      onload="
+        this.media = 'all';
+        this.onload = null;
+      "
     />
 
+    <!-- Fallback untuk no-JS -->
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <!-- CSS -->
     <link rel="stylesheet" href="./public/css/main.css" />
 
@@ -210,10 +228,13 @@
     <!-- Web App Manifest -->
     <link rel="manifest" href="./public/site.webmanifest" />
 
-    <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://api.github.com https://www.google-analytics.com; frame-src 'none';"
+    />
 
     <!-- PWA Support -->
     <link rel="me" href="https://github.com/hayaxxdev-bit" />
@@ -1201,27 +1222,37 @@
          SCRIPTS
          ════════════════════════════════════════════════════════════════ -->
     <script src="./public/js/script.js" defer></script>
+    <script src="./public/js/optimizer.js" defer></script>
 
     <!-- ════════════════════════════════════════════════════════════════
          ANALYTICS (Google Analytics 4)
          ════════════════════════════════════════════════════════════════ -->
     <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-E87BE53RJ2"
-    ></script>
     <script>
+      // Defer GA loading
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
-      gtag("js", new Date());
 
-      gtag("config", "G-E87BE53RJ2", {
-        cookie_domain: "hayaxxdev-bit.my.id",
-        cookie_flags: "SameSite=None;Secure",
-        cookie_expires: 63072000,
-      });
+      // Load GA setelah 3 detik idle
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(
+          () => {
+            const script = document.createElement("script");
+            script.src =
+              "https://www.googletagmanager.com/gtag/js?id=G-E87BE53RJ2";
+            script.async = true;
+            document.head.appendChild(script);
+
+            script.onload = () => {
+              gtag("js", new Date());
+              gtag("config", "G-E87BE53RJ2");
+            };
+          },
+          { timeout: 3000 },
+        );
+      }
     </script>
   </body>
 </html>
