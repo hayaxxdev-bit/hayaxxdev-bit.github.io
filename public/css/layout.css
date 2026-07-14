@@ -31,6 +31,11 @@
   display: block;
 }
 
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ══════════════════════════════
    SECTION HEAD
    ══════════════════════════════ */
@@ -124,6 +129,21 @@
   box-shadow: 0 15px 40px rgba(124, 58, 237, 0.5), 0 0 60px rgba(204, 17, 51, 0.3);
 }
 
+/* terminal cursor after CTA label, dev-tier flourish — appends after the icon+text */
+.btn--primary::after {
+  content: '_';
+  font-family: var(--font-mono);
+  margin-left: 1px;
+  animation: btn-blink-cursor 1.1s step-end infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes btn-blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 .btn--ghost {
   background: rgba(124, 58, 237, 0.1);
   color: #a78bfa;
@@ -155,8 +175,19 @@
   animation: borderGlow 3s ease-in-out infinite;
 }
 
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(124, 58, 237, 0.4); }
+  50% { border-color: rgba(204, 17, 51, 0.4); }
+}
+
 .badge--dim {
   background: rgba(124, 58, 237, 0.1);
   color: var(--text-secondary);
   border-color: rgba(124, 58, 237, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view { animation: none; }
+  .btn--primary::after { animation: none !important; }
+  .badge { animation: none; }
 }

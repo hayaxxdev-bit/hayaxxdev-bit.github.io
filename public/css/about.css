@@ -1,8 +1,33 @@
 /* ══════════════════════════════
    ABOUT SECTION
+   "Hanko Seal × Terminal" edition
    ══════════════════════════════ */
 
+#about {
+  position: relative;
+}
+
+/* ghost kanji watermark — same running motif as hero/contact/project-card */
+#about .section-title {
+  position: relative;
+}
+
+#about .about-layout::before {
+  content: '素性';
+  position: absolute;
+  top: -30px;
+  right: -10px;
+  font-family: var(--font-stat, 'Spectral SC', serif);
+  font-size: 6rem;
+  line-height: 1;
+  color: rgba(124, 58, 237, 0.04);
+  pointer-events: none;
+  z-index: -1;
+  user-select: none;
+}
+
 .about-layout {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 40px;
@@ -23,6 +48,21 @@
   padding: 4px;
   background: linear-gradient(135deg, #7c3aed, #cc1133, #6d28d9);
   animation: spin 8s linear infinite;
+  position: relative;
+}
+
+.about__img-frame:hover {
+  animation-play-state: paused;
+}
+
+/* dashed seal ring, echoes navbar logo / card-pfp treatment */
+.about__img-frame::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px dashed rgba(124, 58, 237, 0.3);
+  pointer-events: none;
 }
 
 .about__img {
@@ -71,7 +111,23 @@
   font-size: 1rem;
   margin: 24px 0 12px;
   color: #a78bfa;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
+
+/* JP micro-label per subheading — small, consistent with nav tooltip style */
+.about__skills-title::after {
+  font-family: var(--font-stat, 'Spectral SC', serif);
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: #a78bfa;
+  opacity: 0.4;
+}
+
+.about__skills-title:nth-of-type(1)::after { content: '技術'; }
+.about__skills-title:nth-of-type(2)::after { content: '熟練度'; }
+.about__skills-title:nth-of-type(3)::after { content: '歩み'; }
 
 .skills-grid {
   display: flex;
@@ -115,13 +171,124 @@
   transform: translateY(-1px);
 }
 
+/* ── Skill proficiency bars ── */
+.skill-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skill-bar__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+}
+
+.skill-bar__pct {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+.skill-bar__track {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  overflow: hidden;
+}
+
+.skill-bar__fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #7c3aed, #cc1133);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.35);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Journey timeline ── */
+.journey-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 4px;
+  position: relative;
+}
+
+.journey-timeline::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 5px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.5), rgba(204, 17, 51, 0.15));
+}
+
+.journey-item {
+  position: relative;
+  padding: 0 0 24px 26px;
+}
+
+.journey-item:last-child {
+  padding-bottom: 0;
+}
+
+.journey-item__dot {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid #6d28d9;
+}
+
+.journey-item__dot--current {
+  border-color: #7c3aed;
+  background: #7c3aed;
+  box-shadow: 0 0 14px rgba(124, 58, 237, 0.7);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.journey-item__stage {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a78bfa;
+  margin-bottom: 4px;
+}
+
+.journey-item__body p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .about-layout {
     grid-template-columns: 1fr;
   }
-  
+  .about-layout::before {
+    font-size: 4rem;
+    top: -10px;
+  }
   .about__visual {
     flex-direction: row;
     gap: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about__img-frame,
+  .journey-item__dot--current,
+  .skill-bar__fill {
+    animation: none !important;
+    transition: none !important;
   }
 }

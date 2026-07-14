@@ -1,0 +1,261 @@
+/* ============================================
+   ACHIEVEMENT TOASTS - DARK FANTASY THEME
+   ============================================ */
+
+/* --- Container --- */
+.achievement-toasts {
+  position: fixed;
+  top: calc(var(--navbar-height) + 20px);
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  max-width: 380px;
+  width: 100%;
+}
+
+/* --- Individual Toast --- */
+.achievement-toast {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--accent-glowd), 0 8px 32px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  transform: translateX(120%);
+  opacity: 0;
+  animation: toastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transition: transform 0.4s ease, opacity 0.4s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* --- Shine Effect Line --- */
+.achievement-toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--purple-bright), var(--crimson-bright));
+  border-radius: 4px 0 0 4px;
+  box-shadow: 0 0 12px var(--accent-gold-glow), 0 0 24px var(--accent-glow);
+}
+
+/* --- Subtle Background Glow --- */
+.achievement-toast::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* --- Hover State --- */
+.achievement-toast:hover {
+  transform: translateX(0) scale(1.02);
+  border-color: var(--border-active);
+  box-shadow: var(--accent-glowd), 0 8px 40px rgba(0, 0, 0, 0.6);
+  background: rgba(22, 12, 43, 0.8);
+}
+
+/* --- Icon Container --- */
+.achievement-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 20px var(--accent-gold-glow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  color: var(--purple-soft);
+}
+
+.achievement-toast:hover .achievement-icon {
+  box-shadow: 0 0 30px var(--accent-gold-glow), 0 0 50px var(--accent-glow);
+  transform: scale(1.1);
+  color: var(--ink);
+}
+
+/* --- Icon Inner Glow --- */
+.achievement-icon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--purple-bright), var(--crimson-bright));
+  opacity: 0.2;
+  z-index: -1;
+  filter: blur(6px);
+}
+
+/* --- Text Content --- */
+.achievement-content {
+  flex: 1;
+  z-index: 1;
+  min-width: 0;
+}
+
+.achievement-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.03em;
+  margin: 0 0 4px 0;
+  text-shadow: 0 0 20px var(--accent-gold-glow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achievement-description {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- XP / Reward Badge --- */
+.achievement-reward {
+  font-family: var(--font-stat);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--crimson-bright);
+  background: rgba(204, 17, 51, 0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(204, 17, 51, 0.3);
+  text-shadow: 0 0 8px var(--accent-glow);
+  white-space: nowrap;
+  z-index: 1;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+}
+
+.achievement-toast:hover .achievement-reward {
+  background: rgba(204, 17, 51, 0.2);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+/* --- Exit Animation --- */
+.achievement-toast.removing {
+  animation: toastSlideOut 0.4s ease-in forwards;
+}
+
+/* --- Entrance Keyframes --- */
+@keyframes toastSlideIn {
+  0% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* --- Exit Keyframes --- */
+@keyframes toastSlideOut {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* --- Tier Variations (Optional - Add class to toast) --- */
+
+/* Rare / Epic Tier */
+.achievement-toast.tier-epic .achievement-icon {
+  box-shadow: 0 0 24px var(--accent-gold-glow), 0 0 48px var(--accent-glow);
+}
+.achievement-toast.tier-epic {
+  border-color: rgba(124, 58, 237, 0.5);
+}
+.achievement-toast.tier-epic::before {
+  background: linear-gradient(180deg, var(--purple-bright), var(--crimson-bright), var(--purple-bright));
+}
+
+/* Legendary Tier */
+.achievement-toast.tier-legendary {
+  border-color: rgba(204, 17, 51, 0.6);
+  box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-gold-glow);
+  background: rgba(22, 8, 36, 0.85);
+}
+.achievement-toast.tier-legendary .achievement-icon {
+  animation: legendaryPulse 2s infinite;
+  box-shadow: 0 0 30px var(--accent-gold-glow), 0 0 60px var(--accent-glow);
+  color: var(--ink);
+}
+.achievement-toast.tier-legendary .achievement-title {
+  background: linear-gradient(135deg, var(--purple-soft), var(--crimson-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  font-weight: 800;
+}
+
+@keyframes legendaryPulse {
+  0%, 100% { box-shadow: 0 0 24px var(--accent-gold-glow), 0 0 48px var(--accent-glow); }
+  50% { box-shadow: 0 0 40px var(--accent-gold-glow), 0 0 80px var(--accent-glow); }
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 480px) {
+  .achievement-toasts {
+    right: 12px;
+    left: 12px;
+    max-width: none;
+    top: calc(var(--navbar-height) + 8px);
+  }
+  
+  .achievement-toast {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  
+  .achievement-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 20px;
+  }
+  
+  .achievement-title {
+    font-size: 0.9rem;
+  }
+  
+  .achievement-description {
+    font-size: 0.8rem;
+  }
+}

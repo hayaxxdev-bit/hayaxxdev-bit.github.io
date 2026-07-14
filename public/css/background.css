@@ -1,13 +1,16 @@
 /* ══════════════════════════════
    BACKGROUND EFFECTS
    MAPLE'S VOID REALM
+   "Hanko Seal × Terminal" edition
    ══════════════════════════════ */
+
+
 .bg-noise {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: 
+  background:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
   opacity: 0.3;
 }
@@ -17,10 +20,12 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image: 
-    linear-gradient(rgba(124, 58, 237, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124, 58, 237, 0.03) 1px, transparent 1px);
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.035) 1px, transparent 1px);
   background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 65% at 50% 20%, black 40%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 65% at 50% 20%, black 40%, transparent 90%);
 }
 
 /* Floating Particles Background */
@@ -36,45 +41,35 @@
   position: absolute;
   width: 2px;
   height: 2px;
-  background: var(--accent-poison);
+  background: var(--accent-poison, #6d28d9);
   border-radius: 50%;
   animation: floatParticle 15s linear infinite;
   opacity: 0;
 }
 
 .bg-particle:nth-child(odd) {
-  background: var(--accent-gold);
+  background: var(--purple-bright, #7c3aed);
 }
 
 .bg-particle:nth-child(3n) {
-  background: var(--accent);
+  background: var(--accent, #cc1133);
 }
 
 @keyframes floatParticle {
-  0% {
-    transform: translateY(100vh) translateX(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.6;
-  }
-  90% {
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateY(-100vh) translateX(100px);
-    opacity: 0;
-  }
+  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
 }
 
 /* Maple's Shield Pattern */
 .bg-shield-pattern {
   position: fixed;
   inset: 0;
-  background-image: 
-    radial-gradient(circle at 20% 30%, rgba(139, 63, 207, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(232, 17, 61, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 50%);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(204, 17, 51, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(109, 40, 217, 0.03) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
   animation: patternShift 20s ease-in-out infinite;
@@ -83,4 +78,70 @@
 @keyframes patternShift {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
+}
+
+/* ── Corner vignette rings — reinforces the "void realm" edge, subtle ── */
+.bg-noise::before,
+.bg-noise::after {
+  content: '';
+  position: fixed;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(80px);
+  z-index: 0;
+}
+
+.bg-noise::before {
+  top: -180px;
+  left: -180px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.10), transparent 70%);
+}
+
+.bg-noise::after {
+  bottom: -180px;
+  right: -180px;
+  background: radial-gradient(circle, rgba(204, 17, 51, 0.07), transparent 70%);
+}
+
+/* ── Dev-tier corner tag — quiet "system status" readout, bottom-left ── */
+.bg-sys-tag {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 1;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  color: rgba(167, 139, 250, 0.28);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.bg-sys-tag::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.5);
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+@media (max-width: 768px) {
+  .bg-sys-tag {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-particle,
+  .bg-shield-pattern,
+  .bg-sys-tag::before {
+    animation: none !important;
+  }
 }

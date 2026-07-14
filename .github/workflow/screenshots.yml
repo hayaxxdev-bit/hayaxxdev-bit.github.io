@@ -1,0 +1,41 @@
+# File: .github/workflows/screenshots.yml
+name: Generate Screenshots
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0' # Setiap minggu
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Puppeteer
+        run: |
+          npm init -y
+          npm install puppeteer
+      
+      - name: Generate Screenshots
+        run: |
+          node scripts/generate-screenshots.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Commit Screenshots
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add screenshots/
+          git diff --staged --quiet || git commit -m '📸 Update screenshots [skip ci]'
+          git push
