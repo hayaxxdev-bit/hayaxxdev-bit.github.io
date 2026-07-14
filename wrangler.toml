@@ -1,0 +1,6 @@
+name = "github-proxy-hayaxxdev"
+compatibility_date = "2026-07-14"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
