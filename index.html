@@ -11,11 +11,13 @@
     <title>
       hayaxxdev-bit | Portfolio & Game Developer - Fullstack Developer
     </title>
-    <!-- Di bagian <head> -->
+
+    <!-- Consolidated & Updated Content Security Policy -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="frame-src 'self' https:;"
+      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://www.google-analytics.com https://cloudflareinsights.com; frame-src 'self' https:;"
     />
+
     <meta
       name="title"
       content="hayaxxdev-bit | Portfolio & Game Developer - UI/UX Designer"
@@ -118,49 +120,27 @@
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
+    <!-- Fonts Domain Connections -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- Preload font kritis dengan display swap -->
+    <!-- 
+      CSP-COMPLIANT FONT LOADING
+      Removed inline 'onload' attribute triggers to meet your strict CSP rules.
+      Using standard high-priority stylesheets with font-display: swap.
+    -->
     <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      onload="
-        this.onload = null;
-        this.rel = 'stylesheet';
-      "
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
     />
 
-    <!-- Font sekunder dengan media query -->
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
-      media="print"
-      onload="
-        this.media = 'all';
-        this.onload = null;
-      "
-    />
-
-    <!-- Fallback untuk no-JS -->
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
     <!-- CSS -->
     <link rel="stylesheet" href="./public/css/main.css" />
 
     <!-- ═══════════════════════════════════════════════
      FAVICON & ICONS - COMPLETE SET
      ═══════════════════════════════════════════════ -->
-    <!-- SVG Favicon (Modern Browsers) -->
     <link rel="icon" type="image/svg+xml" href="./public/image/favicon.svg" />
-
-    <!-- ICO Favicon (Legacy Support) -->
     <link rel="icon" type="image/x-icon" href="./public/image/favicon.ico" />
     <link
       rel="shortcut icon"
@@ -205,7 +185,6 @@
       href="./public/image/apple-touch-icon-120x120.png"
     />
 
-    <!-- Apple Web App Title (Fix Warning) -->
     <meta name="apple-mobile-web-app-title" content="hayaxxdev" />
 
     <!-- Android Chrome Icons -->
@@ -233,13 +212,10 @@
     <!-- Web App Manifest -->
     <link rel="manifest" href="./public/site.webmanifest" />
 
+    <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://api.github.com https://www.google-analytics.com; frame-src 'none';"
-    />
 
     <!-- PWA Support -->
     <link rel="me" href="https://github.com/hayaxxdev-bit" />
