@@ -1,47 +1,289 @@
 /* ══════════════════════════════
-   VISUAL NOVEL DIALOGUE
+   CSS CUSTOM PROPERTIES
    ══════════════════════════════ */
+:root {
+  /* Guide System */
+  --guide-btn-size: 52px;
+  --guide-btn-size-mobile: 44px;
+  --guide-btn-size-small: 38px;
+  --guide-z-base: 150;
+  --guide-z-btn: 200;
+  --guide-z-vn: 250;
+  
+  /* Transitions */
+  --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* VN Dialogue Colors */
+  --vn-bg: rgba(8, 6, 12, 0.97);
+  --vn-border: rgba(124, 58, 237, 0.2);
+  --vn-gold: #d4af37;
+  --vn-purple: #7c3aed;
+  --vn-accent: #d81e36;
+  --vn-text: #e0e0e0;
+  --vn-text-secondary: #a0a0b0;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow-purple: 0 0 24px rgba(124, 58, 237, 0.3);
+  --shadow-glow-gold: 0 0 24px rgba(212, 175, 55, 0.3);
+}
 
+/* ══════════════════════════════
+   MAPLE'S GUIDE BUTTON
+   ══════════════════════════════ */
+.guide-mode-btn {
+  position: fixed;
+  bottom: 92px;
+  right: 24px;
+  z-index: var(--guide-z-btn);
+  width: var(--guide-btn-size);
+  height: var(--guide-btn-size);
+  border-radius: 50%;
+  background: rgba(10, 8, 15, 0.92);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: var(--vn-purple);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-smooth), 
+              border-color var(--transition-smooth), 
+              color var(--transition-smooth), 
+              box-shadow var(--transition-smooth);
+  box-shadow: var(--shadow-md);
+  will-change: transform;
+  transform: translateZ(0);
+  outline: none;
+}
+
+/* Tooltip via pseudo-element */
+.guide-mode-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(8px);
+  background: rgba(10, 8, 15, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  color: var(--vn-text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.04em;
+}
+
+.guide-mode-btn:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.guide-mode-btn:hover {
+  border-color: var(--vn-gold);
+  color: var(--vn-gold);
+  transform: scale(1.08) translateY(-2px) translateZ(0);
+  box-shadow: var(--shadow-glow-purple);
+}
+
+.guide-mode-btn:focus-visible {
+  outline: 2px solid var(--vn-purple);
+  outline-offset: 3px;
+}
+
+.guide-mode-btn:active {
+  transform: scale(0.92) translateZ(0);
+}
+
+/* Active state */
+.guide-mode-btn--active {
+  background: linear-gradient(135deg, var(--vn-accent), var(--vn-purple));
+  color: #f0f0f2;
+  border-color: var(--vn-gold);
+  animation: guide-pulse 2s ease-in-out infinite;
+}
+
+@keyframes guide-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(216, 30, 54, 0.3), 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(216, 30, 54, 0.5), 0 8px 40px rgba(124, 58, 237, 0.4);
+  }
+}
+
+.guide-mode-btn svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  pointer-events: none;
+  transition: transform var(--transition-fast);
+}
+
+.guide-mode-btn:hover svg {
+  transform: rotate(15deg);
+}
+
+/* ══════════════════════════════
+   GUIDE INDICATOR
+   ══════════════════════════════ */
+.guide-indicator {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(0);
+  z-index: var(--guide-z-base);
+  background: rgba(10, 8, 15, 0.92);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 40px;
+  padding: 10px 24px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--vn-purple);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-lg);
+  letter-spacing: 0.03em;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-smooth), 
+              visibility var(--transition-smooth), 
+              transform var(--transition-smooth);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.guide-indicator--active {
+  opacity: 1;
+  visibility: visible;
+  animation: slide-down-guide 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slide-down-guide {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.95) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1) translateZ(0);
+  }
+}
+
+.guide-indicator .auto-quest-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(124, 58, 237, 0.15);
+  border-top-color: var(--vn-purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.guide-indicator .guide-progress {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.guide-indicator .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  transition: all var(--transition-smooth);
+  will-change: transform, background, box-shadow;
+}
+
+.guide-indicator .dot.active {
+  background: var(--vn-purple);
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+  transform: scale(1.2) translateZ(0);
+}
+
+.guide-indicator .dot.completed {
+  background: var(--vn-gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+/* ══════════════════════════════
+   VISUAL NOVEL DIALOGUE CONTAINER
+   ══════════════════════════════ */
 .vn-container {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 250;
-  background: rgba(8, 6, 12, 0.97);
+  z-index: var(--guide-z-vn);
+  background: var(--vn-bg);
   backdrop-filter: blur(24px) saturate(1.3);
   -webkit-backdrop-filter: blur(24px) saturate(1.3);
-  border-top: 2px solid rgba(124, 58, 237, 0.2);
-  display: none;
+  border-top: 2px solid var(--vn-border);
+  display: flex;
   padding: 20px 32px 24px;
   gap: 20px;
   align-items: flex-start;
   box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(30px) translateZ(0);
+  transition: opacity var(--transition-smooth), 
+              visibility var(--transition-smooth), 
+              transform var(--transition-smooth);
+  will-change: transform, opacity;
+}
+
+.vn-container[hidden] {
+  display: none;
 }
 
 .vn-container--active {
-  display: flex;
-  animation: slide-up-vn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  visibility: visible;
+  animation: slide-up-vn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes slide-up-vn {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(30px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
 }
 
+/* ══════════════════════════════
+   VN CLOSE BUTTON
+   ══════════════════════════════ */
 .vn-close {
   position: absolute;
   top: 12px;
   right: 16px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--vn-text-secondary);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -50,18 +292,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-fast);
   z-index: 2;
   line-height: 1;
+  outline: none;
 }
 
 .vn-close:hover {
   background: rgba(216, 30, 54, 0.2);
-  color: var(--accent);
-  border-color: var(--accent);
-  transform: rotate(90deg);
+  color: var(--vn-accent);
+  border-color: var(--vn-accent);
+  transform: rotate(90deg) translateZ(0);
 }
 
+.vn-close:focus-visible {
+  outline: 2px solid var(--vn-accent);
+  outline-offset: 2px;
+}
+
+/* ══════════════════════════════
+   VN AVATAR
+   ══════════════════════════════ */
 .vn-avatar {
   flex-shrink: 0;
   position: relative;
@@ -73,11 +324,17 @@
   inset: -4px;
   border-radius: 50%;
   padding: 3px;
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-poison));
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-purple));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0.5;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+.vn-container:hover .vn-avatar::after {
+  opacity: 0.8;
 }
 
 .vn-avatar-img {
@@ -87,54 +344,128 @@
   border: 2px solid rgba(212, 175, 55, 0.2);
   object-fit: cover;
   box-shadow: 0 0 30px rgba(124, 58, 237, 0.15);
+  transform: translateZ(0);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.vn-container:hover .vn-avatar-img {
+  transform: scale(1.05) translateZ(0);
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.25);
+}
+
+/* Avatar Emotion */
+.vn-avatar-emotion {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  background: rgba(10, 8, 15, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  transform: scale(0) rotate(-180deg);
+  transition: all var(--transition-bounce);
+  pointer-events: none;
+}
+
+.vn-avatar-emotion--show {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* ══════════════════════════════
+   VN TEXTBOX
+   ══════════════════════════════ */
 .vn-textbox {
   flex: 1;
   min-width: 0;
   position: relative;
 }
 
+/* Speaker Name */
 .vn-name {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-weight: 700;
-  color: var(--accent-gold);
+  color: var(--vn-gold);
   font-size: 0.85rem;
   margin-bottom: 6px;
   letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 1.5em;
+  flex-wrap: wrap;
 }
 
-.vn-name .vn-badge {
+.vn-speaker {
+  transition: color var(--transition-fast);
+}
+
+.vn-badge {
   font-size: 0.55rem;
   font-weight: 400;
   background: rgba(124, 58, 237, 0.15);
   padding: 2px 10px;
   border-radius: 12px;
-  color: var(--accent-poison);
+  color: var(--vn-purple);
   border: 1px solid rgba(124, 58, 237, 0.15);
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
+.vn-route-badge {
+  font-size: 0.55rem;
+  font-weight: 400;
+  padding: 2px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+/* Message Area */
 .vn-message {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, sans-serif);
   font-size: 0.98rem;
-  color: var(--text);
+  color: var(--vn-text);
   line-height: 1.7;
   min-height: 48px;
   padding-right: 40px;
+  contain: layout style;
 }
 
+.vn-message--new {
+  animation: dialogue-enter 0.3s ease forwards;
+}
+
+@keyframes dialogue-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typing Cursor */
 .vn-message .typing-cursor {
   display: inline-block;
   width: 2px;
-  height: 1em;
-  background: var(--accent-poison);
+  height: 1.1em;
+  background: var(--vn-purple);
   animation: blink-cursor 1s step-end infinite;
   margin-left: 2px;
   vertical-align: text-bottom;
+  will-change: opacity;
 }
 
 @keyframes blink-cursor {
@@ -142,69 +473,477 @@
   50% { opacity: 0; }
 }
 
+/* Text Highlight Styles */
+.vn-message .highlight {
+  color: var(--vn-gold);
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.vn-message .action-hint {
+  color: var(--vn-purple);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* ══════════════════════════════
+   VN QUICK REPLIES
+   ══════════════════════════════ */
+.vn-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all var(--transition-fast);
+  pointer-events: none;
+}
+
+.vn-quick-replies--active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.vn-quick-reply {
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  color: var(--vn-text);
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.vn-quick-reply::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(212, 175, 55, 0.1));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.vn-quick-reply:hover::before,
+.vn-quick-reply:focus-visible::before {
+  opacity: 1;
+}
+
+.vn-quick-reply:hover,
+.vn-quick-reply:focus-visible {
+  border-color: var(--vn-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.25);
+}
+
+.vn-quick-reply:active {
+  transform: scale(0.95);
+}
+
+.vn-quick-reply:focus-visible {
+  outline: 2px solid var(--vn-purple);
+  outline-offset: 2px;
+}
+
+/* Quick Reply Variants */
+.vn-quick-reply--primary {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: var(--vn-purple);
+  color: #fff;
+  font-weight: 600;
+}
+
+.vn-quick-reply--gold {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--vn-gold);
+  color: var(--vn-gold);
+}
+
+/* ══════════════════════════════
+   VN ACTION BUTTONS
+   ══════════════════════════════ */
 .vn-actions {
   display: flex;
   gap: 8px;
   margin-top: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
+/* Next Button */
 .vn-next {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(124, 58, 237, 0.05));
   border: 1px solid rgba(124, 58, 237, 0.25);
-  color: var(--accent-poison);
+  color: var(--vn-purple);
   padding: 8px 20px;
   border-radius: 24px;
   cursor: pointer;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-fast);
   letter-spacing: 0.04em;
   display: flex;
   align-items: center;
   gap: 6px;
+  outline: none;
+  position: relative;
+  overflow: hidden;
 }
 
-.vn-next:hover {
-  background: rgba(124, 58, 237, 0.25);
-  border-color: var(--accent-poison);
-  transform: translateX(4px);
-  box-shadow: 0 0 24px rgba(124, 58, 237, 0.15);
+.vn-next::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(212, 175, 55, 0.1));
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.vn-next:hover::after,
+.vn-next:focus-visible::after {
+  opacity: 1;
+}
+
+.vn-next:hover,
+.vn-next:focus-visible {
+  border-color: var(--vn-purple);
+  transform: translateX(4px) translateZ(0);
+  box-shadow: var(--shadow-glow-purple);
 }
 
 .vn-next:active {
-  transform: scale(0.95);
+  transform: scale(0.95) translateZ(0);
+}
+
+.vn-next:focus-visible {
+  outline: 2px solid var(--vn-purple);
+  outline-offset: 2px;
 }
 
 .vn-next .vn-key-hint {
   font-size: 0.55rem;
   opacity: 0.5;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   padding: 2px 6px;
   border-radius: 4px;
 }
 
+/* Skip & Repeat Buttons */
+.vn-skip,
+.vn-repeat {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--vn-text-secondary);
+  padding: 8px 16px;
+  border-radius: 24px;
+  cursor: pointer;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  outline: none;
+}
+
+.vn-skip:hover,
+.vn-repeat:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.vn-skip:focus-visible,
+.vn-repeat:focus-visible {
+  outline: 2px solid var(--vn-text-secondary);
+  outline-offset: 2px;
+}
+
+.vn-skip:active,
+.vn-repeat:active {
+  transform: scale(0.95);
+}
+
+.vn-skip:hover {
+  color: var(--vn-gold);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.vn-repeat:hover {
+  color: var(--vn-purple);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+.vn-key-hint {
+  font-size: 0.55rem;
+  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+/* ══════════════════════════════
+   VN PROGRESS BAR
+   ══════════════════════════════ */
 .vn-progress {
   position: absolute;
   bottom: -8px;
   left: 0;
   right: 0;
-  height: 2px;
-  background: rgba(255,255,255,0.04);
+  height: 3px;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .vn-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-gold), var(--accent-poison));
+  background: linear-gradient(90deg, var(--vn-gold), var(--vn-purple), var(--vn-accent));
+  background-size: 200% 100%;
   border-radius: 2px;
   width: 0%;
-  transition: width 0.1s linear;
+  transition: width 0.3s ease;
+  animation: progress-shimmer 2s linear infinite;
+}
+
+@keyframes progress-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ══════════════════════════════
+   VN CONTEXT INFO
+   ══════════════════════════════ */
+.vn-context {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 8, 15, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  color: var(--vn-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.02em;
+}
+
+.vn-container:hover .vn-context,
+.vn-container:focus-within .vn-context {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.vn-context-icon {
+  font-size: 0.75rem;
+}
+
+/* ══════════════════════════════
+   VN SKELETON LOADING (Optional)
+   ══════════════════════════════ */
+.vn-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.vn-skeleton--avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.vn-skeleton--name {
+  width: 120px;
+  height: 16px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+}
+
+.vn-skeleton--text {
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 6px;
+}
+
+.vn-skeleton--text:last-child {
+  width: 60%;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* ══════════════════════════════
+   VN ROUTE TRANSITIONS
+   ══════════════════════════════ */
+.vn-container[data-current-route="home"] {
+  --route-accent: var(--vn-gold);
+}
+
+.vn-container[data-current-route="maple"] {
+  --route-accent: var(--vn-purple);
+}
+
+.vn-container[data-current-route="project"] {
+  --route-accent: #10b981;
+}
+
+.vn-container[data-current-route="about"] {
+  --route-accent: #3b82f6;
+}
+
+.vn-container[data-current-route="contact"] {
+  --route-accent: #ef4444;
+}
+
+.vn-container[data-current-route] .vn-avatar::after {
+  background: linear-gradient(135deg, var(--route-accent, var(--vn-gold)), var(--vn-purple));
+}
+
+/* ══════════════════════════════
+   VN DIALOGUE HISTORY (Optional)
+   ══════════════════════════════ */
+.vn-history {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: none;
+}
+
+.vn-history--visible {
+  display: block;
+}
+
+.vn-history-item {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 0.8rem;
+  color: var(--vn-text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.vn-history-item:hover {
+  color: var(--vn-text);
+}
+
+.vn-history-item:last-child {
+  border-bottom: none;
+}
+
+/* ══════════════════════════════
+   VN ACCESSIBILITY
+   ══════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .vn-container,
+  .vn-container--active,
+  .guide-mode-btn,
+  .guide-indicator,
+  .guide-indicator--active {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .vn-message .typing-cursor {
+    animation: none !important;
+  }
+  
+  .vn-progress-bar {
+    animation: none !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+  .vn-container {
+    border: 2px solid ButtonText;
+  }
+  
+  .vn-close,
+  .vn-next,
+  .vn-quick-reply {
+    border: 1px solid ButtonText;
+  }
+}
+
+/* ══════════════════════════════
+   RESPONSIVE STYLES
+   ══════════════════════════════ */
+@media (max-width: 1024px) {
+  .vn-container {
+    padding: 18px 24px 20px;
+    gap: 16px;
+  }
+  
+  .vn-avatar-img {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .vn-message {
+    font-size: 0.92rem;
+  }
 }
 
 @media (max-width: 768px) {
+  .guide-mode-btn {
+    bottom: 148px;
+    right: 12px;
+    width: var(--guide-btn-size-mobile);
+    height: var(--guide-btn-size-mobile);
+  }
+  
+  .guide-mode-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .guide-mode-btn::after {
+    display: none;
+  }
+  
+  .guide-indicator {
+    top: 80px;
+    padding: 6px 16px;
+    font-size: 0.65rem;
+    gap: 8px;
+  }
+  
+  .guide-indicator .auto-quest-spinner {
+    width: 12px;
+    height: 12px;
+  }
+  
   .vn-container {
     padding: 16px 16px 20px;
     gap: 14px;
@@ -215,6 +954,14 @@
     height: 48px;
   }
   
+  .vn-avatar-emotion {
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+    top: -6px;
+    right: -6px;
+  }
+  
   .vn-message {
     font-size: 0.88rem;
     padding-right: 0;
@@ -223,6 +970,13 @@
   
   .vn-name {
     font-size: 0.75rem;
+    gap: 6px;
+  }
+  
+  .vn-badge,
+  .vn-route-badge {
+    font-size: 0.5rem;
+    padding: 2px 8px;
   }
   
   .vn-close {
@@ -232,9 +986,45 @@
     top: 8px;
     right: 10px;
   }
+  
+  .vn-next {
+    font-size: 0.7rem;
+    padding: 6px 16px;
+  }
+  
+  .vn-skip,
+  .vn-repeat {
+    font-size: 0.65rem;
+    padding: 6px 12px;
+  }
+  
+  .vn-quick-replies {
+    gap: 6px;
+  }
+  
+  .vn-quick-reply {
+    font-size: 0.75rem;
+    padding: 6px 14px;
+  }
+  
+  .vn-context {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
+  .guide-mode-btn {
+    bottom: 130px;
+    right: 8px;
+    width: var(--guide-btn-size-small);
+    height: var(--guide-btn-size-small);
+  }
+  
+  .guide-mode-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
   .vn-container {
     padding: 12px 12px 16px;
     gap: 10px;
@@ -245,13 +1035,141 @@
     height: 40px;
   }
   
+  .vn-avatar-emotion {
+    width: 18px;
+    height: 18px;
+    font-size: 0.6rem;
+  }
+  
+  .vn-avatar::after {
+    inset: -2px;
+    padding: 2px;
+  }
+  
   .vn-message {
     font-size: 0.82rem;
     min-height: 36px;
   }
   
+  .vn-name {
+    font-size: 0.7rem;
+  }
+  
   .vn-next {
     font-size: 0.65rem;
     padding: 6px 14px;
+  }
+  
+  .vn-skip,
+  .vn-repeat {
+    font-size: 0.6rem;
+    padding: 5px 10px;
+  }
+  
+  .vn-quick-reply {
+    font-size: 0.7rem;
+    padding: 5px 12px;
+  }
+  
+  .vn-actions {
+    gap: 6px;
+  }
+  
+  .vn-badge,
+  .vn-route-badge {
+    display: none;
+  }
+}
+
+/* ══════════════════════════════
+   VN ANIMATIONS & EFFECTS
+   ══════════════════════════════ */
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.vn-message--shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Glow effect for special dialogues */
+.vn-message--glow {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* Bounce animation for new replies */
+@keyframes reply-bounce {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.vn-quick-reply--new {
+  animation: reply-bounce 0.3s ease forwards;
+}
+
+/* Fade in for action buttons */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vn-actions > * {
+  animation: fade-in-up 0.3s ease forwards;
+}
+
+.vn-actions > *:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.vn-actions > *:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+/* Scrollbar styling for VN container */
+.vn-container *::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vn-container *::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 2px;
+}
+
+.vn-container *::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.3);
+  border-radius: 2px;
+}
+
+.vn-container *::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.5);
+}
+
+/* Selection styling */
+.vn-message ::selection {
+  background: rgba(124, 58, 237, 0.3);
+  color: #fff;
+}
+
+.vn-message .highlight ::selection {
+  background: rgba(212, 175, 55, 0.3);
+}
+
+/* Print styles */
+@media print {
+  .vn-container,
+  .guide-mode-btn,
+  .guide-indicator {
+    display: none !important;
   }
 }

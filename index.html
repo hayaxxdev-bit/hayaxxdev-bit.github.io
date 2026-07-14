@@ -322,7 +322,7 @@
          ════════════════════════════════════════════════════════════════ -->
     <div class="bg-noise" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
-
+    <!-- 
     <div class="bg-syrup-container" aria-hidden="true">
       <div class="syrup-bg" id="syrupBg">
         <img
@@ -333,12 +333,20 @@
           loading="lazy"
           onerror="this.src = './public/image/character/syrup.png'"
         />
-        <!-- Reverb/Shadow trail -->
         <div class="syrup-reverb"></div>
         <div class="syrup-reverb syrup-reverb--2"></div>
         <div class="syrup-reverb syrup-reverb--3"></div>
       </div>
-    </div>
+    </div> -->
+
+    <!-- ════════════════════════════════════════════════════════════════
+         NEW: ACHIEVEMENT TOAST CONTAINER
+         ════════════════════════════════════════════════════════════════ -->
+    <div
+      id="achievementToasts"
+      class="achievement-toasts"
+      aria-live="polite"
+    ></div>
 
     <!-- ════════════════════════════════════════════════════════════════
          APP CONTAINER
@@ -430,6 +438,15 @@
                 kreasi digital yang memukau.
               </p>
 
+              <!-- NEW: Now Building status widget -->
+              <div class="now-building" role="status">
+                <span class="now-building__dot" aria-hidden="true"></span>
+                <span class="now-building__label">Sedang Dikerjakan:</span>
+                <span class="now-building__project"
+                  >Nexovra — Finance Dashboard</span
+                >
+              </div>
+
               <div class="hero__cta">
                 <button
                   class="btn btn--primary"
@@ -497,9 +514,10 @@
                 </div>
 
                 <div class="stat stat--center" role="listitem">
-                  <span class="stat__value accent animate" id="activeSince"
-                    >2022</span
-                  >
+                  <span
+                    class="stat__value accent animate"
+                    id="activeSince"
+                  ></span>
                   <span class="stat__label">Aktif Sejak</span>
                   <span class="stat__subtext">Perjalanan coding</span>
                   <span class="stat__tooltip"
@@ -556,10 +574,20 @@
           <!-- ════════════════════════════════════════════════════════════════
                FEATURED CAROUSEL
                ════════════════════════════════════════════════════════════════ -->
-         <div class="featured">
+          <div class="featured">
             <div class="section-head">
               <div>
-                <h2 class="section-title">Sorotan Karya</h2>
+                <h2 class="section-title">
+                  <span class="section-title__icon" aria-hidden="true">✦</span>
+                  Sorotan Karya
+                  <span class="section-title__badge" id="repoCountBadge"
+                    >0</span
+                  >
+                </h2>
+                <p class="section-sub">
+                  Proyek unggulan dari GitHub ·
+                  <span id="lastUpdateTime">diperbarui otomatis</span>
+                </p>
                 <div class="section-rule" aria-hidden="true"></div>
               </div>
               <div
@@ -568,7 +596,7 @@
                 aria-label="Carousel navigation"
               >
                 <button
-                  class="car-btn"
+                  class="car-btn car-btn--prev"
                   id="carPrev"
                   aria-label="Slide sebelumnya"
                 >
@@ -584,8 +612,12 @@
                     <polyline points="15 18 9 12 15 6" />
                   </svg>
                 </button>
+                <span class="carousel-counter" id="carouselCounter">
+                  <span id="currentSlideNum">1</span> /
+                  <span id="totalSlideNum">6</span>
+                </span>
                 <button
-                  class="car-btn"
+                  class="car-btn car-btn--next"
                   id="carNext"
                   aria-label="Slide selanjutnya"
                 >
@@ -603,10 +635,30 @@
                 </button>
               </div>
             </div>
+
             <div class="carousel">
               <div class="carousel__track" id="carTrack" role="list">
-                <div class="car-placeholder">Memuat sorotan karya...</div>
+                <div class="car-placeholder">
+                  <span class="car-placeholder__icon" aria-hidden="true"
+                    >🍁</span
+                  >
+                  <p>Memuat sorotan karya...</p>
+                  <span class="car-placeholder__sub"
+                    >Mengambil data dari GitHub</span
+                  >
+                </div>
               </div>
+
+              <div
+                class="carousel__progress"
+                role="progressbar"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <div class="carousel__progress-fill" id="carProgressFill"></div>
+              </div>
+
               <div
                 class="carousel__dots"
                 id="carDots"
@@ -909,6 +961,7 @@
                 karakter, dan visual storytelling. Terbuka untuk kolaborasi
                 kreatif dan proyek freelance.
               </p>
+
               <h3 class="about__skills-title">Tech Stack</h3>
               <div class="skills-grid">
                 <div class="skill-group">
@@ -937,6 +990,113 @@
                   </div>
                 </div>
               </div>
+
+              <!-- NEW: Skill proficiency bars -->
+              <h3 class="about__skills-title">Proficiency</h3>
+              <div class="skill-bars">
+                <div class="skill-bar reveal-on-scroll">
+                  <div class="skill-bar__head">
+                    <span>HTML / CSS / JavaScript</span>
+                    <span class="skill-bar__pct">90%</span>
+                  </div>
+                  <div class="skill-bar__track">
+                    <div class="skill-bar__fill" data-level="90"></div>
+                  </div>
+                </div>
+                <div class="skill-bar reveal-on-scroll">
+                  <div class="skill-bar__head">
+                    <span>React</span>
+                    <span class="skill-bar__pct">75%</span>
+                  </div>
+                  <div class="skill-bar__track">
+                    <div class="skill-bar__fill" data-level="75"></div>
+                  </div>
+                </div>
+                <div class="skill-bar reveal-on-scroll">
+                  <div class="skill-bar__head">
+                    <span>Node.js / Express</span>
+                    <span class="skill-bar__pct">70%</span>
+                  </div>
+                  <div class="skill-bar__track">
+                    <div class="skill-bar__fill" data-level="70"></div>
+                  </div>
+                </div>
+                <div class="skill-bar reveal-on-scroll">
+                  <div class="skill-bar__head">
+                    <span>Tailwind CSS</span>
+                    <span class="skill-bar__pct">85%</span>
+                  </div>
+                  <div class="skill-bar__track">
+                    <div class="skill-bar__fill" data-level="85"></div>
+                  </div>
+                </div>
+                <div class="skill-bar reveal-on-scroll">
+                  <div class="skill-bar__head">
+                    <span>Supabase</span>
+                    <span class="skill-bar__pct">65%</span>
+                  </div>
+                  <div class="skill-bar__track">
+                    <div class="skill-bar__fill" data-level="65"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- NEW: Journey timeline -->
+              <h3 class="about__skills-title">Perjalanan</h3>
+              <ol class="journey-timeline">
+                <li class="journey-item reveal-on-scroll">
+                  <span class="journey-item__dot" aria-hidden="true"></span>
+                  <div class="journey-item__body">
+                    <span class="journey-item__stage">Awal Perjalanan</span>
+                    <p>
+                      Mulai belajar HTML, CSS, dan JavaScript dasar —
+                      bereksperimen dengan proyek-proyek kecil untuk memahami
+                      fundamental web.
+                    </p>
+                  </div>
+                </li>
+                <li class="journey-item reveal-on-scroll">
+                  <span class="journey-item__dot" aria-hidden="true"></span>
+                  <div class="journey-item__body">
+                    <span class="journey-item__stage"
+                      >Eksplorasi Game & Fan Project</span
+                    >
+                    <p>
+                      Membangun serangkaian proyek fan-made bertema Bofuri —
+                      "Maple's Vault", "Maple's Odyssey", dan "Syrup's
+                      Adventure" — sambil mempelajari canvas rendering, animasi,
+                      dan game state.
+                    </p>
+                  </div>
+                </li>
+                <li class="journey-item reveal-on-scroll">
+                  <span class="journey-item__dot" aria-hidden="true"></span>
+                  <div class="journey-item__body">
+                    <span class="journey-item__stage"
+                      >Full-Stack & Backend</span
+                    >
+                    <p>
+                      Mulai membangun aplikasi full-stack seperti FileShare Hub
+                      dan Nexovra — belajar arsitektur backend, database, auth,
+                      dan migrasi ke Supabase/serverless.
+                    </p>
+                  </div>
+                </li>
+                <li class="journey-item reveal-on-scroll">
+                  <span
+                    class="journey-item__dot journey-item__dot--current"
+                    aria-hidden="true"
+                  ></span>
+                  <div class="journey-item__body">
+                    <span class="journey-item__stage">Saat Ini</span>
+                    <p>
+                      Terus mengasah kemampuan fullstack sambil menjaga sentuhan
+                      estetika manga di setiap proyek — dari dashboard finansial
+                      hingga fan-site interaktif.
+                    </p>
+                  </div>
+                </li>
+              </ol>
             </div>
           </div>
         </section>
@@ -1120,13 +1280,17 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════
-         MAPLE'S GUIDE BUTTON
-         ════════════════════════════════════════════════════════════════ -->
+     MAPLE'S GUIDE BUTTON
+     ════════════════════════════════════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════
+     MAPLE'S GUIDE BUTTON
+     ════════════════════════════════════════════════════════════════ -->
     <button
       id="guideModeBtn"
       class="guide-mode-btn"
       title="Maple's Guide Tour"
       aria-label="Start Maple's guide tour"
+      data-tooltip="Guide Tour 🍁"
     >
       <svg
         width="22"
@@ -1146,16 +1310,17 @@
     </button>
 
     <!-- ════════════════════════════════════════════════════════════════
-         MAPLE'S GUIDE INDICATOR
-         ════════════════════════════════════════════════════════════════ -->
+     MAPLE'S GUIDE INDICATOR
+     ════════════════════════════════════════════════════════════════ -->
     <div
       id="guideIndicator"
       class="guide-indicator"
       role="status"
       aria-live="polite"
+      aria-hidden="true"
     >
       <span class="auto-quest-spinner" aria-hidden="true"></span>
-      <span>[Maple's Guiding... 🍁]</span>
+      <span class="guide-text">Maple's Guiding... 🍁</span>
       <div
         class="guide-progress"
         role="progressbar"
@@ -1164,26 +1329,28 @@
         aria-valuemax="6"
         aria-label="Guide progress"
       >
-        <span class="dot active" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
+        <span class="dot" data-step="0"></span>
+        <span class="dot" data-step="1"></span>
+        <span class="dot" data-step="2"></span>
+        <span class="dot" data-step="3"></span>
+        <span class="dot" data-step="4"></span>
+        <span class="dot" data-step="5"></span>
       </div>
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════
-         VISUAL NOVEL DIALOGUE BOX
-         ════════════════════════════════════════════════════════════════ -->
+     VISUAL NOVEL DIALOGUE BOX - INTERACTIVE VERSION
+     ════════════════════════════════════════════════════════════════ -->
     <div
       id="vnContainer"
       class="vn-container"
       role="dialog"
-      aria-label="Visual novel dialogue"
+      aria-label="Maple's Dialogue"
       aria-modal="true"
       hidden
+      data-current-route="home"
     >
+      <!-- Close Button -->
       <button
         id="vnClose"
         class="vn-close"
@@ -1192,22 +1359,73 @@
       >
         ✕
       </button>
+
+      <!-- Avatar Section -->
       <div class="vn-avatar">
         <img
           src="./public/image/character/bofuri.jpeg"
-          alt="hayaxx-bot avatar"
+          alt="Maple avatar"
           class="vn-avatar-img"
           width="64"
           height="64"
           loading="lazy"
         />
+        <div class="vn-avatar-emotion" aria-hidden="true"></div>
       </div>
+
+      <!-- Dialogue Content -->
       <div class="vn-textbox">
-        <div class="vn-name">hayaxx-bot</div>
-        <div class="vn-message" id="vnMessage"></div>
-        <button class="vn-next" id="vnNext" aria-label="Next message">
-          ▼ Next
-        </button>
+        <!-- Speaker Name -->
+        <div class="vn-name">
+          <span class="vn-speaker">🍁 Maple</span>
+          <span class="vn-badge">Guild Member</span>
+          <span class="vn-route-badge" data-route-indicator></span>
+        </div>
+
+        <!-- Message Area -->
+        <div class="vn-message" id="vnMessage">
+          <span class="typing-cursor"></span>
+        </div>
+
+        <!-- Quick Reply Buttons (Interactive) -->
+        <div
+          class="vn-quick-replies"
+          id="vnQuickReplies"
+          role="group"
+          aria-label="Quick replies"
+        >
+          <!-- Dynamic buttons will be inserted here -->
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="vn-actions">
+          <button class="vn-next" id="vnNext" aria-label="Next message">
+            ▼ <span class="vn-key-hint">Lanjut</span>
+          </button>
+          <button class="vn-skip" id="vnSkip" aria-label="Skip dialogue">
+            ⏭ <span class="vn-key-hint">Skip</span>
+          </button>
+          <button class="vn-repeat" id="vnRepeat" aria-label="Repeat dialogue">
+            🔄 <span class="vn-key-hint">Ulang</span>
+          </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="vn-progress">
+          <div
+            class="vn-progress-bar"
+            id="vnProgressBar"
+            style="width: 0%"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Context Info (Optional) -->
+      <div class="vn-context" aria-live="polite">
+        <span class="vn-context-icon" aria-hidden="true">💡</span>
+        <span class="vn-context-text"
+          >Tekan Space/Enter untuk lanjut, Esc untuk tutup</span
+        >
       </div>
     </div>
 
