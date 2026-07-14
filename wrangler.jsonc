@@ -1,12 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "github-proxy-hayaxxdev",
-  "compatibility_date": "2026-07-14",
+  "main": "api/index.js", // <-- Pastikan ini tepat!
+  "compatibility_date": "2026-07-15",
   "observability": {
     "enabled": true
-  },
-  "assets": {
-    "directory": ".",
-    "binding": "ASSETS"
   }
 }
