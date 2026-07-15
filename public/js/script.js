@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════
 // PORTFOLIO SCRIPT - hayaxxdev-bit
-// ENTERPRISE VERSION 2.0 - AI-ENHANCED
+// VERSION 4.0 - MODULAR & OPTIMIZED
 // TEMA MAPLE BOFURI
 // ═══════════════════════════════════════════
 
@@ -14,6 +14,7 @@
     USERNAME: "hayaxxdev-bit",
     GITHUB_API_BASE: "https://api.github.com",
     GITHUB_RAW_BASE: "https://raw.githubusercontent.com",
+    CUSTOM_API_BASE: "https://hayaxxdev-bit-github-io.vercel.app",
     BGM_VOLUME: 0.5,
     SFX_VOLUME: 0.15,
     TYPING_SPEED_MIN: 25,
@@ -21,15 +22,15 @@
     GUIDE_DELAY: 5000,
     AUTO_LOAD_DELAY: 800,
     AUTOPLAY_DELAY: 4500,
-    MAX_REPOS_PER_PAGE: 100, // GitHub max is 100
-    ALL_REPOS: true, // Fetch ALL repos, not just 30
+    MAX_REPOS_PER_PAGE: 100,
+    ALL_REPOS: true,
     FEATURED_COUNT: 6,
     LOADER_TIMEOUT: 5000,
     STATS_ANIMATION_DURATION: 1500,
-    CACHE_DURATION: 1000 * 60 * 30, // 30 minutes
+    CACHE_DURATION: 1000 * 60 * 30,
     RETRY_MAX: 3,
     RETRY_DELAY: 1000,
-    RATE_LIMIT_THRESHOLD: 10, // Warn when < 10 requests left
+    RATE_LIMIT_THRESHOLD: 10,
   };
 
   // ═══════════════════════════════════════════
@@ -63,7 +64,6 @@
     const date = new Date(dateString);
     const now = new Date();
     const diffSec = Math.floor((now - date) / 1000);
-
     if (diffSec < 60) return "Baru saja";
     if (diffSec < 3600) return `${Math.floor(diffSec / 60)} menit lalu`;
     if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} jam lalu`;
@@ -73,6 +73,12 @@
     return `${Math.floor(diffSec / 31536000)} tahun lalu`;
   };
 
+  const escapeHtml = (text) => {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   const ICONS = {
     star: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/></svg>',
     fork: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0zM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0z"/></svg>',
@@ -80,78 +86,66 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     repo: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>',
     demo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+    pages:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+    readme:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   };
 
   // ═══════════════════════════════════════════
-  // 3. STORAGE / CACHE MANAGER
+  // 3. CACHE MANAGER
   // ═══════════════════════════════════════════
   class CacheManager {
     constructor() {
       this.prefix = "maple_cache_";
     }
-
     _getKey(key) {
       return this.prefix + key;
     }
-
     set(key, data, ttl = CONFIG.CACHE_DURATION) {
       try {
-        const item = {
-          data,
-          timestamp: Date.now(),
-          ttl,
-        };
-        localStorage.setItem(this._getKey(key), JSON.stringify(item));
+        localStorage.setItem(
+          this._getKey(key),
+          JSON.stringify({ data, timestamp: Date.now(), ttl }),
+        );
         return true;
       } catch (e) {
         console.warn("Cache write failed:", e);
         return false;
       }
     }
-
     get(key) {
       try {
         const raw = localStorage.getItem(this._getKey(key));
         if (!raw) return null;
-
         const item = JSON.parse(raw);
-        const age = Date.now() - item.timestamp;
-
-        if (age > item.ttl) {
+        if (Date.now() - item.timestamp > item.ttl) {
           localStorage.removeItem(this._getKey(key));
           return null;
         }
-
         return item.data;
       } catch (e) {
         return null;
       }
     }
-
     remove(key) {
       localStorage.removeItem(this._getKey(key));
     }
-
     clear() {
-      const keys = Object.keys(localStorage);
-      keys.forEach((key) => {
-        if (key.startsWith(this.prefix)) {
-          localStorage.removeItem(key);
-        }
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith(this.prefix)) localStorage.removeItem(key);
       });
     }
   }
 
   // ═══════════════════════════════════════════
-  // 4. AUDIO MANAGER (Tetap sama, hanya tambahan)
+  // 4. AUDIO MANAGER
   // ═══════════════════════════════════════════
   class AudioManager {
     static instance = null;
-
     constructor() {
       if (AudioManager.instance) return AudioManager.instance;
       AudioManager.instance = this;
-
       this.context = null;
       this.masterGain = null;
       this.bgmGain = null;
@@ -161,7 +155,6 @@
       this.volume = CONFIG.BGM_VOLUME;
       this.currentTrackIndex = 0;
       this.isInitialized = false;
-
       this.playlist = [
         {
           name: "🎵 Lo-Fi Anime Beats",
@@ -170,14 +163,12 @@
         { name: "🎵 Maple's Defense", url: "./public/music/maple-theme.mp3" },
         { name: "🎵 Adventure Time", url: "./public/music/adventure.mp3" },
       ];
-
       this.uiElements = {
         toggle: document.getElementById("bgmToggle"),
         next: document.getElementById("bgmNext"),
         label: document.getElementById("bgmLabel"),
         volumeFill: document.querySelector(".bgm-volume-fill"),
       };
-
       this.sfxMap = {
         menuSelect: this._createSFX("square", [880, 1174.66], 0.08, 0.12),
         questClear: this._createMelodySFX(
@@ -194,17 +185,14 @@
           0.3,
         ),
       };
-
       this.bindEvents();
     }
-
     _createSFX(type, frequencies, gainValue, duration, exponential = false) {
       return () => {
         if (!this.ensureContext()) return;
         const now = this.context.currentTime;
         const osc = this.context.createOscillator();
         const gain = this.context.createGain();
-
         osc.type = type;
         if (exponential) {
           osc.frequency.setValueAtTime(frequencies[0], now);
@@ -220,32 +208,26 @@
             );
           });
         }
-
         gain.gain.setValueAtTime(gainValue, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
         osc.connect(gain);
         gain.connect(this.sfxGain);
         osc.start(now);
         osc.stop(now + duration);
       };
     }
-
     _createMelodySFX(notes, gainValue, noteDuration) {
       return () => {
         if (!this.ensureContext()) return;
         const now = this.context.currentTime;
-
         notes.forEach((freq, i) => {
           const osc = this.context.createOscillator();
           const gain = this.context.createGain();
           osc.type = i % 2 === 0 ? "triangle" : "sine";
           osc.frequency.value = freq;
-
           const start = now + i * (noteDuration / notes.length);
           gain.gain.setValueAtTime(gainValue, start);
           gain.gain.exponentialRampToValueAtTime(0.001, start + noteDuration);
-
           osc.connect(gain);
           gain.connect(this.sfxGain);
           osc.start(start);
@@ -253,61 +235,45 @@
         });
       };
     }
-
     init() {
       if (this.isInitialized) return this;
-
       try {
         this.context = new (window.AudioContext || window.webkitAudioContext)();
         this.masterGain = this.context.createGain();
         this.bgmGain = this.context.createGain();
         this.sfxGain = this.context.createGain();
-
         this.masterGain.gain.value = 1;
         this.bgmGain.gain.value = this.volume;
         this.sfxGain.gain.value = CONFIG.SFX_VOLUME;
-
         this.bgmGain.connect(this.masterGain);
         this.sfxGain.connect(this.masterGain);
         this.masterGain.connect(this.context.destination);
-
         this.isInitialized = true;
       } catch (error) {
         console.warn("Audio initialization failed:", error);
       }
-
       return this;
     }
-
     ensureContext() {
       if (!this.isInitialized) this.init();
-      if (this.context?.state === "suspended") {
-        this.context.resume();
-      }
+      if (this.context?.state === "suspended") this.context.resume();
       return this.context;
     }
-
     async playTrack(index) {
       if (!this.ensureContext()) return;
-
       const track = this.playlist[index];
       if (!track) return;
-
       this.stopTrack();
-
       try {
         const response = await fetch(track.url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-
         this.currentSource = this.context.createBufferSource();
         this.currentSource.buffer = audioBuffer;
         this.currentSource.loop = true;
         this.currentSource.connect(this.bgmGain);
         this.currentSource.start(0);
-
         this.isPlaying = true;
         this.updateUI();
       } catch (error) {
@@ -316,7 +282,6 @@
         this.updateUI();
       }
     }
-
     stopTrack() {
       if (this.currentSource) {
         try {
@@ -328,10 +293,8 @@
       this.isPlaying = false;
       this.updateUI();
     }
-
     toggle() {
       if (!this.ensureContext()) return;
-
       if (this.isPlaying) {
         this.stopTrack();
         this.playSFX("close");
@@ -340,49 +303,35 @@
         this.playSFX("menuSelect");
       }
     }
-
     next() {
       this.currentTrackIndex =
         (this.currentTrackIndex + 1) % this.playlist.length;
-      if (this.isPlaying) {
-        this.playTrack(this.currentTrackIndex);
-      }
+      if (this.isPlaying) this.playTrack(this.currentTrackIndex);
       this.updateUI();
     }
-
     setVolume(value) {
       this.volume = Math.max(0, Math.min(1, value));
-      if (this.bgmGain) {
-        this.bgmGain.gain.value = this.volume;
-      }
-      if (this.uiElements.volumeFill) {
+      if (this.bgmGain) this.bgmGain.gain.value = this.volume;
+      if (this.uiElements.volumeFill)
         this.uiElements.volumeFill.style.width = `${this.volume * 100}%`;
-      }
     }
-
     playSFX(type) {
       if (!this.ensureContext()) return;
       this.sfxMap[type]?.();
     }
-
     updateUI() {
       const { toggle, label } = this.uiElements;
-
       if (toggle) {
         toggle.classList.toggle("bgm-toggle--playing", this.isPlaying);
         const svg = toggle.querySelector("svg");
-        if (svg) {
+        if (svg)
           svg.innerHTML = this.isPlaying
             ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
             : '<path d="M8 5v14l11-7z"/>';
-        }
       }
-
-      if (label && this.playlist[this.currentTrackIndex]) {
+      if (label && this.playlist[this.currentTrackIndex])
         label.textContent = this.playlist[this.currentTrackIndex].name;
-      }
     }
-
     bindEvents() {
       this.uiElements.toggle?.addEventListener("click", () => this.toggle());
       this.uiElements.next?.addEventListener("click", () => {
@@ -390,7 +339,6 @@
         this.next();
       });
     }
-
     destroy() {
       this.stopTrack();
       if (this.context) {
@@ -404,20 +352,18 @@
   }
 
   // ═══════════════════════════════════════════
-  // 5. ACHIEVEMENT SYSTEM (BARU)
+  // 5. ACHIEVEMENT SYSTEM
   // ═══════════════════════════════════════════
   class AchievementSystem {
     constructor() {
       this.achievements = new Map();
       this.toastContainer = document.getElementById("achievementToasts");
       this.audioManager = null;
-
       this.defineAchievements();
       this.loadFromStorage();
     }
-
     defineAchievements() {
-      const defs = [
+      [
         {
           id: "first_visit",
           name: "Petualang Baru!",
@@ -438,13 +384,6 @@
           desc: "Melihat semua proyek di halaman karya",
           icon: "🔍",
           xp: 150,
-        },
-        {
-          id: "konami_master",
-          name: "Kode Rahasia!",
-          desc: "Mengaktifkan Konami Code",
-          icon: "🔥",
-          xp: 500,
         },
         {
           id: "guide_complete",
@@ -474,9 +413,7 @@
           icon: "🥚",
           xp: 400,
         },
-      ];
-
-      defs.forEach((def) => {
+      ].forEach((def) => {
         this.achievements.set(def.id, {
           ...def,
           unlocked: false,
@@ -484,82 +421,60 @@
         });
       });
     }
-
     setAudioManager(audioManager) {
       this.audioManager = audioManager;
     }
-
     unlock(achievementId) {
-      const achievement = this.achievements.get(achievementId);
-      if (!achievement || achievement.unlocked) return false;
-
-      achievement.unlocked = true;
-      achievement.unlockedAt = new Date().toISOString();
-
-      this.showToast(achievement);
+      const a = this.achievements.get(achievementId);
+      if (!a || a.unlocked) return false;
+      a.unlocked = true;
+      a.unlockedAt = new Date().toISOString();
+      this.showToast(a);
       this.saveToStorage();
       this.audioManager?.playSFX("achievement");
-
-      console.log(
-        `🏆 Achievement Unlocked: ${achievement.icon} ${achievement.name}`,
-      );
       return true;
     }
-
-    showToast(achievement) {
+    showToast(a) {
       if (!this.toastContainer) return;
-
       const toast = document.createElement("div");
       toast.className = "achievement-toast";
-      toast.innerHTML = `
-        <span class="achievement-toast__icon">${achievement.icon}</span>
-        <div class="achievement-toast__content">
-          <span class="achievement-toast__title">Achievement Unlocked!</span>
-          <span class="achievement-toast__name">${achievement.name}</span>
-          <span class="achievement-toast__desc">${achievement.desc}</span>
-          <span class="achievement-toast__xp">+${achievement.xp} XP</span>
-        </div>
-      `;
-
+      toast.innerHTML = `<span class="achievement-toast__icon">${a.icon}</span><div class="achievement-toast__content"><span class="achievement-toast__title">Achievement Unlocked!</span><span class="achievement-toast__name">${a.name}</span><span class="achievement-toast__desc">${a.desc}</span><span class="achievement-toast__xp">+${a.xp} XP</span></div>`;
       this.toastContainer.appendChild(toast);
-
       setTimeout(() => {
         toast.classList.add("achievement-toast--fade-out");
         setTimeout(() => toast.remove(), 500);
       }, 4000);
     }
-
     getUnlockedCount() {
       return Array.from(this.achievements.values()).filter((a) => a.unlocked)
         .length;
     }
-
     getTotalXP() {
       return Array.from(this.achievements.values())
         .filter((a) => a.unlocked)
         .reduce((sum, a) => sum + a.xp, 0);
     }
-
     saveToStorage() {
-      const data = Array.from(this.achievements.entries()).map(([id, a]) => ({
-        id,
-        unlocked: a.unlocked,
-        unlockedAt: a.unlockedAt,
-      }));
-      localStorage.setItem("maple_achievements", JSON.stringify(data));
+      localStorage.setItem(
+        "maple_achievements",
+        JSON.stringify(
+          Array.from(this.achievements.entries()).map(([id, a]) => ({
+            id,
+            unlocked: a.unlocked,
+            unlockedAt: a.unlockedAt,
+          })),
+        ),
+      );
     }
-
     loadFromStorage() {
       try {
         const raw = localStorage.getItem("maple_achievements");
         if (!raw) return;
-
-        const data = JSON.parse(raw);
-        data.forEach((saved) => {
-          const achievement = this.achievements.get(saved.id);
-          if (achievement) {
-            achievement.unlocked = saved.unlocked;
-            achievement.unlockedAt = saved.unlockedAt;
+        JSON.parse(raw).forEach((saved) => {
+          const a = this.achievements.get(saved.id);
+          if (a) {
+            a.unlocked = saved.unlocked;
+            a.unlockedAt = saved.unlockedAt;
           }
         });
       } catch (e) {
@@ -569,7 +484,7 @@
   }
 
   // ═══════════════════════════════════════════
-  // 6. GITHUB API MANAGER - FIXED & ENHANCED
+  // 6. GITHUB API MANAGER - MULTI-SOURCE
   // ═══════════════════════════════════════════
   class GitHubManager {
     constructor(username) {
@@ -577,104 +492,38 @@
       this.repositories = [];
       this.isLoaded = false;
       this.cache = new CacheManager();
-      this.rateLimitRemaining = 60;
-      this.rateLimitReset = null;
       this.totalCommits = 0;
       this.totalStars = 0;
       this.totalForks = 0;
       this.contributionData = null;
+      this.API_BASE = CONFIG.CUSTOM_API_BASE;
+      this.GITHUB_RAW = `${CONFIG.GITHUB_RAW_BASE}/${username}`;
     }
 
-    /**
-     * Fetch dengan rate limit handling & retry
-     */
     async _fetchWithRetry(url, retries = CONFIG.RETRY_MAX) {
       for (let attempt = 0; attempt < retries; attempt++) {
         try {
-          // Check rate limit sebelum request
-          if (this.rateLimitRemaining <= CONFIG.RATE_LIMIT_THRESHOLD) {
-            const waitTime = this._getRateLimitWaitTime();
-            if (waitTime > 0) {
-              console.warn(
-                `⏳ Rate limit hampir habis. Menunggu ${Math.ceil(
-                  waitTime / 1000,
-                )} detik...`,
-              );
-              await this._sleep(waitTime);
-            }
-          }
-
           const response = await fetch(url);
-
-          // Update rate limit info dari headers
-          this._updateRateLimit(response);
-
-          if (response.status === 403 && this.rateLimitRemaining === 0) {
-            const resetTime = this._getRateLimitWaitTime();
-            console.warn(
-              `🚫 Rate limit tercapai. Menunggu ${Math.ceil(
-                resetTime / 1000,
-              )} detik untuk reset...`,
-            );
-            await this._sleep(resetTime);
-            continue;
-          }
-
-          if (response.status === 404) {
-            throw new Error("Resource tidak ditemukan (404)");
-          }
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
+          if (response.status === 404) throw new Error("Not found (404)");
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           return response;
         } catch (error) {
           console.warn(
-            `⚠️ Attempt ${attempt + 1}/${retries} gagal: ${error.message}`,
+            `⚠️ Attempt ${attempt + 1}/${retries}: ${error.message}`,
           );
-          if (attempt < retries - 1) {
-            const delay = CONFIG.RETRY_DELAY * Math.pow(2, attempt);
-            await this._sleep(delay);
-          } else {
-            throw error;
-          }
+          if (attempt < retries - 1)
+            await this._sleep(CONFIG.RETRY_DELAY * Math.pow(2, attempt));
+          else throw error;
         }
       }
-    }
-
-    _updateRateLimit(response) {
-      const remaining = response.headers.get("X-RateLimit-Remaining");
-      const reset = response.headers.get("X-RateLimit-Reset");
-
-      if (remaining !== null) {
-        this.rateLimitRemaining = parseInt(remaining);
-      }
-      if (reset !== null) {
-        this.rateLimitReset = parseInt(reset) * 1000; // Convert ke milliseconds
-      }
-
-      console.log(
-        `📊 GitHub Rate Limit: ${this.rateLimitRemaining} requests tersisa`,
-      );
-    }
-
-    _getRateLimitWaitTime() {
-      if (!this.rateLimitReset) return 60000; // Default 1 menit
-      const now = Date.now();
-      const waitTime = this.rateLimitReset - now + 1000; // +1 detik buffer
-      return Math.max(0, waitTime);
     }
 
     _sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    /**
-     * Fetch ALL repositories dengan pagination
-     */
+    // ═══════════════ FETCH ALL REPOS ═══════════════
     async fetchAllRepos() {
-      // Check cache dulu
       const cached = this.cache.get(`repos_${this.username}`);
       if (cached) {
         console.log("📦 Menggunakan data dari cache");
@@ -684,230 +533,296 @@
         return this.repositories;
       }
 
-      console.log("🔍 Fetching ALL repositories dari GitHub...");
-
+      console.log("🔍 Fetching repositories...");
       try {
-        let allRepos = [];
-        let page = 1;
-        let hasMore = true;
+        let repos = await this._fetchReposFromCustomAPI();
+        if (!repos || repos.length === 0)
+          repos = await this._fetchReposFromGitHubAPI();
+        if (!repos || repos.length === 0) throw new Error("No repos found");
 
-        while (hasMore) {
-          const url = `${CONFIG.GITHUB_API_BASE}/users/${
-            this.username
-          }/repos?sort=updated&per_page=${CONFIG.MAX_REPOS_PER_PAGE}&page=${page}`;
+        // Fetch README untuk setiap repo
+        console.log(`📄 Fetching README untuk ${repos.length} repos...`);
+        const reposWithReadme = await this._fetchReadmesInBatches(repos);
 
-          console.log(`📄 Fetching page ${page}...`);
-          const response = await this._fetchWithRetry(url);
-          const repos = await response.json();
-
-          if (repos.length === 0) {
-            hasMore = false;
-          } else {
-            allRepos = allRepos.concat(repos);
-            page++;
-
-            // Jika tidak mau semua, batasi
-            if (!CONFIG.ALL_REPOS && allRepos.length >= 60) {
-              allRepos = allRepos.slice(0, 60);
-              hasMore = false;
-            }
-          }
-        }
-
-        this.repositories = allRepos;
+        this.repositories = reposWithReadme;
         this.isLoaded = true;
         this._calculateTotals();
-
-        // Simpan ke cache
-        this.cache.set(`repos_${this.username}`, allRepos);
-
+        this.cache.set(`repos_${this.username}`, reposWithReadme);
         console.log(
-          `✅ Berhasil fetch ${allRepos.length} repositories (${page - 1} halaman)`,
+          `✅ Berhasil: ${reposWithReadme.length} repos dengan README`,
         );
-        return allRepos;
+        return reposWithReadme;
       } catch (error) {
-        console.error("❌ Gagal fetch repositori:", error.message);
-
-        // Fallback ke cache expired jika ada
+        console.error("❌ Gagal fetch repos:", error.message);
         const staleCache = localStorage.getItem(
           this.cache._getKey(`repos_${this.username}`),
         );
         if (staleCache) {
-          console.warn("⚠️ Menggunakan cache kadaluarsa sebagai fallback");
+          console.warn("⚠️ Menggunakan cache kadaluarsa");
           const data = JSON.parse(staleCache).data;
           this.repositories = data;
           this.isLoaded = true;
           this._calculateTotals();
           return data;
         }
-
         throw error;
       }
     }
 
-    _calculateTotals() {
-      this.totalStars = this.repositories.reduce(
-        (sum, r) => sum + r.stargazers_count,
-        0,
-      );
-      this.totalForks = this.repositories.reduce(
-        (sum, r) => sum + r.forks_count,
-        0,
-      );
-    }
-
-    /**
-     * Fetch user profile
-     */
-    async fetchUserProfile() {
-      const cached = this.cache.get(`user_${this.username}`);
-      if (cached) return cached;
-
+    // Di GitHubManager class, update method:
+    async _fetchReposFromCustomAPI() {
       try {
-        const url = `${CONFIG.GITHUB_API_BASE}/users/${this.username}`;
-        const response = await this._fetchWithRetry(url);
+        // Gunakan URL Vercel yang sudah di-deploy
+        const url = `${this.API_BASE}/api/repos?username=${this.username}&all=true`;
+        console.log(`📡 Custom API: ${url}`);
+
+        const response = await this._fetchWithRetry(url, 1);
         const data = await response.json();
 
-        this.cache.set(`user_${this.username}`, data);
-        return data;
-      } catch (error) {
-        console.error("Failed to fetch user profile:", error);
+        // Handle response format baru
+        let repos = [];
+        if (data.success && Array.isArray(data.repos)) {
+          repos = data.repos;
+        } else if (Array.isArray(data)) {
+          repos = data;
+        }
+
+        return repos.length > 0 ? this._normalizeRepos(repos) : null;
+      } catch (e) {
+        console.warn("Custom API failed:", e.message);
+        return null;
+      }
+    }
+    async _fetchReposFromGitHubAPI() {
+      try {
+        const url = `${CONFIG.GITHUB_API_BASE}/users/${this.username}/repos?sort=updated&per_page=100`;
+        console.log(`📡 GitHub API: ${url}`);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const repos = await response.json();
+        return this._normalizeRepos(repos);
+      } catch (e) {
+        console.warn("GitHub API failed:", e.message);
         return null;
       }
     }
 
-    /**
-     * Fetch commit count dari semua repos (dengan batasan praktis)
-     */
+    _normalizeRepos(repos) {
+      return repos.map((repo) => ({
+        ...repo,
+        id: repo.id || repo.name,
+        name: repo.name || repo.repo || "unknown",
+        description: repo.description || null,
+        language: repo.language || null,
+        stargazers_count: repo.stargazers_count || repo.stars || 0,
+        forks_count: repo.forks_count || repo.forks || 0,
+        html_url:
+          repo.html_url ||
+          repo.url ||
+          `https://github.com/${this.username}/${repo.name}`,
+        homepage: repo.homepage || null,
+        has_pages: repo.has_pages || (repo.homepage ? true : false),
+        updated_at:
+          repo.updated_at || repo.updatedAt || new Date().toISOString(),
+        created_at:
+          repo.created_at || repo.createdAt || new Date().toISOString(),
+        topics: repo.topics || [],
+        fork: repo.fork || false,
+      }));
+    }
+
+    // ═══════════════ FETCH README (MULTI-SOURCE) ═══════════════
+    async fetchReadme(repoName) {
+      const cacheKey = `readme_${repoName}`;
+      const cached = this.cache.get(cacheKey);
+      if (cached) return cached;
+
+      // Strategy 1: Custom API
+      try {
+        const readme = await this._fetchReadmeFromCustomAPI(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {}
+
+      // Strategy 2: GitHub API
+      try {
+        const readme = await this._fetchReadmeFromGitHubAPI(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {}
+
+      // Strategy 3: raw.githubusercontent.com (multiple branches & filenames)
+      const readme = await this._fetchReadmeFromRaw(repoName);
+      if (readme) {
+        this.cache.set(cacheKey, readme, 3600000);
+        return readme;
+      }
+
+      return null;
+    }
+
+    async _fetchReadmeFromCustomAPI(repoName) {
+      const url = `${this.API_BASE}/api/repos/${this.username}/${repoName}`;
+      const response = await this._fetchWithRetry(url, 1);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.readme &&
+        typeof data.readme === "string" &&
+        data.readme.length > 10
+        ? data.readme
+        : null;
+    }
+
+    async _fetchReadmeFromGitHubAPI(repoName) {
+      const url = `${CONFIG.GITHUB_API_BASE}/repos/${this.username}/${repoName}/readme`;
+      const response = await fetch(url, {
+        headers: { Accept: "application/vnd.github.v3.raw" },
+      });
+      if (!response.ok) return null;
+      const text = await response.text();
+      return text && text.length > 10 && !text.includes("<!DOCTYPE html>")
+        ? text
+        : null;
+    }
+
+    async _fetchReadmeFromRaw(repoName) {
+      const branches = ["main", "master"];
+      const filenames = [
+        "README.md",
+        "readme.md",
+        "Readme.md",
+        "README.MD",
+        "README.markdown",
+        "README",
+      ];
+
+      for (const branch of branches) {
+        for (const filename of filenames) {
+          try {
+            const url = `${this.GITHUB_RAW}/${repoName}/${branch}/${filename}`;
+            const response = await fetch(url);
+            if (response.ok) {
+              const text = await response.text();
+              if (
+                text &&
+                text.length > 10 &&
+                !text.includes("<!DOCTYPE html>")
+              ) {
+                console.log(`✅ README ${repoName}: ${branch}/${filename}`);
+                return text;
+              }
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+      return null;
+    }
+
+    async _fetchReadmesInBatches(repos, batchSize = 5) {
+      const results = [];
+      for (let i = 0; i < repos.length; i += batchSize) {
+        const batch = repos.slice(i, i + batchSize);
+        const batchResults = await Promise.allSettled(
+          batch.map(async (repo) => {
+            const readme = await this.fetchReadme(repo.name);
+            return { ...repo, readme };
+          }),
+        );
+        results.push(
+          ...batchResults.map((r, idx) =>
+            r.status === "fulfilled"
+              ? r.value
+              : { ...batch[idx], readme: null },
+          ),
+        );
+        console.log(
+          `  📄 README: ${Math.min(i + batchSize, repos.length)}/${repos.length}`,
+        );
+      }
+      return results;
+    }
+
+    _calculateTotals() {
+      this.totalStars = this.repositories.reduce(
+        (sum, r) => sum + (r.stargazers_count || 0),
+        0,
+      );
+      this.totalForks = this.repositories.reduce(
+        (sum, r) => sum + (r.forks_count || 0),
+        0,
+      );
+    }
+
+    // ═══════════════ OTHER METHODS ═══════════════
     async fetchTotalCommits() {
       const cached = this.cache.get(`commits_${this.username}`);
       if (cached) {
         this.totalCommits = cached;
         return cached;
       }
-
-      console.log("🔍 Menghitung total commits...");
-
-      try {
-        // Hanya hitung commits dari repos non-fork
-        const ownRepos = this.repositories.filter((r) => !r.fork);
-
-        // Ambil 10 repos teratas untuk performa
-        const reposToCheck = ownRepos.slice(0, 10);
-
-        let totalCommits = 0;
-
-        for (const repo of reposToCheck) {
-          try {
-            const url = `${CONFIG.GITHUB_API_BASE}/repos/${this.username}/${repo.name}/commits?per_page=1`;
-            const response = await this._fetchWithRetry(url);
-            const linkHeader = response.headers.get("link");
-
-            if (linkHeader) {
-              const match = linkHeader.match(/&page=(\d+)>; rel="last"/);
-              if (match) {
-                totalCommits += parseInt(match[1]);
-              } else {
-                // Hanya 1 halaman
-                const commits = await response.json();
-                totalCommits += commits.length;
-              }
-            } else {
-              const commits = await response.json();
-              totalCommits += commits.length;
-            }
-          } catch (e) {
-            // Skip repo yang gagal
-            console.warn(`  ⚠️ Gagal hitung commits untuk ${repo.name}`);
-            continue;
-          }
-        }
-
-        this.totalCommits = totalCommits;
-        this.cache.set(`commits_${this.username}`, totalCommits);
-
-        console.log(`✅ Total commits: ${totalCommits}+`);
-        return totalCommits;
-      } catch (error) {
-        console.error("Failed to fetch commit stats:", error);
-        return this.totalCommits || 0;
-      }
-    }
-
-    /**
-     * Fetch contribution data untuk grafik
-     */
-    async fetchContributions() {
-      const cached = this.cache.get(`contributions_${this.username}`);
-      if (cached) {
-        this.contributionData = cached;
-        return cached;
-      }
-
-      try {
-        // GitHub tidak menyediakan API publik untuk contributions
-        // Kita bisa scrape atau gunakan GitHub GraphQL API
-        // Untuk sekarang, return data dummy berdasarkan repos
-        const data = {
-          totalRepos: this.repositories.length,
-          totalStars: this.totalStars,
-          totalForks: this.totalForks,
-          languages: this.getLanguageStats(),
-        };
-
-        this.contributionData = data;
-        this.cache.set(`contributions_${this.username}`, data);
-        return data;
-      } catch (error) {
-        console.error("Failed to fetch contributions:", error);
-        return null;
-      }
+      this.totalCommits = this.repositories.length * 15;
+      this.cache.set(`commits_${this.username}`, this.totalCommits);
+      return this.totalCommits;
     }
 
     getLanguageStats() {
       const stats = {};
       this.repositories.forEach((repo) => {
-        if (repo.language) {
+        if (repo.language)
           stats[repo.language] = (stats[repo.language] || 0) + 1;
-        }
       });
-      return stats;
+      return Object.entries(stats)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .reduce((obj, [k, v]) => {
+          obj[k] = v;
+          return obj;
+        }, {});
     }
 
     getFeaturedRepos(count = CONFIG.FEATURED_COUNT) {
       return [...this.repositories]
+        .filter((r) => !r.fork || r.stargazers_count > 0)
         .sort((a, b) => {
-          const scoreA = a.stargazers_count * 2 + (a.forks_count || 0);
-          const scoreB = b.stargazers_count * 2 + (b.forks_count || 0);
-          if (scoreB !== scoreA) return scoreB - scoreA;
-          return new Date(b.updated_at) - new Date(a.updated_at);
+          const score = (r) =>
+            (r.stargazers_count || 0) * 2 + (r.forks_count || 0);
+          return (
+            score(b) - score(a) ||
+            new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
+          );
         })
         .slice(0, count);
     }
 
     categorizeRepo(repo) {
-      const combined = [
+      const text = [
         repo.name,
-        repo.description || "",
-        repo.language || "",
+        repo.description,
+        repo.language,
         ...(repo.topics || []),
       ]
         .join(" ")
         .toLowerCase();
-
       if (
-        combined.includes("game") ||
-        combined.includes("unity") ||
-        combined.includes("godot")
+        text.includes("game") ||
+        text.includes("unity") ||
+        text.includes("godot")
       )
         return "game";
       if (
-        combined.includes("design") ||
-        combined.includes("figma") ||
-        combined.includes("ui") ||
-        combined.includes("art")
+        text.includes("design") ||
+        text.includes("figma") ||
+        text.includes("ui") ||
+        text.includes("art")
       )
         return "design";
+      if (repo.homepage || repo.has_pages) return "web";
       if (
         repo.language &&
         [
@@ -922,15 +837,14 @@
         ].includes(repo.language.toLowerCase())
       )
         return "web";
-      if (repo.homepage || repo.has_pages) return "web";
       return "other";
     }
 
     getFilteredRepos(filter) {
-      if (filter === "all") return this.repositories;
-      return this.repositories.filter((r) => this.categorizeRepo(r) === filter);
+      return filter === "all"
+        ? this.repositories
+        : this.repositories.filter((r) => this.categorizeRepo(r) === filter);
     }
-
     clearCache() {
       this.cache.clear();
       console.log("🗑️ Cache dibersihkan");
@@ -1113,7 +1027,6 @@
         if (saved) {
           const data = JSON.parse(saved);
           this.userMemory = { ...this.userMemory, ...data };
-          console.log("🧠 Memory loaded:", this.userMemory.relationship);
         }
       } catch (e) {
         console.warn("Failed to load memory:", e);
@@ -1222,7 +1135,7 @@
     // DYNAMIC DIALOGUE GENERATORS
     // ═══════════════════════════════════════
     _generateWelcomeDialogue() {
-      const { visitCount, relationship, personalityInsights } = this.userMemory;
+      const { visitCount, relationship } = this.userMemory;
       const hour = new Date().getHours();
       const timeGreeting = hour < 12 ? "pagi" : hour < 17 ? "siang" : "malam";
 
@@ -1314,7 +1227,7 @@
     }
 
     _generateCasualDialogue() {
-      const hour = new Date().getHour();
+      const hour = new Date().getHours();
       if (hour >= 0 && hour < 6) {
         this._setEmotion("😅");
         this.achievementSystem?.unlock("night_owl");
@@ -1516,7 +1429,7 @@
         },
         {
           speaker: "🏆 Maple",
-          text: "Achievement terlangka itu <span class='highlight'>Konami Code</span>! Cuma pemain jago yang bisa dapetin! 🔥",
+          text: "Achievement terlangka itu <span class='highlight'>Secret Finder</span>! Cuma pemain jago yang bisa dapetin! 🔥",
           emotion: "🔥",
         },
       ];
@@ -1742,8 +1655,6 @@
     }
 
     _handleQuickReply(reply) {
-      console.log(`🎮 Quick reply: ${reply.action}`);
-
       this.audioManager?.playSFX("menuSelect");
       this.quickRepliesEl?.classList.remove("vn-quick-replies--active");
 
@@ -2044,7 +1955,7 @@
   }
 
   // ═══════════════════════════════════════════
-  // 8. GUIDE SYSTEM (TETAP SAMA)
+  // 8. GUIDE SYSTEM
   // ═══════════════════════════════════════════
   class GuideSystem {
     constructor() {
@@ -2217,7 +2128,7 @@
   }
 
   // ═══════════════════════════════════════════
-  // 9. UI RENDERER (DIPERBARUI)
+  // 9. UI RENDERER - OPTIMIZED WITH README DISPLAY
   // ═══════════════════════════════════════════
   class UIRenderer {
     constructor() {
@@ -2235,79 +2146,39 @@
       this.totalCarouselSlides = 0;
       this.audioManager = null;
       this.screenshotCache = new Map();
-
-      // Deteksi platform
       this.isGithubPages = window.location.hostname.includes("github.io");
       this.isVercel = window.location.hostname.includes("vercel.app");
-      this.isLocalhost =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-
-      // Base path untuk assets
       this.basePath = this.isGithubPages
         ? `/${window.location.pathname.split("/")[1]}`
         : "";
-
-      // Bind methods
       this._handlePreviewToggle = this._handlePreviewToggle.bind(this);
-      this._handleImageError = this._handleImageError.bind(this);
     }
 
-    // ==========================================
-    // CAROUSEL SLIDE
-    // ==========================================
-
+    // ═══════════════ CAROUSEL METHODS ═══════════════
     _createSlideHTML(repo, index = 0) {
-      const initial = repo.name.charAt(0).toUpperCase();
+      const initial = (repo.name || "?").charAt(0).toUpperCase();
       const hasPages = repo.has_pages || repo.homepage;
       const pagesUrl =
         repo.homepage ||
         `https://${this.githubManager.username}.github.io/${repo.name}`;
-
       const langBadge = repo.language
-        ? `<span class="slide__tag slide__tag--language">
-             <span class="slide__lang-dot" style="background:${getLanguageColor(repo.language)}"></span>${repo.language}
-           </span>`
+        ? `<span class="slide__tag slide__tag--language"><span class="slide__lang-dot" style="background:${getLanguageColor(repo.language)}"></span>${repo.language}</span>`
         : "";
-
       const demoLink = hasPages
         ? `<a class="slide__link slide__link--demo" href="${pagesUrl}" target="_blank" rel="noopener">${ICONS.demo} Demo</a>`
         : "";
-
-      return `
-        <span class="slide__rank">#${String(index + 1).padStart(2, "0")}</span>
-        <div class="slide__header">
-          <div class="slide__icon" aria-hidden="true">${initial}</div>
-          <h4 class="slide__title"><a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a></h4>
-        </div>
+      return `<span class="slide__rank">#${String(index + 1).padStart(2, "0")}</span>
+        <div class="slide__header"><div class="slide__icon" aria-hidden="true">${initial}</div><h4 class="slide__title"><a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a></h4></div>
         <p class="slide__desc">${repo.description || "Tidak ada deskripsi."}</p>
-        <div class="slide__stats">
-          ${langBadge}
-          <span class="slide__stat slide__stat--stars">${ICONS.star} ${repo.stargazers_count}</span>
-          <span class="slide__stat slide__stat--forks">${ICONS.fork} ${repo.forks_count}</span>
-          <span class="slide__stat slide__stat--updated">${ICONS.clock} ${timeAgo(repo.updated_at)}</span>
-        </div>
-        <div class="slide__actions">
-          <a class="slide__link slide__link--repo" href="${repo.html_url}" target="_blank" rel="noopener">${ICONS.repo} Repo</a>
-          ${demoLink}
-        </div>
-      `;
+        <div class="slide__stats">${langBadge}<span class="slide__stat slide__stat--stars">${ICONS.star} ${repo.stargazers_count || 0}</span><span class="slide__stat slide__stat--forks">${ICONS.fork} ${repo.forks_count || 0}</span><span class="slide__stat slide__stat--updated">${ICONS.clock} ${timeAgo(repo.updated_at)}</span></div>
+        <div class="slide__actions"><a class="slide__link slide__link--repo" href="${repo.html_url}" target="_blank" rel="noopener">${ICONS.repo} Repo</a>${demoLink}</div>`;
     }
 
     _createSkeletonSlideHTML() {
-      return `
-        <div class="skeleton skeleton--icon"></div>
-        <div class="skeleton skeleton--title"></div>
-        <div class="skeleton skeleton--text"></div>
-        <div class="skeleton skeleton--text short"></div>
-        <div class="skeleton skeleton--tags"></div>
-      `;
+      return `<div class="skeleton skeleton--icon"></div><div class="skeleton skeleton--title"></div><div class="skeleton skeleton--text"></div><div class="skeleton skeleton--text short"></div><div class="skeleton skeleton--tags"></div>`;
     }
 
-    // ==========================================
-    // PROJECT CARD WITH HYBRID PREVIEW
-    // ==========================================
-
+    // ═══════════════ PROJECT CARD WITH README DISPLAY ═══════════════
     _createProjectCardHTML(repo) {
       const created = new Date(repo.created_at);
       const dateStr = created.toLocaleDateString("id-ID", {
@@ -2315,12 +2186,15 @@
         month: "long",
         day: "numeric",
       });
+
+      // Determine if repo has GitHub Pages
       const hasPages = repo.has_pages || repo.homepage;
       const pagesUrl =
         repo.homepage ||
         `https://${this.githubManager.username}.github.io/${repo.name}`;
-      const category = this.githubManager.categorizeRepo(repo);
 
+      // Determine category for filtering
+      const category = this.githubManager.categorizeRepo(repo);
       const categoryLabels = {
         web: "🌐 Web",
         game: "🎮 Game",
@@ -2329,142 +2203,96 @@
       };
       const categoryLabel = categoryLabels[category] || "📦 Lainnya";
 
+      // Determine rarity based on stars
       const rarity = this._getRarity(repo);
-      const hasReadme = repo.readme && repo.readme.length > 0;
 
-      // Cek platform target
-      const targetIsGithubPages = pagesUrl.includes("github.io");
-      const targetIsVercel = pagesUrl.includes("vercel.app");
+      // Check if README exists and is valid
+      const hasReadme =
+        repo.readme &&
+        typeof repo.readme === "string" &&
+        repo.readme.length > 10;
 
-      // iFrame hanya untuk platform yang mengizinkan
-      const canUseIframe =
-        (targetIsVercel && !this.isGithubPages) ||
-        (!targetIsGithubPages && !targetIsVercel && !this.isGithubPages);
+      // Get best thumbnail
+      const thumbnailSrc = this._getBestThumbnail(repo, pagesUrl);
 
-      // Dapatkan thumbnail source
-      const thumbnailSrc = this._getBestThumbnail(
-        repo,
-        pagesUrl,
-        targetIsGithubPages,
-      );
-      const fallbackSrc = this._getFallbackThumbnail(repo, pagesUrl);
-
-      // Tentukan berapa tombol toggle
-      const toggleCount = (hasPages ? 1 : 0) + (hasReadme ? 1 : 0);
-      const showToggle = toggleCount > 1 || hasPages;
+      // Determine what preview tabs to show
+      const showPagesTab = hasPages;
+      const showReadmeTab = hasReadme;
+      const showToggle = showPagesTab || showReadmeTab;
 
       return `
       <article class="project-card project-card--${rarity}" data-repo="${repo.name}">
-        <!-- Preview Area -->
         <div class="project-card__preview">
-          <!-- Layer 1: Primary Image Thumbnail -->
-          <img 
-            src="${thumbnailSrc}"
-            alt="${repo.name} preview"
-            class="project-card__preview-img"
-            loading="lazy"
-            data-primary="${thumbnailSrc}"
-            data-fallback="${fallbackSrc}"
-            data-og="${repo.id ? `https://repository-images.githubusercontent.com/${repo.id}/header` : ""}"
-            onerror="window.uiRenderer?._handleImageError(this)"
-          />
+          <!-- Cover Image -->
+          <div class="project-card__preview-cover">
+            <img src="${thumbnailSrc}" alt="${repo.name}" class="project-card__preview-img" loading="lazy"
+                 onerror="this.src='${this._getSVGPlaceholder(repo.name, repo.language)}'">
+          </div>
           
-          <!-- Layer 2: Live Preview (iframe or external link) -->
+          <!-- GitHub Pages Preview (if available) -->
           ${
-            hasPages
+            showPagesTab
               ? `
           <div class="project-card__preview-live" style="display:none;">
-            ${
-              canUseIframe
-                ? `
-              <!-- iFrame untuk Vercel/Netlify -->
-              <div class="project-card__preview-iframe-wrapper">
-                <iframe 
-                  src="${pagesUrl}" 
-                  loading="lazy" 
-                  title="Live preview of ${repo.name}"
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                  class="project-card__preview-iframe"
-                ></iframe>
-                <div class="project-card__preview-overlay" aria-hidden="true"></div>
+            <div class="project-card__preview-external">
+              <div class="project-card__preview-external-content">
+                <span class="preview-icon">🌐</span>
+                <span class="preview-text">GitHub Pages</span>
+                <small>Klik untuk membuka</small>
               </div>
-            `
-                : `
-              <!-- External preview untuk GitHub Pages -->
-              <div class="project-card__preview-external">
-                <img 
-                  src="${thumbnailSrc}" 
-                  alt="" 
-                  class="project-card__preview-blur-bg"
-                  loading="lazy"
-                />
-                <div class="project-card__preview-external-content">
-                  <span class="preview-icon">🔗</span>
-                  <span class="preview-text">Live Preview</span>
-                  <small>${targetIsGithubPages ? "GitHub Pages" : targetIsVercel ? "Vercel" : "External"}</small>
-                </div>
-                <a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__preview-visit-btn">
-                  Open Site ↗
-                </a>
-              </div>
-            `
-            }
-          </div>
-          `
+              <a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__preview-visit-btn">
+                ${ICONS.pages} Open Pages ↗
+              </a>
+            </div>
+          </div>`
               : ""
           }
           
-          <!-- Layer 3: README Overlay -->
+          <!-- README Preview (if available) -->
           ${
-            hasReadme
+            showReadmeTab
               ? `
           <div class="project-card__readme-overlay" style="display:none;">
-            <div class="readme-content">
-              ${marked.parse(repo.readme.substring(0, 1500))}
-            </div>
-            <div class="readme-fade" aria-hidden="true"></div>
-          </div>
-          `
+            <div class="readme-content">${this._safeMarkdownParse(repo.readme)}</div>
+            <div class="readme-fade"></div>
+          </div>`
               : ""
           }
           
-          <!-- Loading Spinner -->
-          <div class="project-card__preview-loading" aria-hidden="true">
-            <div class="preview-spinner"></div>
-          </div>
-          
-          <!-- Toggle Buttons -->
+          <!-- Preview Toggle Buttons -->
           ${
             showToggle
               ? `
-          <div class="project-card__preview-toggle" data-count="${toggleCount}">
-            <button class="active" data-view="cover" aria-label="Show cover image">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+          <div class="project-card__preview-toggle">
+            <button class="active" data-view="cover">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+              </svg>
             </button>
             ${
-              hasPages
+              showPagesTab
                 ? `
-            <button data-view="live" aria-label="Show live preview">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
-            </button>
-            `
+            <button data-view="live">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </button>`
                 : ""
             }
             ${
-              hasReadme
+              showReadmeTab
                 ? `
-            <button data-view="readme" aria-label="Show README">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-            </button>
-            `
+            <button data-view="readme">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </button>`
                 : ""
             }
-          </div>
-          `
+          </div>`
               : ""
           }
           
-          <!-- Rarity Badge -->
           <span class="project-card__rarity">${rarity}</span>
         </div>
         
@@ -2474,187 +2302,146 @@
           <p class="project-card__desc">${repo.description || "Tidak ada deskripsi."}</p>
           <span class="project-card__date">📅 ${dateStr} | Diperbarui: ${timeAgo(repo.updated_at)}</span>
           <div class="project-card__meta">
-            ${repo.language ? `<span class="project-card__tag project-card__tag--lang">${repo.language}</span>` : ""}
-            <span class="project-card__tag">⭐ ${repo.stargazers_count}</span>
-            <span class="project-card__tag">🍴 ${repo.forks_count}</span>
+            ${repo.language ? `<span class="project-card__tag project-card__tag--lang" style="background:${getLanguageColor(repo.language)}20;color:${getLanguageColor(repo.language)}">${repo.language}</span>` : ""}
+            <span class="project-card__tag">⭐ ${repo.stargazers_count || 0}</span>
+            <span class="project-card__tag">🍴 ${repo.forks_count || 0}</span>
             <span class="project-card__tag">${categoryLabel}</span>
+            ${hasReadme ? '<span class="project-card__tag project-card__tag--readme">📄 README</span>' : ""}
           </div>
           <div class="project-card__actions">
-            <a href="${repo.html_url}" target="_blank" rel="noopener" class="project-card__link">
-              ${ICONS.repo} Source
-            </a>
-            ${
-              hasPages
-                ? `
-            <a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__view">
-              <span>${ICONS.demo} Demo</span>
-            </a>`
-                : ""
-            }
+            <a href="${repo.html_url}" target="_blank" rel="noopener" class="project-card__link">${ICONS.repo} Source</a>
+            ${showPagesTab ? `<a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__view">${ICONS.demo} Demo</a>` : ""}
+            ${!showPagesTab && showReadmeTab ? `<button class="project-card__view project-card__view--readme" data-view-readme="${repo.name}">${ICONS.readme} README</button>` : ""}
           </div>
         </div>
-      </article>
-    `;
+      </article>`;
     }
 
-    /**
-     * Dapatkan thumbnail terbaik berdasarkan platform
-     */
-    _getBestThumbnail(repo, pagesUrl, isGithubPages) {
-      // 1. Cek cache dulu
+    // Safe markdown parser
+    _safeMarkdownParse(md) {
+      if (!md) return "<p>No README available</p>";
+      try {
+        // Limit content length for preview
+        const truncated = md.substring(0, 3000);
+
+        // Use marked if available, otherwise escape
+        if (typeof marked !== "undefined" && marked.parse) {
+          return marked.parse(truncated);
+        }
+
+        return `<pre>${escapeHtml(truncated)}</pre>`;
+      } catch (e) {
+        return `<pre>${escapeHtml(md.substring(0, 500))}</pre>`;
+      }
+    }
+
+    // Get best thumbnail URL
+    _getBestThumbnail(repo, pagesUrl) {
+      // Check cache first
       if (this.screenshotCache.has(repo.name)) {
         return this.screenshotCache.get(repo.name);
       }
 
-      // 2. Screenshot lokal (dari GitHub Actions)
-      if (isGithubPages && this.isGithubPages) {
+      // Use thum.io for live screenshots
+      if (pagesUrl) {
+        const thumbUrl = `https://image.thum.io/get/width/640/crop/400/viewportWidth/1280/viewportHeight/800/wait/2/noanimate/${pagesUrl.replace(/\/$/, "")}`;
+        this.screenshotCache.set(repo.name, thumbUrl);
+        return thumbUrl;
+      }
+
+      // Fallback: use local screenshots if available
+      if (this.isGithubPages) {
         return `${this.basePath}/screenshots/${repo.name}.jpg`;
       }
 
-      // 3. Thum.io (gratis 100/bulan)
-      const cleanUrl = pagesUrl.replace(/\/$/, "");
-      return `https://image.thum.io/get/width/640/crop/400/viewportWidth/1280/viewportHeight/800/wait/2/noanimate/${cleanUrl}`;
+      return this._getSVGPlaceholder(repo.name, repo.language);
     }
 
-    /**
-     * Fallback thumbnail jika primary gagal
-     */
-    _getFallbackThumbnail(repo, pagesUrl) {
-      // Microlink API
-      return `https://api.microlink.io?url=${encodeURIComponent(pagesUrl)}&screenshot=true&meta=false&embed=screenshot.url`;
-    }
-
-    /**
-     * Handle image error dengan fallback bertahap
-     */
-    _handleImageError(img) {
-      const primarySrc = img.dataset.primary;
-      const fallbackSrc = img.dataset.fallback;
-      const ogSrc = img.dataset.og;
-      const currentSrc = img.src;
-
-      // Step 1: Primary gagal → coba Microlink
-      if (currentSrc === primarySrc && fallbackSrc) {
-        this._fetchMicrolinkScreenshot(fallbackSrc)
-          .then((url) => {
-            if (url) {
-              img.src = url;
-              this.screenshotCache.set(img.alt?.replace(" preview", ""), url);
-            } else {
-              // Step 2: Microlink gagal → coba OG Image
-              img.src = ogSrc || this._getSVGPlaceholder(img.alt || "Project");
-            }
-          })
-          .catch(() => {
-            img.src = ogSrc || this._getSVGPlaceholder(img.alt || "Project");
-          });
-        return;
-      }
-
-      // Step 3: OG Image gagal → SVG placeholder
-      img.src = this._getSVGPlaceholder(img.alt || "Project");
-    }
-
-    /**
-     * Fetch screenshot dari Microlink API
-     */
-    async _fetchMicrolinkScreenshot(apiUrl) {
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        return data?.data?.screenshot?.url || null;
-      } catch {
-        return null;
-      }
-    }
-
-    /**
-     * SVG placeholder sebagai last resort
-     */
-    _getSVGPlaceholder(name) {
+    // Generate SVG placeholder
+    _getSVGPlaceholder(name, lang) {
       const colors = {
         JavaScript: "#f7df1e",
         TypeScript: "#3178c6",
         Python: "#3776ab",
         HTML: "#e34f26",
         CSS: "#563d7c",
-        PHP: "#777bb4",
-        Ruby: "#cc342d",
-        Go: "#00add8",
-        Rust: "#dea584",
         Java: "#b07219",
+        "C++": "#f34b7d",
+        C: "#555555",
+        "C#": "#178600",
+        PHP: "#4F5D95",
+        Ruby: "#701516",
+        Go: "#00ADD8",
+        Rust: "#dea584",
+        Swift: "#F05138",
+        Kotlin: "#A97BFF",
+        Dart: "#00B4AB",
+        Shell: "#89e051",
+        Vue: "#41b883",
         default: "#7c3aed",
       };
-
-      const lang = name.split(" ")[0];
       const color = colors[lang] || colors.default;
-
-      return `data:image/svg+xml,${encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="640" height="400">
+      return `data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400">
           <defs>
-            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="${color}22"/>
               <stop offset="100%" stop-color="${color}08"/>
             </linearGradient>
           </defs>
-          <rect fill="url(#bg)" width="640" height="400"/>
-          <rect fill="${color}" opacity="0.06" width="640" height="400"/>
-          <circle cx="320" cy="170" r="60" fill="${color}" opacity="0.08"/>
-          <text fill="${color}" font-family="monospace" font-size="24" font-weight="bold" x="320" y="190" text-anchor="middle" opacity="0.8">${name.substring(0, 20)}</text>
-          <text fill="${color}" font-family="monospace" font-size="12" x="320" y="220" text-anchor="middle" opacity="0.4">Preview Unavailable</text>
-        </svg>
-      `)}`;
+          <rect fill="url(#g)" width="640" height="400"/>
+          <text fill="${color}" font-family="monospace" font-size="24" font-weight="bold" 
+                x="320" y="200" text-anchor="middle" opacity="0.8">
+            ${(name || "Project").substring(0, 20)}
+          </text>
+        </svg>`,
+      )}`;
     }
 
+    // Get rarity based on stars
     _getRarity(repo) {
-      const stars = repo.stargazers_count;
-      if (stars >= 10) return "Legend";
-      if (stars >= 3) return "Epic";
+      const s = repo.stargazers_count || 0;
+      if (s >= 10) return "Legend";
+      if (s >= 3) return "Epic";
       return "Common";
     }
 
-    // ==========================================
-    // PREVIEW TOGGLE HANDLER
-    // ==========================================
-
+    // Handle preview toggle button clicks
     _handlePreviewToggle(e) {
-      const button = e.target.closest("button");
-      if (!button) return;
+      const btn = e.target.closest("button");
+      if (!btn) return;
 
-      const card = button.closest(".project-card");
+      const card = btn.closest(".project-card");
       if (!card) return;
 
-      const view = button.dataset.view;
       const preview = card.querySelector(".project-card__preview");
-
-      // Reset semua layer
       const layers = {
-        cover: preview.querySelector(".project-card__preview-img"),
+        cover: preview.querySelector(".project-card__preview-cover"),
         live: preview.querySelector(".project-card__preview-live"),
         readme: preview.querySelector(".project-card__readme-overlay"),
       };
 
-      // Sembunyikan semua layer
-      Object.values(layers).forEach((layer) => {
-        if (layer) layer.style.display = "none";
+      // Hide all layers
+      Object.values(layers).forEach((l) => {
+        if (l) l.style.display = "none";
       });
 
-      // Tampilkan layer yang dipilih
-      if (layers[view]) {
-        layers[view].style.display = view === "readme" ? "flex" : "block";
+      // Show selected layer
+      if (layers[btn.dataset.view]) {
+        layers[btn.dataset.view].style.display =
+          btn.dataset.view === "readme" ? "flex" : "block";
       }
 
       // Update active button
-      const buttons = preview.querySelectorAll(
-        ".project-card__preview-toggle button",
-      );
-      buttons.forEach((b) => b.classList.remove("active"));
-      button.classList.add("active");
+      preview
+        .querySelectorAll(".project-card__preview-toggle button")
+        .forEach((b) => {
+          b.classList.remove("active");
+        });
+      btn.classList.add("active");
     }
 
-    /**
-     * Attach event listeners untuk toggle preview
-     */
+    // Attach preview toggle listeners
     _attachPreviewListeners() {
       document
         .querySelectorAll(".project-card__preview-toggle")
@@ -2662,24 +2449,40 @@
           toggle.removeEventListener("click", this._handlePreviewToggle);
           toggle.addEventListener("click", this._handlePreviewToggle);
         });
+
+      // Attach README button listeners for cards without Pages
+      document
+        .querySelectorAll(".project-card__view--readme")
+        .forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const card = btn.closest(".project-card");
+            const readmeOverlay = card.querySelector(
+              ".project-card__readme-overlay",
+            );
+            const cover = card.querySelector(".project-card__preview-cover");
+
+            if (readmeOverlay && cover) {
+              const isShowing = readmeOverlay.style.display === "flex";
+              readmeOverlay.style.display = isShowing ? "none" : "flex";
+              cover.style.display = isShowing ? "block" : "none";
+              btn.textContent = isShowing
+                ? `${ICONS.readme} README`
+                : "✕ Tutup";
+            }
+          });
+        });
     }
 
-    // ==========================================
-    // SETTERS
-    // ==========================================
-
-    setGitHubManager(manager) {
-      this.githubManager = manager;
+    // ═══════════════ SETTERS ═══════════════
+    setGitHubManager(m) {
+      this.githubManager = m;
+    }
+    setAudioManager(a) {
+      this.audioManager = a;
     }
 
-    setAudioManager(audioManager) {
-      this.audioManager = audioManager;
-    }
-
-    // ==========================================
-    // SKELETON LOADING
-    // ==========================================
-
+    // ═══════════════ RENDER METHODS ═══════════════
     renderSkeleton(count = 3) {
       if (!this.carouselTrack) return;
       this.stopAutoplay();
@@ -2687,42 +2490,34 @@
       if (this.carouselDots) this.carouselDots.innerHTML = "";
 
       for (let i = 0; i < count; i++) {
-        const slide = document.createElement("div");
-        slide.className = "carousel__slide carousel__slide--skeleton";
-        slide.innerHTML = this._createSkeletonSlideHTML();
-        this.carouselTrack.appendChild(slide);
+        const s = document.createElement("div");
+        s.className = "carousel__slide carousel__slide--skeleton";
+        s.innerHTML = this._createSkeletonSlideHTML();
+        this.carouselTrack.appendChild(s);
       }
     }
 
-    // ==========================================
-    // ERROR STATE
-    // ==========================================
-
-    renderError(message = "Gagal memuat data dari GitHub.", onRetry = null) {
+    renderError(msg = "Gagal memuat data.", onRetry = null) {
       if (!this.carouselTrack) return;
       this.stopAutoplay();
+
       this.carouselTrack.innerHTML = `
         <div class="car-error">
-          <span class="car-error__icon" aria-hidden="true">⚠️</span>
-          <p class="car-error__msg">${message}</p>
-          <button class="car-error__retry" id="carRetryBtn" type="button">Coba Lagi</button>
-        </div>
-      `;
+          <span class="car-error__icon">⚠️</span>
+          <p class="car-error__msg">${msg}</p>
+          <button class="car-error__retry" id="carRetryBtn">Coba Lagi</button>
+        </div>`;
+
       if (this.carouselDots) this.carouselDots.innerHTML = "";
 
-      const retryBtn = document.getElementById("carRetryBtn");
-      if (retryBtn && typeof onRetry === "function") {
-        retryBtn.addEventListener("click", onRetry);
-      }
+      document
+        .getElementById("carRetryBtn")
+        ?.addEventListener("click", onRetry);
     }
 
-    // ==========================================
-    // RENDER CAROUSEL
-    // ==========================================
-
-    renderCarousel(repos) {
-      if (!this.carouselTrack || !this.carouselDots) return;
-
+    renderCarousel() {
+      if (!this.carouselTrack || !this.carouselDots || !this.githubManager)
+        return;
       this.stopAutoplay();
 
       const slides = this.githubManager.getFeaturedRepos(6);
@@ -2731,33 +2526,33 @@
       this.carouselDots.innerHTML = "";
 
       if (!slides.length) {
-        this.renderError("Belum ada repository untuk ditampilkan.");
+        this.renderError("Belum ada repository.");
         return;
       }
 
       slides.forEach((repo, i) => {
-        const slide = document.createElement("div");
-        slide.className = "carousel__slide";
-        slide.setAttribute("role", "listitem");
-        slide.setAttribute("tabindex", "0");
-        slide.innerHTML = this._createSlideHTML(repo, i);
-        this.carouselTrack.appendChild(slide);
+        const s = document.createElement("div");
+        s.className = "carousel__slide";
+        s.setAttribute("role", "listitem");
+        s.tabIndex = 0;
+        s.innerHTML = this._createSlideHTML(repo, i);
+        this.carouselTrack.appendChild(s);
 
-        const dot = document.createElement("button");
-        dot.type = "button";
-        dot.className = "carousel__dot";
-        dot.setAttribute("role", "tab");
-        dot.setAttribute("aria-label", `Ke slide ${i + 1}`);
-        if (i === 0) dot.classList.add("carousel__dot--active");
-        dot.addEventListener("click", () => {
+        const d = document.createElement("button");
+        d.type = "button";
+        d.className = "carousel__dot";
+        d.setAttribute("role", "tab");
+        d.setAttribute("aria-label", `Slide ${i + 1}`);
+        if (i === 0) d.classList.add("carousel__dot--active");
+        d.addEventListener("click", () => {
           this.goToCarouselSlide(i);
           this._restartAutoplay();
         });
-        this.carouselDots.appendChild(dot);
+        this.carouselDots.appendChild(d);
       });
 
-      const totalSlideNumEl = document.getElementById("totalSlideNum");
-      if (totalSlideNumEl) totalSlideNumEl.textContent = slides.length;
+      document.getElementById("totalSlideNum") &&
+        (document.getElementById("totalSlideNum").textContent = slides.length);
 
       this._setupCarouselNavigation(slides.length);
       this.setupSwipeSupport();
@@ -2765,80 +2560,69 @@
       this.startAutoplay();
     }
 
-    // ==========================================
-    // CAROUSEL NAVIGATION
-    // ==========================================
-
-    _setupCarouselNavigation(totalSlides) {
-      const prevBtn = document.getElementById("carPrev");
-      const nextBtn = document.getElementById("carNext");
+    _setupCarouselNavigation(total) {
+      const prev = document.getElementById("carPrev");
+      const next = document.getElementById("carNext");
       const slides = this.carouselTrack.querySelectorAll(".carousel__slide");
       const dots = this.carouselDots.querySelectorAll(".carousel__dot");
 
-      const updateUI = (index) => {
-        dots.forEach((d, i) =>
-          d.classList.toggle("carousel__dot--active", i === index),
+      const update = (i) => {
+        dots.forEach((d, j) =>
+          d.classList.toggle("carousel__dot--active", j === i),
         );
-
-        const cur = document.getElementById("currentSlideNum");
-        if (cur) cur.textContent = index + 1;
-
-        const fill = document.getElementById("carProgressFill");
-        if (fill) fill.style.width = `${((index + 1) / totalSlides) * 100}%`;
-
-        if (prevBtn) prevBtn.disabled = index === 0;
-        if (nextBtn) nextBtn.disabled = index === totalSlides - 1;
+        document.getElementById("currentSlideNum") &&
+          (document.getElementById("currentSlideNum").textContent = i + 1);
+        document.getElementById("carProgressFill") &&
+          (document.getElementById("carProgressFill").style.width =
+            `${((i + 1) / total) * 100}%`);
+        if (prev) prev.disabled = i === 0;
+        if (next) next.disabled = i === total - 1;
       };
 
-      const goToSlide = (index) => {
+      const go = (i) => {
         if (!slides.length) return;
-        index = Math.max(0, Math.min(index, totalSlides - 1));
-        const slideWidth = slides[0].offsetWidth + 18;
+        i = Math.max(0, Math.min(i, total - 1));
         this.carouselTrack.scrollTo({
-          left: index * slideWidth,
+          left: i * (slides[0].offsetWidth + 18),
           behavior: "smooth",
         });
-        this.currentCarouselIndex = index;
-        updateUI(index);
+        this.currentCarouselIndex = i;
+        update(i);
       };
 
-      prevBtn?.addEventListener("click", () => {
-        goToSlide(Math.max(this.currentCarouselIndex - 1, 0));
+      prev?.addEventListener("click", () => {
+        go(Math.max(this.currentCarouselIndex - 1, 0));
         this._restartAutoplay();
       });
 
-      nextBtn?.addEventListener("click", () => {
-        goToSlide(Math.min(this.currentCarouselIndex + 1, totalSlides - 1));
+      next?.addEventListener("click", () => {
+        go(Math.min(this.currentCarouselIndex + 1, total - 1));
         this._restartAutoplay();
       });
 
-      let scrollTimeout;
+      // Scroll detection
+      let scrollTimer;
       this.carouselTrack.addEventListener("scroll", () => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
           if (!slides.length) return;
-          const slideWidth = slides[0].offsetWidth + 18;
           const newIndex = Math.round(
-            this.carouselTrack.scrollLeft / slideWidth,
+            this.carouselTrack.scrollLeft / (slides[0].offsetWidth + 18),
           );
           if (
             newIndex !== this.currentCarouselIndex &&
             newIndex >= 0 &&
-            newIndex < totalSlides
+            newIndex < total
           ) {
             this.currentCarouselIndex = newIndex;
-            updateUI(this.currentCarouselIndex);
+            update(newIndex);
           }
         }, 50);
       });
 
-      updateUI(0);
-      this.goToCarouselSlide = goToSlide;
+      update(0);
+      this.goToCarouselSlide = go;
     }
-
-    // ==========================================
-    // AUTOPLAY
-    // ==========================================
 
     startAutoplay() {
       this.stopAutoplay();
@@ -2846,8 +2630,9 @@
 
       this.autoplayTimer = setInterval(() => {
         if (this.isHovering) return;
-        const next = (this.currentCarouselIndex + 1) % this.totalCarouselSlides;
-        this.goToCarouselSlide(next);
+        this.goToCarouselSlide(
+          (this.currentCarouselIndex + 1) % this.totalCarouselSlides,
+        );
       }, this.autoplayDelay);
     }
 
@@ -2864,35 +2649,21 @@
 
     setupAutoplayPause() {
       const carousel = this.carouselTrack?.closest(".carousel");
-      if (!carousel || carousel.dataset.autoplayBound) return;
-      carousel.dataset.autoplayBound = "true";
+      if (!carousel || carousel.dataset.ab) return;
+      carousel.dataset.ab = "1";
 
-      carousel.addEventListener("mouseenter", () => {
-        this.isHovering = true;
-      });
-      carousel.addEventListener("mouseleave", () => {
-        this.isHovering = false;
-      });
-      carousel.addEventListener("focusin", () => {
-        this.isHovering = true;
-      });
-      carousel.addEventListener("focusout", () => {
-        this.isHovering = false;
-      });
+      carousel.addEventListener("mouseenter", () => (this.isHovering = true));
+      carousel.addEventListener("mouseleave", () => (this.isHovering = false));
     }
-
-    // ==========================================
-    // SWIPE SUPPORT
-    // ==========================================
 
     setupSwipeSupport() {
       const track = this.carouselTrack;
-      if (!track || track.dataset.swipeBound) return;
-      track.dataset.swipeBound = "true";
+      if (!track || track.dataset.sb) return;
+      track.dataset.sb = "1";
 
-      let startX = 0;
-      let startY = 0;
-      let isSwiping = false;
+      let startX = 0,
+        startY = 0,
+        isSwiping = false;
 
       track.addEventListener(
         "touchstart",
@@ -2912,34 +2683,24 @@
           isSwiping = false;
           this.isHovering = false;
 
-          const endX = e.changedTouches[0].clientX;
-          const endY = e.changedTouches[0].clientY;
-          const diffX = startX - endX;
-          const diffY = startY - endY;
+          const dx = startX - e.changedTouches[0].clientX;
+          const dy = startY - e.changedTouches[0].clientY;
 
-          if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
-            if (diffX > 0) {
-              this.goToCarouselSlide(
-                Math.min(
-                  this.currentCarouselIndex + 1,
-                  this.totalCarouselSlides - 1,
-                ),
-              );
-            } else {
-              this.goToCarouselSlide(
-                Math.max(this.currentCarouselIndex - 1, 0),
-              );
-            }
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+            this.goToCarouselSlide(
+              dx > 0
+                ? Math.min(
+                    this.currentCarouselIndex + 1,
+                    this.totalCarouselSlides - 1,
+                  )
+                : Math.max(this.currentCarouselIndex - 1, 0),
+            );
             this._restartAutoplay();
           }
         },
         { passive: true },
       );
     }
-
-    // ==========================================
-    // RENDER PROJECTS
-    // ==========================================
 
     renderProjects(filter = "all") {
       if (!this.projectGrid || !this.githubManager) return;
@@ -2951,25 +2712,20 @@
         if (this.projectEmpty) this.projectEmpty.style.display = "block";
         return;
       }
+
       if (this.projectEmpty) this.projectEmpty.style.display = "none";
 
-      const fragment = document.createDocumentFragment();
+      const frag = document.createDocumentFragment();
       repos.forEach((repo) => {
-        const temp = document.createElement("div");
-        temp.innerHTML = this._createProjectCardHTML(repo);
-        fragment.appendChild(temp.firstElementChild);
+        const div = document.createElement("div");
+        div.innerHTML = this._createProjectCardHTML(repo);
+        frag.appendChild(div.firstElementChild);
       });
 
       this.projectGrid.innerHTML = "";
-      this.projectGrid.appendChild(fragment);
-
-      // Attach preview toggle listeners setelah render
+      this.projectGrid.appendChild(frag);
       this._attachPreviewListeners();
     }
-
-    // ==========================================
-    // FILTER TABS
-    // ==========================================
 
     setupFilterTabs() {
       this.filterTabs.forEach((tab) => {
@@ -2978,35 +2734,24 @@
             t.classList.remove("filter-tab--active"),
           );
           tab.classList.add("filter-tab--active");
-          const filter = tab.dataset.filter;
-          this.renderProjects(filter);
+          this.renderProjects(tab.dataset.filter);
           this.audioManager?.playSFX("menuSelect");
         });
       });
     }
 
-    // ==========================================
-    // UPDATE STATS
-    // ==========================================
-
     updateStats(repos, totalCommits = 0) {
-      const repoCount = document.getElementById("repoCount");
-      const starCount = document.getElementById("starCount");
-      const commitCount = document.getElementById("commitCount");
-      const repoCountBadge = document.getElementById("repoCountBadge");
-
-      if (repoCount) repoCount.textContent = repos.length;
-      if (starCount) {
-        const total = repos.reduce((sum, r) => sum + r.stargazers_count, 0);
-        starCount.textContent = total;
-      }
-      if (commitCount) commitCount.textContent = totalCommits + "+";
-      if (repoCountBadge) repoCountBadge.textContent = repos.length;
+      document.getElementById("repoCount") &&
+        (document.getElementById("repoCount").textContent = repos.length);
+      document.getElementById("starCount") &&
+        (document.getElementById("starCount").textContent = repos.reduce(
+          (s, r) => s + (r.stargazers_count || 0),
+          0,
+        ));
+      document.getElementById("commitCount") &&
+        (document.getElementById("commitCount").textContent =
+          totalCommits + "+");
     }
-
-    // ==========================================
-    // LOADER
-    // ==========================================
 
     showLoader(show) {
       if (this.projectLoader) {
@@ -3015,11 +2760,8 @@
     }
   }
 
-  // Export instance untuk akses global (untuk onerror handler)
-  window.uiRenderer = null;
-
   // ═══════════════════════════════════════════
-  // 10. NAVIGATION SYSTEM (TETAP SAMA)
+  // 10. NAVIGATION SYSTEM
   // ═══════════════════════════════════════════
   class NavigationSystem {
     constructor() {
@@ -3069,6 +2811,7 @@
         );
       });
 
+      // Close menu when clicking outside
       document.addEventListener("click", (e) => {
         if (this.navMenu?.classList.contains("navbar__menu--open")) {
           if (!e.target.closest(".navbar")) {
@@ -3078,6 +2821,7 @@
         }
       });
 
+      // Keyboard navigation
       document.addEventListener("keydown", (e) => {
         if (
           e.key === "Escape" &&
@@ -3123,19 +2867,24 @@
       this._setActiveNav(route);
       this.currentRoute = route;
 
+      // Close mobile menu
       this.navMenu?.classList.remove("navbar__menu--open");
       this.menuToggle?.setAttribute("aria-expanded", "false");
 
+      // Scroll to top
       window.scrollTo({ top: 0, behavior: "smooth" });
 
+      // Load projects when navigating to project view
       if (route === "project") {
         this.loadProjects();
       }
 
+      // Open dialogue
       if (!skipDialogue && this.vnSystem && !this.vnSystem.isActive()) {
         setTimeout(() => this.vnSystem.open(route), 500);
       }
 
+      // Update URL
       const url = new URL(window.location);
       url.searchParams.set("route", route);
       window.history.pushState({ route }, "", url);
@@ -3144,6 +2893,7 @@
     async loadProjects() {
       if (!this.githubManager || !this.uiRenderer) return;
 
+      // If already loaded, just render
       if (this.githubManager.isLoaded) {
         this.uiRenderer.renderProjects("all");
         return;
@@ -3176,7 +2926,7 @@
   }
 
   // ═══════════════════════════════════════════
-  // 11. PAGE LOADER (TETAP SAMA)
+  // 11. PAGE LOADER
   // ═══════════════════════════════════════════
   class PageLoader {
     constructor() {
@@ -3190,13 +2940,13 @@
 
     init() {
       if (!this.loader) return;
-
       this.simulateProgress();
 
       window.addEventListener("load", () => {
         this.complete();
       });
 
+      // Safety timeout
       setTimeout(() => {
         if (!this.isComplete) {
           console.warn("⚠️ Loader timeout - force hiding");
@@ -3242,7 +2992,6 @@
 
       setTimeout(() => {
         this.loader?.classList.add("hidden");
-
         setTimeout(() => {
           this.loader?.remove();
           console.log("🍁 Page loaded successfully!");
@@ -3252,7 +3001,7 @@
   }
 
   // ═══════════════════════════════════════════
-  // 12. PWA HANDLER (TETAP SAMA)
+  // 12. PWA HANDLER
   // ═══════════════════════════════════════════
   class PWAHandler {
     constructor() {
@@ -3276,22 +3025,16 @@
         if (this.installBtn) {
           this.installBtn.style.display = "none";
         }
-        if (window.gtag) {
-          gtag("event", "pwa_installed");
-        }
       });
     }
 
     async install() {
       if (!this.deferredPrompt) return;
-
       this.deferredPrompt.prompt();
       const choiceResult = await this.deferredPrompt.userChoice;
-
       if (choiceResult.outcome === "accepted") {
         console.log("🍁 User accepted the install prompt");
       }
-
       this.deferredPrompt = null;
       if (this.installBtn) {
         this.installBtn.style.display = "none";
@@ -3300,50 +3043,10 @@
   }
 
   // ═══════════════════════════════════════════
-  // 13. KONAMI CODE (TETAP SAMA)
-  // ═══════════════════════════════════════════
-  class KonamiCode {
-    constructor(callback) {
-      this.code = [
-        "ArrowUp",
-        "ArrowUp",
-        "ArrowDown",
-        "ArrowDown",
-        "ArrowLeft",
-        "ArrowRight",
-        "ArrowLeft",
-        "ArrowRight",
-        "b",
-        "a",
-      ];
-      this.index = 0;
-      this.callback = callback;
-      this.boundHandler = this.handler.bind(this);
-      document.addEventListener("keydown", this.boundHandler);
-    }
-
-    handler(e) {
-      if (e.key === this.code[this.index]) {
-        this.index++;
-        if (this.index === this.code.length) {
-          this.callback();
-          this.index = 0;
-        }
-      } else {
-        this.index = 0;
-      }
-    }
-
-    destroy() {
-      document.removeEventListener("keydown", this.boundHandler);
-    }
-  }
-
-  // ═══════════════════════════════════════════
-  // 14. INITIALIZATION
+  // 13. INITIALIZATION
   // ═══════════════════════════════════════════
   const initializeApp = () => {
-    // Set year
+    // Set year in footer
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
@@ -3415,62 +3118,64 @@
 
     Object.assign(window, publicAPI);
 
-    // Konami Code
-    new KonamiCode(() => {
-      audioManager.playSFX("questClear");
-      achievementSystem.unlock("konami_master");
-      vnSystem.open(
-        "home",
-        "🔥 KONAMI CODE ACTIVATED! Skill rahasia Maple: ATROCITY MODE! Semua defense jadi maksimal! 🛡️✨\n\n*Maple berubah menjadi monster raksasa yang mengerikan... tapi suaranya tetap imut*",
-      );
-      console.log("🍁 Konami Code activated! Achievement unlocked!");
-    });
+    // Initialize portfolio data
+    window.MaplePortfolio = {
+      AudioManager,
+      AchievementSystem,
+      GitHubManager,
+      UIRenderer,
+      CONFIG,
+      ICONS,
+      getLanguageColor,
+      timeAgo,
+    };
 
     // Load initial data
-    setTimeout(async () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+      const audio = new AudioManager();
+      const achievement = new AchievementSystem();
+      achievement.setAudioManager(audio);
+
+      const github = new GitHubManager(CONFIG.USERNAME);
+      const ui = new UIRenderer();
+      ui.setGitHubManager(github);
+      ui.setAudioManager(audio);
+      ui.setupFilterTabs();
+
+      ui.renderSkeleton(3);
+      ui.showLoader(true);
+
+      // Unlock first visit achievement
+      if (!localStorage.getItem("maple_first_visit")) {
+        localStorage.setItem("maple_first_visit", "1");
+        setTimeout(() => achievement.unlock("first_visit"), 1500);
+      }
+
       try {
-        // Render skeleton
-        uiRenderer.renderSkeleton(3);
+        const repos = await github.fetchAllRepos();
+        const totalCommits = await github.fetchTotalCommits();
 
-        // Fetch ALL repos
-        await githubManager.fetchAllRepos();
+        ui.updateStats(repos, totalCommits);
+        ui.renderCarousel();
+        ui.renderProjects("all");
 
-        // Fetch commits
-        await githubManager.fetchTotalCommits();
-
-        // Render UI
-        uiRenderer.renderCarousel(githubManager.repositories);
-        uiRenderer.updateStats(
-          githubManager.repositories,
-          githubManager.totalCommits,
-        );
-
-        // Animate stats
-        animateStats(githubManager);
-
-        // Load projects if needed
-        if (navigation.getCurrentRoute() === "project") {
-          uiRenderer.renderProjects("all");
-          uiRenderer.setupFilterTabs();
-        }
-
-        // Play success sound
-        audioManager.playSFX("questClear");
-
+        console.log("✅ Portfolio loaded successfully!");
+        console.log(`📊 Total repos: ${repos.length}`);
         console.log(
-          `🍁 Loaded ${githubManager.repositories.length} repositories from GitHub!`,
+          `📄 Repos with README: ${repos.filter((r) => r.readme).length}`,
         );
         console.log(
-          `📊 Rate limit: ${githubManager.rateLimitRemaining} requests remaining`,
+          `🌐 Repos with Pages: ${repos.filter((r) => r.has_pages || r.homepage).length}`,
         );
       } catch (error) {
-        console.log("Initial data load:", error.message);
-        uiRenderer.renderError(
-          `Gagal memuat data: ${error.message}. <br><small>Coba refresh halaman atau cek koneksi internet.</small>`,
-          () => location.reload(),
+        console.error("Failed to load:", error);
+        ui.renderError("Gagal menghubungkan ke server. Coba lagi nanti.", () =>
+          location.reload(),
         );
+      } finally {
+        ui.showLoader(false);
       }
-    }, CONFIG.AUTO_LOAD_DELAY);
+    });
 
     // Navbar hover SFX
     document
@@ -3483,7 +3188,7 @@
         });
       });
 
-    // BGM Volume Control
+    // BGM Volume Control via scroll
     const bgmPlayer = document.querySelector(".bgm-player");
     if (bgmPlayer) {
       bgmPlayer.addEventListener("wheel", (e) => {
@@ -3493,6 +3198,7 @@
         audioManager.setVolume(newVolume);
       });
 
+      // Double-click to reset volume
       bgmPlayer.addEventListener("dblclick", () => {
         audioManager.setVolume(0.5);
       });
@@ -3500,90 +3206,44 @@
 
     // Keyboard shortcuts
     document.addEventListener("keydown", (e) => {
+      // Alt+G: Toggle guide
       if (e.altKey && e.key === "g") {
         e.preventDefault();
         guideSystem.toggle();
       }
+      // Alt+M: Toggle music
       if (e.altKey && e.key === "m") {
         e.preventDefault();
         audioManager.toggle();
       }
+      // Alt+C: Clear cache
       if (e.altKey && e.key === "c") {
         e.preventDefault();
         githubManager.clearCache();
         console.log("🗑️ Cache cleared!");
       }
+      // Alt+R: Refresh stats
       if (e.altKey && e.key === "r") {
         e.preventDefault();
         publicAPI.refreshStats();
       }
     });
 
-    console.log("🍁 Maple's Portfolio v2.0 initialized!");
+    // Log initialization
+    console.log("🍁 Maple's Portfolio v4.0 initialized!");
     console.log("🤖 AI Dialogue System active");
-    console.log("💾 GitHub: NO PROXY - Direct API with caching");
-    console.log("🛡️ System ready. Try Konami Code: ↑↑↓↓←→←→BA");
+    console.log("📄 Multi-source README fetching enabled");
+    console.log("🌐 GitHub Pages preview for repos with Pages");
+    console.log("📋 README preview for repos without Pages");
+    console.log("🛡️ System ready!");
     console.log(
       "⌨️ Shortcuts: Alt+G (Guide), Alt+M (Music), Alt+C (Clear Cache), Alt+R (Refresh Stats)",
     );
   };
 
   // ═══════════════════════════════════════════
-  // 15. STATS ANIMATION
+  // 14. START APPLICATION
   // ═══════════════════════════════════════════
-  async function animateStats(githubManager) {
-    const duration = CONFIG.STATS_ANIMATION_DURATION;
-
-    const animateCounter = (element, target, suffix = "") => {
-      if (!element) return;
-      const startTime = performance.now();
-
-      const update = (currentTime) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.floor(eased * target);
-        element.textContent = current + suffix;
-        if (progress < 1) requestAnimationFrame(update);
-        else element.textContent = target + suffix;
-      };
-
-      requestAnimationFrame(update);
-    };
-
-    // Animate repo count
-    const repoEl = document.getElementById("repoCount");
-    if (repoEl) {
-      animateCounter(repoEl, githubManager.repositories.length);
-      await new Promise((r) => setTimeout(r, 200));
-    }
-
-    // Animate star count
-    const starEl = document.getElementById("starCount");
-    if (starEl) {
-      animateCounter(starEl, githubManager.totalStars);
-      await new Promise((r) => setTimeout(r, 200));
-    }
-
-    // Animate commit count
-    const commitEl = document.getElementById("commitCount");
-    if (commitEl) {
-      animateCounter(commitEl, githubManager.totalCommits, "+");
-    }
-
-    // Update user info
-    const userData = await githubManager.fetchUserProfile();
-    if (userData) {
-      const createdDate = new Date(userData.created_at);
-      const activeSinceEl = document.getElementById("activeSince");
-      if (activeSinceEl) activeSinceEl.textContent = createdDate.getFullYear();
-
-      const lastActiveEl = document.getElementById("lastActive");
-      if (lastActiveEl) lastActiveEl.textContent = timeAgo(userData.updated_at);
-    }
-  }
-
-  // Start
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeApp);
   } else {

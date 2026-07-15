@@ -5,7 +5,7 @@
   "name": "hayaxxdev-bit.github.io",
   "version": "1.0.0",
   "description": "```markdown # 🍁 hayaxxdev-bit.github.io",
-  "main": "index.js",
+  "main": "api/github.js",
   "dependencies": {
     "array-union": "^2.1.0",
     "async": "^3.2.6",

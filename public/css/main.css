@@ -19,3 +19,7 @@
 @import 'loader.css';
 @import 'journey.css';
 @import 'achiv.css';
+
+.is-hidden {
+    display: none !important;
+}
