@@ -18,8 +18,42 @@
 @import 'responsive.css';
 @import 'loader.css';
 @import 'journey.css';
-@import 'achiv.css';
+
+/* ═══════════════════════════════════════════
+   HELPER CLASSES (pengganti inline styles)
+   ═══════════════════════════════════════════ */
 
 .is-hidden {
-    display: none !important;
+  display: none !important;
+}
+
+.is-visible {
+  display: block !important;
+}
+
+.is-flex {
+  display: flex !important;
+}
+
+.is-active {
+  /* style untuk active state sudah ada di masing-masing komponen */
+}
+
+/* Progress bar width - gunakan CSS custom properties */
+.progress-fill {
+  width: var(--progress-width, 0%);
+  transition: width 0.3s ease;
+}
+
+/* Status badge colors */
+.badge-live {
+  background: rgba(16, 185, 129, 0.85);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.badge-repo {
+  background: rgba(107, 114, 128, 0.85);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(107, 114, 128, 0.3);
 }

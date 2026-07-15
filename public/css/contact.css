@@ -1,48 +1,35 @@
-/* ══════════════════════════════
+/* ═══════════════════════════════════════════
    CONTACT SECTION
-   "Hanko Seal × Terminal" edition
-   ══════════════════════════════ */
+   ═══════════════════════════════════════════ */
+
+#contact {
+  position: relative;
+}
 
 .contact-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 20px 0;
+  max-width: 680px;
+  margin: 0 auto;
 }
 
 .contact-card {
-  background: var(--bg-card);
+  background: var(--bg-card, #1a1a2e);
   border: 1px solid rgba(124, 58, 237, 0.15);
-  border-radius: var(--radius);
-  padding: 28px;
-  max-width: 560px;
-  width: 100%;
+  border-radius: var(--radius, 16px);
+  padding: 32px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
-  position: relative;
 }
 
 .contact-card:hover {
   border-color: rgba(124, 58, 237, 0.3);
-  box-shadow: 0 0 60px rgba(124, 58, 237, 0.05);
-}
-
-/* ghost kanji watermark — matches hero signature */
-#contact .section-title::after {
-  content: '契約';
-  display: block;
-  font-family: var(--font-stat, 'Spectral SC', serif);
-  font-size: 0.65rem;
-  letter-spacing: 3px;
-  color: #a78bfa;
-  opacity: 0.5;
-  margin-top: 4px;
-  -webkit-text-fill-color: #a78bfa;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(124, 58, 237, 0.1);
 }
 
 .contact-card__head {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
 }
 
 .contact-card__avatar {
@@ -51,78 +38,64 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #7c3aed;
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
-  position: relative;
+  box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
-/* seal ring echo around avatar, same trick as navbar logo */
-.contact-card__head {
-  position: relative;
+.contact-card:hover .contact-card__avatar {
+  transform: rotate(-6deg) scale(1.05);
 }
 
-.contact-card__head::before {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  border: 1px solid rgba(124, 58, 237, 0.35);
-  pointer-events: none;
+.contact-card__avatar[src*="data:image/svg"] {
+  object-fit: contain;
+  padding: 8px;
 }
 
 .contact-links {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin: 20px 0;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: var(--radius-sm);
-  background: rgba(240, 240, 242, 0.02);
-  border: 1px solid rgba(124, 58, 237, 0.15);
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(124, 58, 237, 0.04);
+  border: 1px solid rgba(124, 58, 237, 0.1);
   text-decoration: none;
-  color: var(--text);
+  color: var(--text, #e2e8f0);
   transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
 }
 
-.contact-item:hover {
-  background: var(--bg-card-hover);
-  border-color: #6d28d9;
-  transform: translateX(4px);
-  box-shadow: 0 0 30px rgba(124, 58, 237, 0.08);
-}
-
-/* skill-tier kanji rank, echoes hero stats */
 .contact-item::before {
   content: '';
   position: absolute;
-  top: 6px;
-  right: 10px;
-  font-family: var(--font-stat, 'Spectral SC', serif);
-  font-size: 0.6rem;
-  color: #a78bfa;
-  opacity: 0.3;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(204, 17, 51, 0.03));
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.contact-item:nth-child(1)::before { content: '壱'; }
-.contact-item:nth-child(2)::before { content: '弐'; }
-.contact-item:nth-child(3)::before { content: '参'; }
+.contact-item:hover {
+  border-color: rgba(124, 58, 237, 0.3);
+  transform: translateX(6px);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.1);
+}
 
 .contact-item:hover::before {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .contact-item__icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   background: rgba(124, 58, 237, 0.1);
   display: flex;
@@ -130,27 +103,38 @@
   justify-content: center;
   flex-shrink: 0;
   color: #a78bfa;
+  transition: all 0.3s ease;
+}
+
+.contact-item:hover .contact-item__icon {
+  background: rgba(124, 58, 237, 0.2);
+  color: #c4b5fd;
 }
 
 .contact-item__label {
   display: block;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.7rem;
+  color: var(--text-secondary, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
 }
 
 .contact-item__value {
-  font-weight: 500;
+  display: block;
   font-size: 0.9rem;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--text, #e2e8f0);
 }
 
 .contact-item__arrow {
   margin-left: auto;
-  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  color: #a78bfa;
   opacity: 0;
-  transform: translateX(-8px);
+  transform: translateX(-10px);
   transition: all 0.3s ease;
-  color: #7c3aed;
 }
 
 .contact-item:hover .contact-item__arrow {
@@ -161,21 +145,70 @@
 .contact-note {
   text-align: center;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #94a3b8);
   margin-top: 16px;
-  font-family: var(--font-mono);
+  padding-top: 16px;
+  border-top: 1px solid rgba(124, 58, 237, 0.1);
+  font-style: italic;
 }
 
-.contact-note::after {
-  content: '_';
-  animation: blink-cursor 1.1s step-end infinite;
+/* Contact section ghost kanji */
+#contact .contact-card {
+  position: relative;
 }
 
-@keyframes blink-cursor {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+#contact .contact-card::after {
+  content: '連絡';
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-family: var(--font-stat, 'Spectral SC', serif);
+  font-size: 4rem;
+  line-height: 1;
+  color: rgba(124, 58, 237, 0.04);
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .contact-note::after { animation: none !important; }
+/* Responsive */
+@media (max-width: 768px) {
+  .contact-card {
+    padding: 24px 20px;
+  }
+  
+  .contact-card__head {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .contact-item {
+    padding: 12px 14px;
+  }
+  
+  .contact-item__arrow {
+    display: none;
+  }
+  
+  #contact .contact-card::after {
+    font-size: 3rem;
+    top: 10px;
+    right: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-card {
+    padding: 20px 16px;
+  }
+  
+  .contact-item__icon {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .contact-item__value {
+    font-size: 0.8rem;
+    word-break: break-all;
+  }
 }

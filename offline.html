@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#7c3aed" />
+  
+  <title>Offline · hayaxxdev</title>
+  <meta name="description" content="Koneksi terputus. Maple juga kadang disconnect dari server!" />
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>" />
+  
+  <style>
+    :root {
+      --purple: #7c3aed;
+      --purple-soft: #a78bfa;
+      --bg: #0a0a14;
+      --bg-card: rgba(26, 26, 46, 0.8);
+      --text: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    /* Background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.06), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(204, 17, 51, 0.04), transparent 40%);
+      pointer-events: none;
+    }
+    
+    .offline-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .offline-card::after {
+      content: '圏外';
+      position: absolute;
+      bottom: -15px;
+      right: -5px;
+      font-family: 'Spectral SC', 'Noto Serif JP', serif;
+      font-size: 5rem;
+      color: rgba(124, 58, 237, 0.04);
+      pointer-events: none;
+      user-select: none;
+    }
+    
+    .offline-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      animation: float 3s ease-in-out infinite;
+      display: inline-block;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    .offline-title {
+      font-family: var(--font-mono);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--purple-soft);
+      margin-bottom: 10px;
+    }
+    
+    .offline-message {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(124, 58, 237, 0.12);
+      color: var(--purple-soft);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      background: rgba(124, 58, 237, 0.2);
+      border-color: rgba(124, 58, 237, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .status-text {
+      margin-top: 16px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      opacity: 0.5;
+      font-family: var(--font-mono);
+    }
+    
+    @media (max-width: 480px) {
+      .offline-card {
+        padding: 30px 20px;
+      }
+      .offline-icon {
+        font-size: 3rem;
+      }
+      .offline-card::after {
+        font-size: 3.5rem;
+      }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .offline-icon {
+        animation: none;
+      }
+      .btn {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="offline-card">
+    <div class="offline-icon" aria-hidden="true">📡</div>
+    <h1 class="offline-title">Koneksi Terputus</h1>
+    <p class="offline-message">
+      Sepertinya kamu sedang <strong>offline</strong>. 
+      <strong>Maple</strong> juga kadang disconnect dari server kok~ 
+      Coba periksa koneksi internetmu ya! 🍁
+    </p>
+    <button class="btn" id="retryBtn" type="button">
+      🔄 Coba Lagi
+    </button>
+    <p class="status-text" id="statusText">Menunggu koneksi...</p>
+  </main>
+
+  <script>
+    (function() {
+      var retryBtn = document.getElementById('retryBtn');
+      var statusText = document.getElementById('statusText');
+      
+      // Retry button
+      retryBtn.addEventListener('click', function() {
+        retryBtn.textContent = '⏳ Mencoba...';
+        retryBtn.disabled = true;
+        retryBtn.style.opacity = '0.7';
+        retryBtn.style.cursor = 'wait';
+        statusText.textContent = 'Mencoba menyambungkan...';
+        
+        setTimeout(function() {
+          window.location.reload();
+        }, 600);
+      });
+      
+      // Auto-retry when back online
+      window.addEventListener('online', function() {
+        statusText.textContent = '✅ Koneksi terdeteksi! Memuat ulang...';
+        statusText.style.color = '#34d399';
+        setTimeout(function() {
+          window.location.reload();
+        }, 500);
+      });
+      
+      // Update status
+      window.addEventListener('offline', function() {
+        statusText.textContent = '❌ Tidak ada koneksi';
+        statusText.style.color = '#e8798a';
+      });
+      
+      // Initial status check
+      if (!navigator.onLine) {
+        statusText.textContent = '❌ Tidak ada koneksi';
+        statusText.style.color = '#e8798a';
+      }
+    })();
+  </script>
+</body>
+</html>

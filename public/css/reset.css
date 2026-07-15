@@ -20,9 +20,9 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
     background:
-    radial-gradient(ellipse 900px 600px at 15% 0%, rgba(124, 58, 237, 0.9), transparent 55%),
-    radial-gradient(ellipse 700px 500px at 100% 20%, rgba(204, 17, 51, 0.9), transparent 50%),
-    radial-gradient(ellipse 800px 700px at 50% 100%, rgba(109, 40, 217, 0.9), transparent 55%),
+    radial-gradient(ellipse 900px 600px at 15% 0%, rgba(124, 58, 237, 0.30), transparent 55%),
+    radial-gradient(ellipse 700px 500px at 100% 20%, rgba(204, 17, 51, 0.30), transparent 50%),
+    radial-gradient(ellipse 800px 700px at 50% 100%, rgba(109, 40, 217, 0.30), transparent 55%),
     var(--bg-void, #030108);
   background-attachment: fixed;
 }

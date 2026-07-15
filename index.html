@@ -13,9 +13,27 @@
     </title>
 
     <!-- Consolidated & Updated Content Security Policy -->
+    <!-- GANTI CSP yang lama dengan ini -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://www.google-analytics.com https://cloudflareinsights.com; frame-src 'self' https:;"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' 
+                   https://www.googletagmanager.com 
+                   https://www.google-analytics.com 
+                   https://static.cloudflareinsights.com
+                   https://cdn.jsdelivr.net
+                   https://unpkg.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+        img-src 'self' data: https: http:;
+        font-src 'self' https://fonts.gstatic.com;
+        connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://hayaxxdev-bit-github-io.vercel.app https://image.thum.io https://www.google-analytics.com;
+        frame-src 'self' https:;
+        media-src 'self';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+      "
     />
 
     <meta
@@ -136,7 +154,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="./public/css/main.css" />
-    <link rel="stylesheet" href="./public/css/acvhiv.css" />
+    <link rel="stylesheet" href="./public/css/achivment.css" />
 
     <!-- ═══════════════════════════════════════════════
      FAVICON & ICONS - COMPLETE SET
@@ -655,9 +673,9 @@
                 <h2 class="section-title">
                   <span class="section-title__icon" aria-hidden="true">✦</span>
                   Sorotan Karya
-                  <span class="section-title__badge" id="repoCountBadge"
-                    >0</span
-                  >
+                  <!-- <span class="section-title__badge" id="repoCountBadge" -->
+                  <!-- ></span -->
+                  <!-- > -->
                 </h2>
                 <p class="section-sub">
                   Proyek unggulan dari GitHub ·
@@ -713,6 +731,7 @@
 
             <div class="carousel">
               <div class="carousel__track" id="carTrack" role="list">
+                <!-- Updated placeholder dengan loading dots -->
                 <div class="car-placeholder">
                   <span class="car-placeholder__icon" aria-hidden="true"
                     >🍁</span
@@ -721,6 +740,11 @@
                   <span class="car-placeholder__sub"
                     >Mengambil data dari GitHub</span
                   >
+                  <div class="car-placeholder__dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
               </div>
 
@@ -757,7 +781,7 @@
             <article
               class="char-card"
               data-char="maple"
-              onclick="window.location.href = './character-info/maple.html'"
+              data-target="./character-info/maple.html"
               role="link"
               tabindex="0"
               aria-label="Maple character details"
@@ -769,10 +793,8 @@
                 width="320"
                 height="448"
                 loading="lazy"
-                onerror="
-                  this.src =
-                    'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22448%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%231d1020%22/%3E%3Cstop offset=%2255%25%22 stop-color=%22%23120a16%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23060508%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22448%22 fill=%22url(%23g)%22/%3E%3Ctext x=%2250%25%22 y=%2252%25%22 text-anchor=%22middle%22 font-size=%22120%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E'
-                "
+                data-fallback-icon="🛡️"
+                data-fallback-bg="#1d1020"
               />
               <div class="card-art-scrim" aria-hidden="true"></div>
 
@@ -794,10 +816,8 @@
                       width="58"
                       height="58"
                       loading="lazy"
-                      onerror="
-                        this.src =
-                          'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22%3E%3Crect fill=%22%23120a16%22 width=%2260%22 height=%2260%22/%3E%3Ctext fill=%22%23d4af37%22 x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2226%22%3E%F0%9F%8D%81%3C/text%3E%3C/svg%3E'
-                      "
+                      data-fallback-icon="🍁"
+                      data-fallback-bg="#120a16"
                     />
                   </div>
                 </div>
@@ -829,9 +849,7 @@
             <article
               class="char-card"
               data-char="sally"
-              onclick="
-                window.location.href = './character-info/sally-detail.html'
-              "
+              data-target="./character-info/sally-detail.html"
               role="link"
               tabindex="0"
               aria-label="Sally character details"
@@ -843,10 +861,8 @@
                 width="320"
                 height="448"
                 loading="lazy"
-                onerror="
-                  this.src =
-                    'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22448%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%230a1a2e%22/%3E%3Cstop offset=%2255%25%22 stop-color=%22%2306121f%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23020508%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22320%22 height=%22448%22 fill=%22url(%23g)%22/%3E%3Ctext x=%2250%25%22 y=%2252%25%22 text-anchor=%22middle%22 font-size=%22120%22%3E%F0%9F%92%A8%3C/text%3E%3C/svg%3E'
-                "
+                data-fallback-icon="💨"
+                data-fallback-bg="#0a1a2e"
               />
               <div class="card-art-scrim" aria-hidden="true"></div>
 
@@ -867,10 +883,8 @@
                       width="58"
                       height="58"
                       loading="lazy"
-                      onerror="
-                        this.src =
-                          'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22%3E%3Crect fill=%22%2306121f%22 width=%2260%22 height=%2260%22/%3E%3Ctext fill=%22%2344aaff%22 x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2226%22%3E%F0%9F%92%A8%3C/text%3E%3C/svg%3E'
-                      "
+                      data-fallback-icon="💨"
+                      data-fallback-bg="#06121f"
                     />
                   </div>
                 </div>
@@ -899,7 +913,6 @@
             </article>
           </div>
         </section>
-
         <!-- ════════════════════════════════════════════════════════════════
              PROJECT SECTION
              ════════════════════════════════════════════════════════════════ -->
@@ -982,21 +995,20 @@
         <!-- ════════════════════════════════════════════════════════════════
              ABOUT SECTION
              ════════════════════════════════════════════════════════════════ -->
-        <section id="about" class="view" aria-label="About hayaxxdev">
+        <section id="about" class="view" aria-label="Tentang hayaxxdev">
           <div class="about-layout">
+            <!-- Visual Side -->
             <div class="about__visual">
               <div class="about__img-frame">
                 <img
-                  src="./public/image/character/bofuri.jpeg"
-                  alt="hayaxxdev - Fullstack Developer & Game Developer"
                   class="about__img"
+                  src="./public/image/character/bofuri.jpeg"
+                  alt="hayaxxdev avatar"
                   width="160"
                   height="160"
                   loading="lazy"
-                  onerror="
-                    this.src =
-                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22%3E%3Crect fill=%22%23141414%22 width=%22160%22 height=%22160%22/%3E%3Ctext fill=%22%23c9a84c%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2236%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
-                  "
+                  data-fallback-initial="NK"
+                  data-fallback-bg="#141414"
                 />
               </div>
               <div class="about__social">
@@ -1008,8 +1020,8 @@
                   aria-label="GitHub profile"
                 >
                   <svg
-                    width="14"
-                    height="14"
+                    width="16"
+                    height="16"
                     viewBox="0 0 24 24"
                     fill="currentColor"
                     aria-hidden="true"
@@ -1020,165 +1032,190 @@
                   </svg>
                   GitHub
                 </a>
+                <a
+                  href="https://linkedin.com/in/hayaxxdev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="social-pill"
+                  aria-label="LinkedIn profile"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    />
+                  </svg>
+                  LinkedIn
+                </a>
               </div>
             </div>
-            <div class="about__content">
+
+            <!-- Info Side -->
+            <div class="about__info">
               <h2 class="section-title">Tentang Saya</h2>
               <div class="section-rule" aria-hidden="true"></div>
+
               <p class="about__bio">
-                Developer & kreator digital yang berfokus pada perpaduan
-                estetika manga/anime dengan teknologi web modern. Dari membangun
-                UI yang responsif hingga mendesain elemen game, saya percaya
-                bahwa kode dan seni bisa hidup berdampingan.
+                Halo! Saya <strong>hayaxxdev</strong>, seorang developer yang
+                passionate dalam membangun web application, game, dan tools
+                kreatif. Saya percaya bahwa kode yang baik adalah kode yang bisa
+                dinikmati — seperti Maple yang menikmati setiap quest-nya! 🛡️
               </p>
               <p class="about__bio">
-                Saat tidak sedang coding, saya mengeksplorasi dunia desain game,
-                karakter, dan visual storytelling. Terbuka untuk kolaborasi
-                kreatif dan proyek freelance.
+                Saat ini fokus pada <strong>frontend development</strong>,
+                <strong>game design</strong>, dan eksplorasi teknologi baru.
+                Selalu terbuka untuk kolaborasi dan project menarik!
               </p>
 
+              <!-- Skills Grid -->
               <h3 class="about__skills-title">Tech Stack</h3>
               <div class="skills-grid">
                 <div class="skill-group">
-                  <span class="skill-group__label">Fullstack</span>
+                  <span class="skill-group__label">Frontend</span>
                   <div class="skill-tags">
                     <span class="skill-tag">HTML5</span>
                     <span class="skill-tag">CSS3</span>
                     <span class="skill-tag">JavaScript</span>
+                    <span class="skill-tag">TypeScript</span>
                     <span class="skill-tag">React</span>
-                  </div>
-                </div>
-                <div class="skill-group">
-                  <span class="skill-group__label">Design</span>
-                  <div class="skill-tags">
-                    <span class="skill-tag">UI/UX</span>
-                    <span class="skill-tag">Figma</span>
-                    <span class="skill-tag">Game Art</span>
+                    <span class="skill-tag">Vue</span>
                   </div>
                 </div>
                 <div class="skill-group">
                   <span class="skill-group__label">Backend</span>
                   <div class="skill-tags">
                     <span class="skill-tag">Node.js</span>
+                    <span class="skill-tag">Python</span>
+                    <span class="skill-tag">PHP</span>
+                    <span class="skill-tag">Go</span>
+                  </div>
+                </div>
+                <div class="skill-group">
+                  <span class="skill-group__label">Tools</span>
+                  <div class="skill-tags">
                     <span class="skill-tag">Git</span>
-                    <span class="skill-tag">GitHub Pages</span>
+                    <span class="skill-tag">Docker</span>
+                    <span class="skill-tag">Figma</span>
+                    <span class="skill-tag">VS Code</span>
                   </div>
                 </div>
               </div>
 
-              <!-- NEW: Skill proficiency bars -->
+              <!-- Proficiency Bars -->
               <h3 class="about__skills-title">Proficiency</h3>
               <div class="skill-bars">
-                <div class="skill-bar reveal-on-scroll">
+                <div class="skill-bar">
                   <div class="skill-bar__head">
-                    <span>HTML / CSS / JavaScript</span>
+                    <span>Frontend</span>
                     <span class="skill-bar__pct">90%</span>
                   </div>
                   <div class="skill-bar__track">
-                    <div class="skill-bar__fill" data-level="90"></div>
+                    <div
+                      class="skill-bar__fill"
+                      data-width="90"
+                      aria-valuenow="90"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      role="progressbar"
+                    ></div>
                   </div>
                 </div>
-                <div class="skill-bar reveal-on-scroll">
+                <div class="skill-bar">
                   <div class="skill-bar__head">
-                    <span>React</span>
+                    <span>Backend</span>
                     <span class="skill-bar__pct">75%</span>
                   </div>
                   <div class="skill-bar__track">
-                    <div class="skill-bar__fill" data-level="75"></div>
+                    <div
+                      class="skill-bar__fill"
+                      data-width="75"
+                      aria-valuenow="75"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      role="progressbar"
+                    ></div>
                   </div>
                 </div>
-                <div class="skill-bar reveal-on-scroll">
+                <div class="skill-bar">
                   <div class="skill-bar__head">
-                    <span>Node.js / Express</span>
-                    <span class="skill-bar__pct">70%</span>
-                  </div>
-                  <div class="skill-bar__track">
-                    <div class="skill-bar__fill" data-level="70"></div>
-                  </div>
-                </div>
-                <div class="skill-bar reveal-on-scroll">
-                  <div class="skill-bar__head">
-                    <span>Tailwind CSS</span>
-                    <span class="skill-bar__pct">85%</span>
-                  </div>
-                  <div class="skill-bar__track">
-                    <div class="skill-bar__fill" data-level="85"></div>
-                  </div>
-                </div>
-                <div class="skill-bar reveal-on-scroll">
-                  <div class="skill-bar__head">
-                    <span>Supabase</span>
+                    <span>Game Dev</span>
                     <span class="skill-bar__pct">65%</span>
                   </div>
                   <div class="skill-bar__track">
-                    <div class="skill-bar__fill" data-level="65"></div>
+                    <div
+                      class="skill-bar__fill"
+                      data-width="65"
+                      aria-valuenow="65"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      role="progressbar"
+                    ></div>
+                  </div>
+                </div>
+                <div class="skill-bar">
+                  <div class="skill-bar__head">
+                    <span>UI/UX Design</span>
+                    <span class="skill-bar__pct">80%</span>
+                  </div>
+                  <div class="skill-bar__track">
+                    <div
+                      class="skill-bar__fill"
+                      data-width="80"
+                      aria-valuenow="80"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      role="progressbar"
+                    ></div>
                   </div>
                 </div>
               </div>
 
-              <!-- NEW: Journey timeline -->
-              <h3 class="about__skills-title">Perjalanan</h3>
-              <ol class="journey-timeline">
-                <li class="journey-item reveal-on-scroll">
+              <!-- Journey Timeline -->
+              <h3 class="about__skills-title">Journey</h3>
+              <ul class="journey-timeline">
+                <li class="journey-item">
                   <span class="journey-item__dot" aria-hidden="true"></span>
                   <div class="journey-item__body">
-                    <span class="journey-item__stage">Awal Perjalanan</span>
+                    <span class="journey-item__stage">2023 · Awal Mula</span>
                     <p>
-                      Mulai belajar HTML, CSS, dan JavaScript dasar —
-                      bereksperimen dengan proyek-proyek kecil untuk memahami
-                      fundamental web.
+                      Memulai perjalanan coding dengan HTML, CSS, dan
+                      JavaScript. Membuat project pertama dan belajar Git.
                     </p>
                   </div>
                 </li>
-                <li class="journey-item reveal-on-scroll">
+                <li class="journey-item">
                   <span class="journey-item__dot" aria-hidden="true"></span>
                   <div class="journey-item__body">
-                    <span class="journey-item__stage"
-                      >Eksplorasi Game & Fan Project</span
-                    >
+                    <span class="journey-item__stage">2024 · Eksplorasi</span>
                     <p>
-                      Membangun serangkaian proyek fan-made bertema Bofuri —
-                      "Maple's Vault", "Maple's Odyssey", dan "Syrup's
-                      Adventure" — sambil mempelajari canvas rendering, animasi,
-                      dan game state.
+                      Mendalami React, Node.js, dan Python. Mulai berkontribusi
+                      ke open-source dan membangun portfolio.
                     </p>
                   </div>
                 </li>
-                <li class="journey-item reveal-on-scroll">
-                  <span class="journey-item__dot" aria-hidden="true"></span>
-                  <div class="journey-item__body">
-                    <span class="journey-item__stage"
-                      >Full-Stack & Backend</span
-                    >
-                    <p>
-                      Mulai membangun aplikasi full-stack seperti FileShare Hub
-                      dan Nexovra — belajar arsitektur backend, database, auth,
-                      dan migrasi ke Supabase/serverless.
-                    </p>
-                  </div>
-                </li>
-                <li class="journey-item reveal-on-scroll">
+                <li class="journey-item">
                   <span
                     class="journey-item__dot journey-item__dot--current"
                     aria-hidden="true"
                   ></span>
                   <div class="journey-item__body">
-                    <span class="journey-item__stage">Saat Ini</span>
+                    <span class="journey-item__stage">2025 · Sekarang</span>
                     <p>
-                      Terus mengasah kemampuan fullstack sambil menjaga sentuhan
-                      estetika manga di setiap proyek — dari dashboard finansial
-                      hingga fan-site interaktif.
+                      Fokus pada full-stack development, game design, dan
+                      membangun komunitas developer.
                     </p>
                   </div>
                 </li>
-              </ol>
+              </ul>
             </div>
           </div>
         </section>
 
-        <!-- ════════════════════════════════════════════════════════════════
-             CONTACT SECTION
-             ════════════════════════════════════════════════════════════════ -->
         <section id="contact" class="view" aria-label="Contact hayaxxdev">
           <div class="contact-wrap">
             <div class="contact-card">
@@ -1190,10 +1227,9 @@
                   width="56"
                   height="56"
                   loading="lazy"
-                  onerror="
-                    this.src =
-                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22%3E%3Crect fill=%22%23141414%22 width=%2256%22 height=%2256%22/%3E%3Ctext fill=%22%23c9a84c%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2220%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
-                  "
+                  data-fallback-initial="NK"
+                  data-fallback-bg="#141414"
+                  data-fallback-color="#c9a84c"
                 />
                 <div>
                   <h2 class="section-title">Hubungi Saya</h2>
@@ -1354,9 +1390,6 @@
       </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════
-     MAPLE'S GUIDE BUTTON
-     ════════════════════════════════════════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════
      MAPLE'S GUIDE BUTTON
      ════════════════════════════════════════════════════════════════ -->
@@ -1539,6 +1572,148 @@
           { timeout: 3000 },
         );
       }
+    </script>
+    <!-- MAINTENANCE MODE DETECTOR -->
+    <!-- MAINTENANCE MODE DETECTOR - GitHub Pages + Vercel -->
+    <script>
+      (function () {
+        // ═══════════════════════════════════════════════
+        // KONFIGURASI - SUDAH DISESUAIKAN
+        // ═══════════════════════════════════════════════
+        const BACKEND_URL = "https://hayaxxdev-bit-github-io.vercel.app";
+        const HEALTH_ENDPOINT = `${BACKEND_URL}/api/health`;
+        const MAINTENANCE_PAGE = "/maintenance.html";
+        const CHECK_INTERVAL = 30000; // Cek setiap 30 detik
+        const INITIAL_DELAY = 3000; // Tunggu 3 detik setelah load
+
+        let isMaintenance = false;
+        let failures = 0;
+        const MAX_FAILURES = 2;
+
+        // ═══════════════════════════════════════════════
+        // FUNGSI CEK STATUS BACKEND
+        // ═══════════════════════════════════════════════
+        async function checkHealth() {
+          try {
+            // Abort controller untuk timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            const response = await fetch(HEALTH_ENDPOINT, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+                "Cache-Control": "no-cache",
+              },
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            // Reset failure counter jika berhasil terhubung
+            failures = 0;
+
+            // Cek status response
+            if (response.status === 503) {
+              // Vercel mengembalikan 503 = maintenance mode
+              redirectToMaintenance();
+              return;
+            }
+
+            if (response.ok) {
+              const data = await response.json().catch(() => ({}));
+
+              if (data.maintenance === true) {
+                redirectToMaintenance();
+              } else {
+                // Backend normal, hapus flag maintenance
+                isMaintenance = false;
+                sessionStorage.removeItem("maintenance_redirect");
+                console.log("✅ Backend status: Healthy");
+              }
+            } else {
+              // Response tidak ok tapi bukan 503
+              handleFailure();
+            }
+          } catch (error) {
+            // Network error atau timeout
+            console.warn("⚠️ Health check failed:", error.message);
+            handleFailure();
+          }
+        }
+
+        // ═══════════════════════════════════════════════
+        // HANDLE FAILURE
+        // ═══════════════════════════════════════════════
+        function handleFailure() {
+          failures++;
+          console.log(`❌ Failure ${failures}/${MAX_FAILURES}`);
+
+          if (failures >= MAX_FAILURES && !isMaintenance) {
+            redirectToMaintenance();
+          }
+        }
+
+        // ═══════════════════════════════════════════════
+        // REDIRECT KE MAINTENANCE
+        // ═══════════════════════════════════════════════
+        function redirectToMaintenance() {
+          if (isMaintenance) return; // Hindari redirect berulang
+
+          isMaintenance = true;
+          sessionStorage.setItem("maintenance_redirect", "true");
+
+          console.log("🔧 Redirecting to maintenance page...");
+
+          // Cek apakah kita tidak sedang di halaman maintenance
+          if (!window.location.pathname.includes("maintenance.html")) {
+            window.location.href = MAINTENANCE_PAGE;
+          }
+        }
+
+        // ═══════════════════════════════════════════════
+        // EXPOSE UNTUK DEBUGGING
+        // ═══════════════════════════════════════════════
+        window.__maintenance = {
+          check: checkHealth,
+          activate: redirectToMaintenance,
+          status: () => isMaintenance,
+          getFailures: () => failures,
+        };
+
+        // ═══════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════
+        window.addEventListener("load", () => {
+          console.log("🔄 Starting maintenance detector...");
+          console.log("📍 Backend:", BACKEND_URL);
+
+          // Cek apakah user baru kembali dari maintenance
+          const wasRedirected = sessionStorage.getItem("maintenance_redirect");
+          if (
+            wasRedirected === "true" &&
+            !window.location.pathname.includes("maintenance.html")
+          ) {
+            console.log("🔄 User returned from maintenance, re-checking...");
+            checkHealth();
+          }
+
+          // First check after initial delay
+          setTimeout(() => {
+            checkHealth();
+            // Periodic checks
+            setInterval(checkHealth, CHECK_INTERVAL);
+          }, INITIAL_DELAY);
+        });
+
+        // Cek juga saat halaman menjadi visible lagi
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            console.log("👁️ Page visible again, checking health...");
+            checkHealth();
+          }
+        });
+      })();
     </script>
   </body>
 </html>

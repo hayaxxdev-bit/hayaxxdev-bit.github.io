@@ -589,3 +589,48 @@
   text-align: right;
   color: var(--ink);
 }
+
+/* ═══════════════════════════════════════════
+   CHARACTER CARD IMAGE STATES
+   ═══════════════════════════════════════════ */
+
+/* Image loading state */
+.card-art:not([src]),
+.card-art[src=""],
+.card-pfp img:not([src]),
+.card-pfp img[src=""] {
+  opacity: 0;
+}
+
+/* Smooth transition when image loads */
+.card-art,
+.card-pfp img {
+  transition: opacity 0.4s ease;
+}
+
+.card-art[src] {
+  opacity: 1;
+}
+
+/* Fallback image styling */
+.card-art[src*="data:image/svg"],
+.card-pfp img[src*="data:image/svg"] {
+  object-fit: contain;
+  padding: 20px;
+}
+
+/* Hover effect for cards with data-target */
+.char-card[data-target] {
+  cursor: pointer;
+}
+
+.char-card[data-target]:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 4px;
+  border-radius: 18px;
+}
+
+/* Active/pressed state */
+.char-card[data-target]:active {
+  transform: scale(0.98);
+}

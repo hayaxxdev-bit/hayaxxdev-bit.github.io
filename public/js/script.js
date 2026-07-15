@@ -522,6 +522,148 @@
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    // ═══════════════ FETCH USER PROFILE ═══════════════
+    async fetchUserProfile() {
+      const cacheKey = `profile_${this.username}`;
+      const cached = this.cache.get(cacheKey);
+      if (cached) return cached;
+
+      console.log("👤 Fetching user profile...");
+
+      try {
+        // Strategy 1: Custom API
+        const customUrl = `${this.API_BASE}/api/user?username=${this.username}`;
+        const customResponse = await this._fetchWithRetry(customUrl, 1);
+        if (customResponse.ok) {
+          const data = await customResponse.json();
+          const profile = data.user || data.profile || data;
+          if (profile.login || profile.name) {
+            this.cache.set(cacheKey, profile);
+            return profile;
+          }
+        }
+      } catch (e) {
+        console.warn("Custom API profile failed:", e.message);
+      }
+
+      try {
+        // Strategy 2: GitHub API langsung
+        const url = `${CONFIG.GITHUB_API_BASE}/users/${this.username}`;
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const profile = await response.json();
+
+        // Transform data
+        const userData = {
+          login: profile.login,
+          name: profile.name || profile.login,
+          avatar_url: profile.avatar_url,
+          bio: profile.bio,
+          public_repos: profile.public_repos,
+          followers: profile.followers,
+          following: profile.following,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at,
+          html_url: profile.html_url,
+          blog: profile.blog,
+          location: profile.location,
+          company: profile.company,
+        };
+
+        this.cache.set(cacheKey, userData);
+        console.log("✅ User profile loaded");
+        return userData;
+      } catch (error) {
+        console.error("Failed to fetch profile:", error.message);
+
+        // Fallback: gunakan data dari repos
+        const fallbackData = {
+          login: this.username,
+          name: this.username,
+          created_at:
+            this.repositories.length > 0
+              ? [...this.repositories].sort(
+                  (a, b) => new Date(a.created_at) - new Date(b.created_at),
+                )[0]?.created_at
+              : null,
+          updated_at:
+            this.repositories.length > 0
+              ? [...this.repositories].sort(
+                  (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+                )[0]?.updated_at
+              : null,
+        };
+
+        this.cache.set(cacheKey, fallbackData);
+        return fallbackData;
+      }
+    }
+
+    // Update fetchTotalCommits untuk estimasi yang lebih baik
+    async fetchTotalCommits() {
+      const cacheKey = `commits_${this.username}`;
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        this.totalCommits = cached;
+        return cached;
+      }
+
+      console.log("📊 Calculating total commits...");
+
+      try {
+        // Strategy 1: Custom API
+        const url = `${this.API_BASE}/api/commits?username=${this.username}`;
+        const response = await this._fetchWithRetry(url, 1);
+        if (response.ok) {
+          const data = await response.json();
+          const total = data.total_commits || data.total || 0;
+          if (total > 0) {
+            this.totalCommits = total;
+            this.cache.set(cacheKey, total);
+            return total;
+          }
+        }
+      } catch (e) {
+        console.warn("Custom API commits failed:", e.message);
+      }
+
+      // Strategy 2: Hitung dari kontribusi (estimasi)
+      // Rata-rata commit per repo: 15-25
+      const avgCommitsPerRepo = 15;
+      const estimatedTotal = this.repositories.length * avgCommitsPerRepo;
+
+      // Strategy 3: Fetch dari GitHub contribution graph
+      try {
+        const profileUrl = `${CONFIG.GITHUB_API_BASE}/users/${this.username}/events/public`;
+        const eventsResponse = await fetch(profileUrl);
+        if (eventsResponse.ok) {
+          const events = await eventsResponse.json();
+          const pushEvents = events.filter((e) => e.type === "PushEvent");
+          // Estimasi kasar dari event terbaru
+          const recentCommits = pushEvents.reduce(
+            (sum, e) => sum + (e.payload?.commits?.length || 0),
+            0,
+          );
+          // Extrapolate (asumsi events menunjukkan 90 hari terakhir)
+          const yearlyEstimate = Math.round(recentCommits * 4);
+          if (yearlyEstimate > estimatedTotal) {
+            this.totalCommits = yearlyEstimate;
+            this.cache.set(cacheKey, yearlyEstimate);
+            return yearlyEstimate;
+          }
+        }
+      } catch (e) {
+        console.warn("GitHub events failed:", e.message);
+      }
+
+      // Fallback: gunakan estimasi
+      this.totalCommits = estimatedTotal;
+      this.cache.set(cacheKey, estimatedTotal);
+      return estimatedTotal;
+    }
+
     // ═══════════════ FETCH ALL REPOS ═══════════════
     async fetchAllRepos() {
       const cached = this.cache.get(`repos_${this.username}`);
@@ -2130,6 +2272,7 @@
   // ═══════════════════════════════════════════
   // 9. UI RENDERER - OPTIMIZED WITH README DISPLAY
   // ═══════════════════════════════════════════
+  // ═══════════════ UPDATED UIRenderer CLASS - AUTO DISPLAY SCREENSHOT ═══════════════
   class UIRenderer {
     constructor() {
       this.githubManager = null;
@@ -2155,30 +2298,87 @@
     }
 
     // ═══════════════ CAROUSEL METHODS ═══════════════
+    // ═══════════════ CAROUSEL METHODS - UPDATED ═══════════════
     _createSlideHTML(repo, index = 0) {
       const initial = (repo.name || "?").charAt(0).toUpperCase();
       const hasPages = repo.has_pages || repo.homepage;
       const pagesUrl =
         repo.homepage ||
         `https://${this.githubManager.username}.github.io/${repo.name}`;
+
+      // SMART SCREENSHOT untuk carousel
+      const screenshotUrl = this._getSmartScreenshot(repo, pagesUrl, hasPages);
+
       const langBadge = repo.language
-        ? `<span class="slide__tag slide__tag--language"><span class="slide__lang-dot" style="background:${getLanguageColor(repo.language)}"></span>${repo.language}</span>`
+        ? `<span class="slide__tag slide__tag--language">
+        <span class="slide__lang-dot" style="background:${getLanguageColor(repo.language)}"></span>${repo.language}
+       </span>`
         : "";
+
       const demoLink = hasPages
-        ? `<a class="slide__link slide__link--demo" href="${pagesUrl}" target="_blank" rel="noopener">${ICONS.demo} Demo</a>`
+        ? `<a class="slide__link slide__link--demo" href="${pagesUrl}" target="_blank" rel="noopener">
+        ${ICONS.demo} Live Demo
+       </a>`
         : "";
-      return `<span class="slide__rank">#${String(index + 1).padStart(2, "0")}</span>
-        <div class="slide__header"><div class="slide__icon" aria-hidden="true">${initial}</div><h4 class="slide__title"><a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a></h4></div>
-        <p class="slide__desc">${repo.description || "Tidak ada deskripsi."}</p>
-        <div class="slide__stats">${langBadge}<span class="slide__stat slide__stat--stars">${ICONS.star} ${repo.stargazers_count || 0}</span><span class="slide__stat slide__stat--forks">${ICONS.fork} ${repo.forks_count || 0}</span><span class="slide__stat slide__stat--updated">${ICONS.clock} ${timeAgo(repo.updated_at)}</span></div>
-        <div class="slide__actions"><a class="slide__link slide__link--repo" href="${repo.html_url}" target="_blank" rel="noopener">${ICONS.repo} Repo</a>${demoLink}</div>`;
+
+      return `
+    <!-- Screenshot Preview -->
+    <div class="slide__screenshot-wrapper">
+      <img src="${screenshotUrl}" 
+           alt="${repo.name}" 
+           class="slide__screenshot" 
+           loading="lazy"
+           onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    
+      ${
+        hasPages
+          ? '<span class="slide__badge slide__badge--live">🌐 LIVE</span>'
+          : '<span class="slide__badge slide__badge--repo">📂 REPO</span>'
+      }
+      <div class="slide__screenshot-overlay"></div>
+    </div>
+    
+    <span class="slide__rank">#${String(index + 1).padStart(2, "0")}</span>
+    
+    <div class="slide__header">
+      <div class="slide__icon" aria-hidden="true">${initial}</div>
+      <h4 class="slide__title">
+        <a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a>
+      </h4>
+    </div>
+    
+    <p class="slide__desc">${repo.description || "Tidak ada deskripsi."}</p>
+    
+    <div class="slide__stats">
+      ${langBadge}
+      <span class="slide__stat slide__stat--stars">${ICONS.star} ${repo.stargazers_count || 0}</span>
+      <span class="slide__stat slide__stat--forks">${ICONS.fork} ${repo.forks_count || 0}</span>
+      <span class="slide__stat slide__stat--updated">${ICONS.clock} ${timeAgo(repo.updated_at)}</span>
+    </div>
+    
+    <div class="slide__actions">
+      <a class="slide__link slide__link--repo" href="${repo.html_url}" target="_blank" rel="noopener">
+        ${ICONS.repo} Source
+      </a>
+      ${demoLink}
+    </div>`;
     }
 
     _createSkeletonSlideHTML() {
-      return `<div class="skeleton skeleton--icon"></div><div class="skeleton skeleton--title"></div><div class="skeleton skeleton--text"></div><div class="skeleton skeleton--text short"></div><div class="skeleton skeleton--tags"></div>`;
+      return `
+    <div class="skeleton skeleton--image"></div>
+    <div class="skeleton skeleton--icon"></div>
+    <div class="skeleton skeleton--title"></div>
+    <div class="skeleton skeleton--text"></div>
+    <div class="skeleton skeleton--text short"></div>
+    <div class="skeleton skeleton--tags"></div>`;
     }
 
-    // ═══════════════ PROJECT CARD WITH README DISPLAY ═══════════════
+    _createSkeletonSlideHTML() {
+      return `<div class="skeleton skeleton--image"></div><div class="skeleton skeleton--icon"></div><div class="skeleton skeleton--title"></div><div class="skeleton skeleton--text"></div><div class="skeleton skeleton--text short"></div><div class="skeleton skeleton--tags"></div>`;
+    }
+
+    // ═══════════════ PROJECT CARD - AUTO DISPLAY SCREENSHOT ═══════════════
     _createProjectCardHTML(repo) {
       const created = new Date(repo.created_at);
       const dateStr = created.toLocaleDateString("id-ID", {
@@ -2193,7 +2393,7 @@
         repo.homepage ||
         `https://${this.githubManager.username}.github.io/${repo.name}`;
 
-      // Determine category for filtering
+      // Determine category
       const category = this.githubManager.categorizeRepo(repo);
       const categoryLabels = {
         web: "🌐 Web",
@@ -2203,68 +2403,63 @@
       };
       const categoryLabel = categoryLabels[category] || "📦 Lainnya";
 
-      // Determine rarity based on stars
+      // Determine rarity
       const rarity = this._getRarity(repo);
 
-      // Check if README exists and is valid
+      // Check README
       const hasReadme =
         repo.readme &&
         typeof repo.readme === "string" &&
         repo.readme.length > 10;
 
-      // Get best thumbnail
-      const thumbnailSrc = this._getBestThumbnail(repo, pagesUrl);
+      // SMART SCREENSHOT - Auto display sesuai tipe repo
+      const screenshotUrl = this._getSmartScreenshot(repo, pagesUrl, hasPages);
 
       // Determine what preview tabs to show
       const showPagesTab = hasPages;
-      const showReadmeTab = hasReadme;
+      const showReadmeTab = hasReadme && !hasPages; // Hanya tampilkan tab README jika TIDAK ada Pages
       const showToggle = showPagesTab || showReadmeTab;
 
       return `
       <article class="project-card project-card--${rarity}" data-repo="${repo.name}">
         <div class="project-card__preview">
-          <!-- Cover Image -->
+          <!-- Screenshot Auto-Display -->
           <div class="project-card__preview-cover">
-            <img src="${thumbnailSrc}" alt="${repo.name}" class="project-card__preview-img" loading="lazy"
-                 onerror="this.src='${this._getSVGPlaceholder(repo.name, repo.language)}'">
+            <img src="${screenshotUrl}" alt="${repo.name}" class="project-card__preview-img" loading="lazy"
+                 onerror="this.onerror=null; this.src='${this._getSVGPlaceholder(repo.name, repo.language)}'">
+            
+            <!-- Badge indicator -->
+            ${
+              hasPages
+                ? '<span class="project-card__badge project-card__badge--live">🌐</span>'
+                : '<span class="project-card__badge project-card__badge--repo">📂 Repository</span>'
+            }
           </div>
           
-          <!-- GitHub Pages Preview (if available) -->
-          ${
-            showPagesTab
-              ? `
-          <div class="project-card__preview-live" style="display:none;">
-            <div class="project-card__preview-external">
-              <div class="project-card__preview-external-content">
-                <span class="preview-icon">🌐</span>
-                <span class="preview-text">GitHub Pages</span>
-                <small>Klik untuk membuka</small>
-              </div>
-              <a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__preview-visit-btn">
-                ${ICONS.pages} Open Pages ↗
-              </a>
-            </div>
-          </div>`
-              : ""
-          }
+          <!-- GitHub Pages Preview Overlay (for toggle) -->
+          ${showPagesTab ? `` : ""}
           
-          <!-- README Preview (if available) -->
+          <!-- README Preview Overlay (for code-only repos) -->
           ${
             showReadmeTab
               ? `
-          <div class="project-card__readme-overlay" style="display:none;">
+        <div class="project-card__readme-overlay" hidden;">
+            <div class="readme-header">
+              <span>📄 README.md</span>
+              <a href="${repo.html_url}#readme" target="_blank" rel="noopener" class="readme-view-full">Lihat di GitHub ↗</a>
+            </div>
             <div class="readme-content">${this._safeMarkdownParse(repo.readme)}</div>
             <div class="readme-fade"></div>
           </div>`
               : ""
           }
           
-          <!-- Preview Toggle Buttons -->
+          <!-- Toggle Buttons (hanya jika ada yang bisa di-toggle) -->
           ${
             showToggle
               ? `
           <div class="project-card__preview-toggle">
-            <button class="active" data-view="cover">
+            <button class="active" data-view="cover" title="Tampilan Screenshot">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
               </svg>
@@ -2272,7 +2467,7 @@
             ${
               showPagesTab
                 ? `
-            <button data-view="live">
+            <button data-view="live" title="Preview Website">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
@@ -2282,7 +2477,7 @@
             ${
               showReadmeTab
                 ? `
-            <button data-view="readme">
+            <button data-view="readme" title="Lihat README">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
               </svg>
@@ -2306,55 +2501,347 @@
             <span class="project-card__tag">⭐ ${repo.stargazers_count || 0}</span>
             <span class="project-card__tag">🍴 ${repo.forks_count || 0}</span>
             <span class="project-card__tag">${categoryLabel}</span>
-            ${hasReadme ? '<span class="project-card__tag project-card__tag--readme">📄 README</span>' : ""}
+            ${hasPages ? '<span class="project-card__tag project-card__tag--pages">🌐 Live</span>' : ""}
           </div>
           <div class="project-card__actions">
             <a href="${repo.html_url}" target="_blank" rel="noopener" class="project-card__link">${ICONS.repo} Source</a>
-            ${showPagesTab ? `<a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__view">${ICONS.demo} Demo</a>` : ""}
-            ${!showPagesTab && showReadmeTab ? `<button class="project-card__view project-card__view--readme" data-view-readme="${repo.name}">${ICONS.readme} README</button>` : ""}
+            ${hasPages ? `<a href="${pagesUrl}" target="_blank" rel="noopener" class="project-card__view project-card__view--demo">${ICONS.demo} Live Demo</a>` : ""}
+            ${hasReadme ? `<button class="project-card__view project-card__view--readme-btn" data-view-readme="${repo.name}">${ICONS.readme} README</button>` : ""}
           </div>
         </div>
       </article>`;
     }
 
-    // Safe markdown parser
+    // ═══════════════ SMART SCREENSHOT LOGIC ═══════════════
+    /**
+     * Get the best screenshot for a repository
+     * - Repo dengan GitHub Pages → Screenshot website live
+     * - Repo code-only → Screenshot halaman GitHub (menampilkan README)
+     * @param {Object} repo - Repository object
+     * @param {string} pagesUrl - GitHub Pages URL
+     * @param {boolean} hasPages - Whether repo has GitHub Pages
+     * @returns {string} Screenshot URL
+     */
+    // ═══════════════ UPDATED SCREENSHOT METHODS ═══════════════
+
+    /**
+     * Get the best screenshot for a repository
+     * Multiple fallback layers:
+     * 1. GitHub OpenGraph Image (selalu works)
+     * 2. thum.io (hanya di production)
+     * 3. SVG Placeholder (last resort)
+     */
+    _getSmartScreenshot(repo, pagesUrl, hasPages) {
+      const cacheKey = `screenshot_${repo.name}`;
+
+      // Check cache first
+      if (this.screenshotCache.has(cacheKey)) {
+        return this.screenshotCache.get(cacheKey);
+      }
+
+      let screenshotUrl;
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname.includes("192.168.");
+
+      if (hasPages && pagesUrl) {
+        // ═══════════════════════════════════════
+        // REPO DENGAN GITHUB PAGES
+        // ═══════════════════════════════════════
+        console.log(`📸 [Pages] Screenshot: ${repo.name}`);
+
+        if (isLocalhost) {
+          // Localhost: langsung gunakan OpenGraph image sebagai fallback
+          screenshotUrl = this._getGitHubOGImage(repo);
+          console.log("   ⚠️ Localhost detected, using OpenGraph image");
+        } else {
+          // Production: coba thum.io
+          screenshotUrl = `https://image.thum.io/get/width/640/crop/400/viewportWidth/1280/viewportHeight/800/wait/3/noanimate/${pagesUrl.replace(/\/$/, "")}`;
+        }
+      } else {
+        // ═══════════════════════════════════════
+        // REPO CODE-ONLY (TIDAK ADA PAGES)
+        // ═══════════════════════════════════════
+        console.log(`📸 [Repo] Screenshot: ${repo.name}`);
+
+        // GitHub OpenGraph Image (paling reliable)
+        screenshotUrl = this._getGitHubOGImage(repo);
+      }
+
+      // Cache untuk performance
+      this.screenshotCache.set(cacheKey, screenshotUrl);
+      return screenshotUrl;
+    }
+
+    /**
+     * Generate GitHub OpenGraph Image URL
+     * Ini adalah gambar yang selalu tersedia dari GitHub
+     * Menampilkan: repo name, description, stars, language, dll
+     */
+    _getGitHubOGImage(repo) {
+      const repoName = repo.name;
+      const username = this.githubManager?.username || CONFIG.USERNAME;
+
+      // GitHub OpenGraph Image - selalu available, no rate limit
+      return `https://opengraph.githubassets.com/1/${username}/${repoName}`;
+    }
+
+    /**
+     * Get alternative screenshot URL (untuk retry)
+     */
+    _getAlternativeScreenshot(repo, pagesUrl, hasPages) {
+      const alternatives = [];
+
+      // 1. GitHub OpenGraph Image
+      alternatives.push(this._getGitHubOGImage(repo));
+
+      // 2. GitHub Social Preview (alternatif OG image)
+      alternatives.push(
+        `https://opengraph.githubassets.com/${Date.now()}/${this.githubManager?.username || CONFIG.USERNAME}/${repo.name}`,
+      );
+
+      // 3. Jika ada Pages, coba dengan parameter berbeda
+      if (hasPages && pagesUrl) {
+        // Gunakan screenshot service lain
+        alternatives.push(
+          `https://api.microlink.io/?url=${encodeURIComponent(pagesUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
+        );
+      }
+
+      // 4. Jika ada demo di Vercel/Netlify
+      if (
+        repo.homepage &&
+        (repo.homepage.includes("vercel.app") ||
+          repo.homepage.includes("netlify.app"))
+      ) {
+        alternatives.push(
+          `https://image.thum.io/get/width/640/crop/400/quality/80/noanimate/${repo.homepage.replace(/\/$/, "")}`,
+        );
+      }
+
+      return alternatives;
+    }
+
+    /**
+     * Handle image error dengan retry logic
+     */
+    _handleImageError(e) {
+      const img = e.target;
+
+      // Cegah infinite loop
+      if (img.dataset.errorHandled === "true") {
+        this._showImageFallback(img);
+        return;
+      }
+
+      const retryCount = parseInt(img.dataset.retryCount) || 0;
+      const maxRetries = 2;
+
+      console.warn(
+        `⚠️ Image error for ${img.alt || "unknown"} (retry: ${retryCount}/${maxRetries})`,
+      );
+
+      if (retryCount < maxRetries) {
+        // Cari alternative URL
+        const repoName = img.closest("[data-repo]")?.dataset?.repo;
+        const card = img.closest(".project-card");
+        const repo = this.githubManager?.repositories?.find(
+          (r) => r.name === repoName,
+        );
+
+        if (repo) {
+          const hasPages = repo.has_pages || repo.homepage;
+          const pagesUrl =
+            repo.homepage ||
+            `https://${this.githubManager.username}.github.io/${repo.name}`;
+          const alternatives = this._getAlternativeScreenshot(
+            repo,
+            pagesUrl,
+            hasPages,
+          );
+
+          if (alternatives[retryCount]) {
+            console.log(
+              `   🔄 Trying alternative: ${alternatives[retryCount].substring(0, 80)}...`,
+            );
+            img.src = alternatives[retryCount];
+            img.dataset.retryCount = retryCount + 1;
+            return;
+          }
+        }
+      }
+
+      // Jika semua retry gagal, tampilkan fallback
+      this._showImageFallback(img);
+    }
+
+    /**
+     * Tampilkan placeholder jika semua gambar gagal
+     */
+    _showImageFallback(img) {
+      img.dataset.errorHandled = "true";
+
+      // Gunakan SVG placeholder
+      const repoName = img.closest("[data-repo]")?.dataset?.repo || "Project";
+      const card = img.closest(".project-card");
+      const repo = this.githubManager?.repositories?.find(
+        (r) => r.name === repoName,
+      );
+      const lang = repo?.language || "Repository";
+
+      // Buat SVG placeholder sebagai data URL
+      const svgPlaceholder = this._getSVGPlaceholder(repoName, lang);
+      img.src = svgPlaceholder;
+
+      // Tampilkan juga fallback element jika ada
+      const wrapper = img.closest(
+        ".slide__screenshot-wrapper, .project-card__preview-cover",
+      );
+      if (wrapper) {
+        const fallbackEl = wrapper.querySelector(
+          ".slide__screenshot-fallback, .project-card__preview--placeholder",
+        );
+        if (fallbackEl) {
+          fallbackEl.classList.add("is-flex");
+          fallbackEl.classList.remove("is-hidden");
+        }
+      }
+
+      // Hapus onerror untuk mencegah loop
+      img.onerror = null;
+    }
+
+    /**
+     * Generate SVG Placeholder (diperbarui)
+     */
+    _getSVGPlaceholder(name, lang) {
+      const colors = {
+        JavaScript: "#f7df1e",
+        TypeScript: "#3178c6",
+        Python: "#3776ab",
+        HTML: "#e34f26",
+        CSS: "#563d7c",
+        Java: "#b07219",
+        "C++": "#f34b7d",
+        C: "#555555",
+        "C#": "#178600",
+        PHP: "#4F5D95",
+        Ruby: "#701516",
+        Go: "#00ADD8",
+        Rust: "#dea584",
+        Swift: "#F05138",
+        Kotlin: "#A97BFF",
+        Dart: "#00B4AB",
+        Shell: "#89e051",
+        Vue: "#41b883",
+        Lua: "#000080",
+        default: "#7c3aed",
+      };
+      const color = colors[lang] || colors.default;
+      const shortName = (name || "Project").substring(0, 20);
+
+      const svgContent = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${color}15"/>
+          <stop offset="50%" stop-color="${color}08"/>
+          <stop offset="100%" stop-color="${color}12"/>
+        </linearGradient>
+        <linearGradient id="border" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${color}30"/>
+          <stop offset="100%" stop-color="${color}10"/>
+        </linearGradient>
+      </defs>
+      
+      <!-- Background -->
+      <rect fill="#0a0a14" width="640" height="400"/>
+      <rect fill="url(#bg)" width="640" height="400"/>
+      
+      <!-- Border -->
+      <rect x="20" y="20" width="600" height="360" rx="12" 
+            fill="none" stroke="url(#border)" stroke-width="1.5"/>
+      
+      <!-- Decorative elements -->
+      <circle cx="80" cy="80" r="40" fill="${color}08"/>
+      <circle cx="560" cy="320" r="60" fill="${color}05"/>
+      <rect x="400" y="60" width="180" height="2" rx="1" fill="${color}15"/>
+      <rect x="420" y="75" width="120" height="2" rx="1" fill="${color}10"/>
+      
+      <!-- Icon -->
+      <text x="320" y="170" text-anchor="middle" font-size="64" opacity="0.3">📂</text>
+      
+      <!-- Repository Name -->
+      <text x="320" y="230" text-anchor="middle" 
+            fill="${color}" font-family="monospace" font-size="22" 
+            font-weight="bold" opacity="0.9">
+        ${this._escapeXml(shortName)}
+      </text>
+      
+      <!-- Language Badge -->
+      <rect x="270" y="260" width="100" height="28" rx="14" 
+            fill="${color}20" stroke="${color}40" stroke-width="1"/>
+      <text x="320" y="279" text-anchor="middle" 
+            fill="${color}" font-family="monospace" font-size="12" font-weight="600">
+        ${this._escapeXml(lang || "Repository")}
+      </text>
+      
+      <!-- Decorative dots -->
+      <circle cx="140" cy="340" r="3" fill="${color}20"/>
+      <circle cx="155" cy="340" r="3" fill="${color}25"/>
+      <circle cx="170" cy="340" r="3" fill="${color}30"/>
+      
+      <!-- Bottom text -->
+      <text x="320" y="360" text-anchor="middle" 
+            fill="${color}40" font-family="monospace" font-size="11">
+        GitHub Repository
+      </text>
+    </svg>
+  `;
+
+      return `data:image/svg+xml,${encodeURIComponent(svgContent.replace(/\s+/g, " ").trim())}`;
+    }
+
+    /**
+     * Escape XML special characters
+     */
+    _escapeXml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+    }
+
+    /**
+     * Attach image error handlers
+     */
+    _attachImageErrorHandlers() {
+      const images = document.querySelectorAll(
+        ".project-card__preview-img, .slide__screenshot",
+      );
+
+      images.forEach((img) => {
+        // Hapus handler lama
+        img.removeEventListener("error", this._boundHandleImageError);
+        // Tambah handler baru
+        img.addEventListener("error", this._boundHandleImageError);
+      });
+    }
+    // Safe markdown parser for README overlay
     _safeMarkdownParse(md) {
       if (!md) return "<p>No README available</p>";
       try {
-        // Limit content length for preview
         const truncated = md.substring(0, 3000);
-
-        // Use marked if available, otherwise escape
         if (typeof marked !== "undefined" && marked.parse) {
           return marked.parse(truncated);
         }
-
         return `<pre>${escapeHtml(truncated)}</pre>`;
       } catch (e) {
         return `<pre>${escapeHtml(md.substring(0, 500))}</pre>`;
       }
-    }
-
-    // Get best thumbnail URL
-    _getBestThumbnail(repo, pagesUrl) {
-      // Check cache first
-      if (this.screenshotCache.has(repo.name)) {
-        return this.screenshotCache.get(repo.name);
-      }
-
-      // Use thum.io for live screenshots
-      if (pagesUrl) {
-        const thumbUrl = `https://image.thum.io/get/width/640/crop/400/viewportWidth/1280/viewportHeight/800/wait/2/noanimate/${pagesUrl.replace(/\/$/, "")}`;
-        this.screenshotCache.set(repo.name, thumbUrl);
-        return thumbUrl;
-      }
-
-      // Fallback: use local screenshots if available
-      if (this.isGithubPages) {
-        return `${this.basePath}/screenshots/${repo.name}.jpg`;
-      }
-
-      return this._getSVGPlaceholder(repo.name, repo.language);
     }
 
     // Generate SVG placeholder
@@ -2391,8 +2878,12 @@
           </defs>
           <rect fill="url(#g)" width="640" height="400"/>
           <text fill="${color}" font-family="monospace" font-size="24" font-weight="bold" 
-                x="320" y="200" text-anchor="middle" opacity="0.8">
+                x="320" y="180" text-anchor="middle" opacity="0.8">
             ${(name || "Project").substring(0, 20)}
+          </text>
+          <text fill="${color}88" font-family="monospace" font-size="14"
+                x="320" y="220" text-anchor="middle" opacity="0.6">
+            ${lang || "Repository"}
           </text>
         </svg>`,
       )}`;
@@ -2415,6 +2906,8 @@
       if (!card) return;
 
       const preview = card.querySelector(".project-card__preview");
+      if (!preview) return;
+
       const layers = {
         cover: preview.querySelector(".project-card__preview-cover"),
         live: preview.querySelector(".project-card__preview-live"),
@@ -2432,17 +2925,16 @@
           btn.dataset.view === "readme" ? "flex" : "block";
       }
 
-      // Update active button
+      // Update active button state
       preview
         .querySelectorAll(".project-card__preview-toggle button")
-        .forEach((b) => {
-          b.classList.remove("active");
-        });
+        .forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
     }
 
     // Attach preview toggle listeners
     _attachPreviewListeners() {
+      // Toggle buttons
       document
         .querySelectorAll(".project-card__preview-toggle")
         .forEach((toggle) => {
@@ -2450,28 +2942,49 @@
           toggle.addEventListener("click", this._handlePreviewToggle);
         });
 
-      // Attach README button listeners for cards without Pages
+      // README button (toggle to show README overlay)
       document
-        .querySelectorAll(".project-card__view--readme")
+        .querySelectorAll(".project-card__view--readme-btn")
         .forEach((btn) => {
-          btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const card = btn.closest(".project-card");
-            const readmeOverlay = card.querySelector(
-              ".project-card__readme-overlay",
-            );
-            const cover = card.querySelector(".project-card__preview-cover");
-
-            if (readmeOverlay && cover) {
-              const isShowing = readmeOverlay.style.display === "flex";
-              readmeOverlay.style.display = isShowing ? "none" : "flex";
-              cover.style.display = isShowing ? "block" : "none";
-              btn.textContent = isShowing
-                ? `${ICONS.readme} README`
-                : "✕ Tutup";
-            }
-          });
+          btn.removeEventListener("click", this._handleReadmeBtnClick);
+          btn.addEventListener("click", this._handleReadmeBtnClick.bind(this));
         });
+    }
+
+    _handleReadmeBtnClick(e) {
+      e.preventDefault();
+      const btn = e.currentTarget;
+      const card = btn.closest(".project-card");
+      if (!card) return;
+
+      const readmeOverlay = card.querySelector(".project-card__readme-overlay");
+      const cover = card.querySelector(".project-card__preview-cover");
+
+      if (readmeOverlay && cover) {
+        const isShowing = readmeOverlay.style.display === "flex";
+
+        if (isShowing) {
+          // Kembali ke screenshot
+          readmeOverlay.style.display = "none";
+          cover.style.display = "block";
+          btn.innerHTML = `${ICONS.readme} README`;
+          btn.classList.remove("active");
+        } else {
+          // Tampilkan README
+          readmeOverlay.style.display = "flex";
+          cover.style.display = "none";
+          btn.innerHTML = "✕ Tutup README";
+          btn.classList.add("active");
+
+          // Reset toggle buttons ke cover
+          const toggleBtns = card.querySelectorAll(
+            ".project-card__preview-toggle button",
+          );
+          toggleBtns.forEach((b) => b.classList.remove("active"));
+          const coverBtn = card.querySelector('[data-view="readme"]');
+          if (coverBtn) coverBtn.classList.add("active");
+        }
+      }
     }
 
     // ═══════════════ SETTERS ═══════════════
@@ -2500,16 +3013,13 @@
     renderError(msg = "Gagal memuat data.", onRetry = null) {
       if (!this.carouselTrack) return;
       this.stopAutoplay();
-
       this.carouselTrack.innerHTML = `
         <div class="car-error">
           <span class="car-error__icon">⚠️</span>
           <p class="car-error__msg">${msg}</p>
           <button class="car-error__retry" id="carRetryBtn">Coba Lagi</button>
         </div>`;
-
       if (this.carouselDots) this.carouselDots.innerHTML = "";
-
       document
         .getElementById("carRetryBtn")
         ?.addEventListener("click", onRetry);
@@ -2594,13 +3104,11 @@
         go(Math.max(this.currentCarouselIndex - 1, 0));
         this._restartAutoplay();
       });
-
       next?.addEventListener("click", () => {
         go(Math.min(this.currentCarouselIndex + 1, total - 1));
         this._restartAutoplay();
       });
 
-      // Scroll detection
       let scrollTimer;
       this.carouselTrack.addEventListener("scroll", () => {
         clearTimeout(scrollTimer);
@@ -2627,7 +3135,6 @@
     startAutoplay() {
       this.stopAutoplay();
       if (this.totalCarouselSlides <= 1) return;
-
       this.autoplayTimer = setInterval(() => {
         if (this.isHovering) return;
         this.goToCarouselSlide(
@@ -2651,7 +3158,6 @@
       const carousel = this.carouselTrack?.closest(".carousel");
       if (!carousel || carousel.dataset.ab) return;
       carousel.dataset.ab = "1";
-
       carousel.addEventListener("mouseenter", () => (this.isHovering = true));
       carousel.addEventListener("mouseleave", () => (this.isHovering = false));
     }
@@ -2682,10 +3188,8 @@
           if (!isSwiping) return;
           isSwiping = false;
           this.isHovering = false;
-
           const dx = startX - e.changedTouches[0].clientX;
           const dy = startY - e.changedTouches[0].clientY;
-
           if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
             this.goToCarouselSlide(
               dx > 0
@@ -2704,7 +3208,6 @@
 
     renderProjects(filter = "all") {
       if (!this.projectGrid || !this.githubManager) return;
-
       const repos = this.githubManager.getFilteredRepos(filter);
 
       if (!repos.length) {
@@ -2740,23 +3243,79 @@
       });
     }
 
-    updateStats(repos, totalCommits = 0) {
-      document.getElementById("repoCount") &&
-        (document.getElementById("repoCount").textContent = repos.length);
-      document.getElementById("starCount") &&
-        (document.getElementById("starCount").textContent = repos.reduce(
+    updateStats(repos, totalCommits = 0, userData = null) {
+      const repoCount = document.getElementById("repoCount");
+      if (repoCount) repoCount.textContent = repos.length;
+
+      const starCount = document.getElementById("starCount");
+      if (starCount) {
+        starCount.textContent = repos.reduce(
           (s, r) => s + (r.stargazers_count || 0),
           0,
-        ));
-      document.getElementById("commitCount") &&
-        (document.getElementById("commitCount").textContent =
-          totalCommits + "+");
+        );
+      }
+
+      const commitCount = document.getElementById("commitCount");
+      if (commitCount) commitCount.textContent = totalCommits + "+";
+
+      const activeSince = document.getElementById("activeSince");
+      if (activeSince && userData?.created_at) {
+        activeSince.textContent = new Date(userData.created_at).getFullYear();
+      } else if (activeSince) {
+        const oldestRepo = [...repos].sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at),
+        )[0];
+        if (oldestRepo?.created_at)
+          activeSince.textContent = new Date(
+            oldestRepo.created_at,
+          ).getFullYear();
+      }
+
+      const lastActive = document.getElementById("lastActive");
+      if (lastActive && userData?.updated_at) {
+        lastActive.textContent = timeAgo(userData.updated_at);
+      } else if (lastActive) {
+        const newestRepo = [...repos].sort(
+          (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+        )[0];
+        if (newestRepo?.updated_at)
+          lastActive.textContent = timeAgo(newestRepo.updated_at);
+      }
+    }
+
+    async animateStats(githubManager) {
+      const duration = CONFIG.STATS_ANIMATION_DURATION || 1500;
+      const animateCounter = (element, target, suffix = "") => {
+        if (!element) return;
+        const startTime = performance.now();
+        const update = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          element.textContent = Math.floor(eased * target) + suffix;
+          if (progress < 1) requestAnimationFrame(update);
+          else element.textContent = target + suffix;
+        };
+        requestAnimationFrame(update);
+      };
+
+      const repoEl = document.getElementById("repoCount");
+      if (repoEl) {
+        animateCounter(repoEl, githubManager.repositories.length);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      const starEl = document.getElementById("starCount");
+      if (starEl) {
+        animateCounter(starEl, githubManager.totalStars);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      const commitEl = document.getElementById("commitCount");
+      if (commitEl) animateCounter(commitEl, githubManager.totalCommits, "+");
     }
 
     showLoader(show) {
-      if (this.projectLoader) {
+      if (this.projectLoader)
         this.projectLoader.style.display = show ? "flex" : "none";
-      }
     }
   }
 
@@ -3043,9 +3602,227 @@
   }
 
   // ═══════════════════════════════════════════
+  // CHARACTER CARD HANDLERS
+  // ═══════════════════════════════════════════
+
+  /**
+   * Setup character card click handlers
+   * Replace inline onclick with proper event listeners
+   */
+  function setupCharacterCards() {
+    document.querySelectorAll(".char-card[data-target]").forEach((card) => {
+      const target = card.dataset.target;
+      if (!target) return;
+
+      // Click handler
+      card.addEventListener("click", (e) => {
+        // Jangan navigate jika user mengklik link di dalam card
+        if (e.target.closest("a")) return;
+        window.location.href = target;
+      });
+
+      // Keyboard handler (Enter/Space)
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          window.location.href = target;
+        }
+      });
+    });
+  }
+
+  /**
+   * Setup image error handlers for character cards
+   * Replace inline onerror with proper event listeners
+   */
+  function setupCharacterImageFallbacks() {
+    document
+      .querySelectorAll(".char-card img[data-fallback-icon]")
+      .forEach((img) => {
+        img.addEventListener("error", function () {
+          const icon = this.dataset.fallbackIcon || "🛡️";
+          const bg = this.dataset.fallbackBg || "#120a16";
+
+          // Generate SVG placeholder
+          const width = this.width || 320;
+          const height = this.height || 448;
+          const isPfp = this.closest(".card-pfp");
+
+          if (isPfp) {
+            this.src = generatePfpPlaceholder(icon, bg, 60, 60);
+          } else {
+            this.src = generateCardArtPlaceholder(icon, bg, width, height);
+          }
+
+          // Prevent infinite loop
+          this.onerror = null;
+        });
+      });
+  }
+
+  /**
+   * Generate SVG placeholder for card art
+   */
+  function generateCardArtPlaceholder(icon, bgColor, width, height) {
+    const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${bgColor}"/>
+          <stop offset="55%" stop-color="${adjustColor(bgColor, -10)}"/>
+          <stop offset="100%" stop-color="${adjustColor(bgColor, -20)}"/>
+        </linearGradient>
+      </defs>
+      <rect width="${width}" height="${height}" fill="url(#bg)"/>
+      <text x="50%" y="52%" text-anchor="middle" font-size="${Math.min(width, height) * 0.35}" 
+            opacity="0.6">${icon}</text>
+    </svg>
+  `;
+    return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+  }
+
+  /**
+   * Generate SVG placeholder for profile picture
+   */
+  function generatePfpPlaceholder(icon, bgColor, width, height) {
+    const textColor =
+      icon === "🍁" ? "#d4af37" : icon === "💨" ? "#44aaff" : "#a78bfa";
+    const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <rect fill="${bgColor}" width="${width}" height="${height}" rx="${width / 2}"/>
+      <text fill="${textColor}" x="50%" y="55%" text-anchor="middle" font-size="${width * 0.43}">${icon}</text>
+    </svg>
+  `;
+    return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+  }
+
+  /**
+   * Helper: Adjust hex color brightness
+   */
+  function adjustColor(hex, percent) {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + percent));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + percent));
+    const b = Math.min(255, Math.max(0, (num & 0x0000ff) + percent));
+    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+  }
+
+  // ═══════════════════════════════════════════
+  // ABOUT & CONTACT IMAGE FALLBACKS
+  // ═══════════════════════════════════════════
+
+  /**
+   * Setup image error handlers untuk about dan contact sections
+   */
+  function setupAboutContactImageFallbacks() {
+    // About avatar
+    const aboutImg = document.querySelector(".about__img");
+    if (aboutImg) {
+      aboutImg.addEventListener("error", function () {
+        const initial = this.dataset.fallbackInitial || "NK";
+        const bg = this.dataset.fallbackBg || "#141414";
+        this.src = generateInitialAvatar(initial, bg, 160, 160);
+        this.onerror = null;
+      });
+    }
+
+    // Contact avatar
+    const contactAvatar = document.querySelector(".contact-card__avatar");
+    if (contactAvatar) {
+      contactAvatar.addEventListener("error", function () {
+        const initial = this.dataset.fallbackInitial || "NK";
+        const bg = this.dataset.fallbackBg || "#141414";
+        const color = this.dataset.fallbackColor || "#c9a84c";
+        this.src = generateInitialAvatar(initial, bg, 56, 56, color);
+        this.onerror = null;
+      });
+    }
+  }
+
+  /**
+   * Generate SVG avatar dengan initial
+   */
+  function generateInitialAvatar(initial, bgColor, width, height, textColor) {
+    const color = textColor || "#c9a84c";
+    const fontSize = Math.floor(Math.min(width, height) * 0.4);
+
+    const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <rect fill="${bgColor}" width="${width}" height="${height}" rx="${width / 2}"/>
+      <text fill="${color}" 
+            x="50%" y="50%" 
+            text-anchor="middle" 
+            dy=".3em" 
+            font-size="${fontSize}px" 
+            font-family="sans-serif" 
+            font-weight="bold">
+        ${escapeXml(initial)}
+      </text>
+    </svg>
+  `;
+
+    return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+  }
+
+  /**
+   * Escape XML special characters
+   */
+  function escapeXml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  /**
+   * Animate skill bars when about section becomes visible
+   */
+  function setupSkillBarAnimation() {
+    const skillBars = document.querySelectorAll(".skill-bar__fill[data-width]");
+
+    if (!skillBars.length) return;
+
+    // Gunakan IntersectionObserver untuk animasi saat visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const bar = entry.target;
+            const width = bar.dataset.width || 0;
+
+            // Animate width
+            setTimeout(() => {
+              bar.style.width = `${width}%`;
+            }, 200);
+
+            // Update ARIA
+            bar.setAttribute("aria-valuenow", width);
+
+            // Unobserve setelah animasi
+            observer.unobserve(bar);
+          }
+        });
+      },
+      {
+        threshold: 0.3,
+      },
+    );
+
+    skillBars.forEach((bar) => observer.observe(bar));
+  }
+
+  // ═══════════════════════════════════════════
   // 13. INITIALIZATION
   // ═══════════════════════════════════════════
   const initializeApp = () => {
+    setupCharacterCards();
+    setupCharacterImageFallbacks();
+    setupAboutContactImageFallbacks(); // ← TAMBAHKAN
+
+    // Setup skill bar animation
+    setupSkillBarAnimation(); // ← TAMBAHKAN
     // Set year in footer
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -3229,6 +4006,85 @@
       }
     });
 
+    // Di bagian document.addEventListener("DOMContentLoaded", ...)
+    document.addEventListener("DOMContentLoaded", async () => {
+      const audio = new AudioManager();
+      const achievement = new AchievementSystem();
+      achievement.setAudioManager(audio);
+
+      const github = new GitHubManager(CONFIG.USERNAME);
+      const ui = new UIRenderer();
+      ui.setGitHubManager(github);
+      ui.setAudioManager(audio);
+      ui.setupFilterTabs();
+
+      // Tampilkan skeleton loading
+      ui.renderSkeleton(3);
+      ui.showLoader(true);
+
+      // Unlock first visit achievement
+      if (!localStorage.getItem("maple_first_visit")) {
+        localStorage.setItem("maple_first_visit", "1");
+        setTimeout(() => achievement.unlock("first_visit"), 1500);
+      }
+
+      try {
+        console.log("🚀 Loading portfolio data...");
+
+        // Fetch repos
+        const repos = await github.fetchAllRepos();
+        console.log(`📦 Got ${repos.length} repositories`);
+
+        // Fetch total commits
+        const totalCommits = await github.fetchTotalCommits();
+        console.log(`📊 Total commits: ${totalCommits}+`);
+
+        // Fetch user profile untuk active since & last active
+        const userData = await github.fetchUserProfile();
+        console.log(`👤 User: ${userData.name || userData.login}`);
+
+        // Update stats dengan data user
+        ui.updateStats(repos, totalCommits, userData);
+
+        // Animate stats
+        await ui.animateStats(github);
+
+        // Render carousel dan projects
+        ui.renderCarousel();
+        ui.renderProjects("all");
+
+        console.log("✅ Portfolio loaded successfully!");
+        console.log(`📊 Total repos: ${repos.length}`);
+        console.log(`⭐ Total stars: ${github.totalStars}`);
+        console.log(`📝 Total commits: ${totalCommits}+`);
+        console.log(
+          `📅 Active since: ${userData?.created_at ? new Date(userData.created_at).getFullYear() : "N/A"}`,
+        );
+        console.log(
+          `🕐 Last active: ${userData?.updated_at ? timeAgo(userData.updated_at) : "N/A"}`,
+        );
+        console.log(
+          `📄 Repos with README: ${repos.filter((r) => r.readme).length}`,
+        );
+        console.log(
+          `🌐 Repos with Pages: ${repos.filter((r) => r.has_pages || r.homepage).length}`,
+        );
+      } catch (error) {
+        console.error("❌ Failed to load:", error);
+        ui.renderError("Gagal menghubungkan ke server. Coba lagi nanti.", () =>
+          location.reload(),
+        );
+
+        // Fallback: tampilkan data kosong
+        const statsEls = ["repoCount", "starCount", "commitCount"];
+        statsEls.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = "—";
+        });
+      } finally {
+        ui.showLoader(false);
+      }
+    });
     // Log initialization
     console.log("🍁 Maple's Portfolio v4.0 initialized!");
     console.log("🤖 AI Dialogue System active");
