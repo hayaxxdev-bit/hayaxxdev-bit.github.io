@@ -3812,26 +3812,100 @@
 
     skillBars.forEach((bar) => observer.observe(bar));
   }
+function initLazyLoading() {
+  // ✅ HANYA pilih gambar, jangan elemen lain
+  // ✅ KECUALIKAN gambar di dalam VN dialogue
+  const lazyImages = document.querySelectorAll([
+    'img[loading="lazy"]:not(.vn-avatar-img):not(.vn-avatar-emotion)',
+    'img[data-src]:not(.vn-avatar-img):not(.vn-avatar-emotion)',
+    '.slide__screenshot[loading="lazy"]',
+    '.card-art[loading="lazy"]',
+    '.char-card img[loading="lazy"]',
+  ].join(','));
+  
+  if (!lazyImages.length) {
+    console.log('📸 No lazy images found');
+    return;
+  }
+  
+  console.log(`📸 Found ${lazyImages.length} lazy images`);
+
+  if (!('IntersectionObserver' in window)) {
+    // Fallback: load all images immediately
+    lazyImages.forEach(img => {
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+      }
+    });
+    return;
+  }
+
+  const imageObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        
+        // ✅ Hanya proses gambar, jangan sentuh elemen lain
+        if (img.tagName !== 'IMG') return;
+        
+        // Handle data-src
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+        }
+        
+        // Handle srcset
+        if (img.dataset.srcset) {
+          img.srcset = img.dataset.srcset;
+          img.removeAttribute('data-srcset');
+        }
+        
+        // Handle fallback icon
+        if (img.dataset.fallbackIcon && img.complete && img.naturalWidth === 0) {
+          // Gambar gagal load
+        }
+        
+        imageObserver.unobserve(img);
+      }
+    });
+  }, {
+    rootMargin: '200px 0px',
+    threshold: 0.01,
+  });
+
+  lazyImages.forEach(img => {
+    // ✅ Pastikan hanya gambar yang diobservasi
+    if (img.tagName === 'IMG') {
+      imageObserver.observe(img);
+    }
+  });
+}
 
   // ═══════════════════════════════════════════
-  // 13. INITIALIZATION
+  // 13. INITIALIZATION (DIPERBAIKI)
   // ═══════════════════════════════════════════
   const initializeApp = () => {
+    console.log("🍁 Maple's Portfolio v4.0 initializing...");
+
+    // ── Step 1: DOM-dependent initializations ──
     setupCharacterCards();
     setupCharacterImageFallbacks();
-    setupAboutContactImageFallbacks(); // ← TAMBAHKAN
+    setupAboutContactImageFallbacks();
+    setupSkillBarAnimation();
 
-    // Setup skill bar animation
-    setupSkillBarAnimation(); // ← TAMBAHKAN
-    // Set year in footer
+    // ── Step 2: Lazy loading (after DOM elements exist) ──
+    initLazyLoading();
+
+    // ── Step 3: Footer year ──
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    // Initialize page loader
+    // ── Step 4: Initialize page loader ──
     const pageLoader = new PageLoader();
     pageLoader.init();
 
-    // Initialize core systems
+    // ── Step 5: Initialize core systems ──
     const audioManager = new AudioManager();
     const achievementSystem = new AchievementSystem();
     const vnSystem = new AIVNDialogueSystem();
@@ -3841,7 +3915,7 @@
     const navigation = new NavigationSystem();
     const pwaHandler = new PWAHandler();
 
-    // Wire up dependencies
+    // ── Step 6: Wire up dependencies ──
     achievementSystem.setAudioManager(audioManager);
     vnSystem.setAudioManager(audioManager);
     vnSystem.setAchievementSystem(achievementSystem);
@@ -3855,7 +3929,7 @@
     navigation.setGitHubManager(githubManager);
     navigation.setUIRenderer(uiRenderer);
 
-    // Expose public API
+    // ── Step 7: Define public API ──
     const publicAPI = {
       audioManager,
       achievementSystem,
@@ -3878,14 +3952,18 @@
         try {
           await githubManager.fetchAllRepos();
           await githubManager.fetchTotalCommits();
+          const userData = await githubManager.fetchUserProfile();
           uiRenderer.updateStats(
             githubManager.repositories,
             githubManager.totalCommits,
+            userData,
           );
           audioManager.playSFX("questClear");
           console.log("📊 Stats refreshed!");
+          return true;
         } catch (error) {
           console.error("Refresh failed:", error);
+          return false;
         }
       },
       clearCache: () => githubManager.clearCache(),
@@ -3893,9 +3971,8 @@
       getAchievements: () => achievementSystem.achievements,
     };
 
+    // ── Step 8: Expose to window ──
     Object.assign(window, publicAPI);
-
-    // Initialize portfolio data
     window.MaplePortfolio = {
       AudioManager,
       AchievementSystem,
@@ -3905,187 +3982,21 @@
       ICONS,
       getLanguageColor,
       timeAgo,
+      publicAPI, // ← Referensi ke publicAPI
     };
 
-    // Load initial data
-    document.addEventListener("DOMContentLoaded", async () => {
-      const audio = new AudioManager();
-      const achievement = new AchievementSystem();
-      achievement.setAudioManager(audio);
+    // ── Step 9: Load portfolio data (SINGLE DOMContentLoaded-like flow) ──
+    loadPortfolioData(
+      audioManager,
+      achievementSystem,
+      githubManager,
+      uiRenderer,
+    );
 
-      const github = new GitHubManager(CONFIG.USERNAME);
-      const ui = new UIRenderer();
-      ui.setGitHubManager(github);
-      ui.setAudioManager(audio);
-      ui.setupFilterTabs();
+    // ── Step 10: Event listeners ──
+    setupEventListeners(audioManager, guideSystem, githubManager, publicAPI);
 
-      ui.renderSkeleton(3);
-      ui.showLoader(true);
-
-      // Unlock first visit achievement
-      if (!localStorage.getItem("maple_first_visit")) {
-        localStorage.setItem("maple_first_visit", "1");
-        setTimeout(() => achievement.unlock("first_visit"), 1500);
-      }
-
-      try {
-        const repos = await github.fetchAllRepos();
-        const totalCommits = await github.fetchTotalCommits();
-
-        ui.updateStats(repos, totalCommits);
-        ui.renderCarousel();
-        ui.renderProjects("all");
-
-        console.log("✅ Portfolio loaded successfully!");
-        console.log(`📊 Total repos: ${repos.length}`);
-        console.log(
-          `📄 Repos with README: ${repos.filter((r) => r.readme).length}`,
-        );
-        console.log(
-          `🌐 Repos with Pages: ${repos.filter((r) => r.has_pages || r.homepage).length}`,
-        );
-      } catch (error) {
-        console.error("Failed to load:", error);
-        ui.renderError("Gagal menghubungkan ke server. Coba lagi nanti.", () =>
-          location.reload(),
-        );
-      } finally {
-        ui.showLoader(false);
-      }
-    });
-
-    // Navbar hover SFX
-    document
-      .querySelectorAll(".nav-link:not(.nav-link--cta)")
-      .forEach((link) => {
-        link.addEventListener("mouseenter", () => {
-          if (!link.classList.contains("active")) {
-            audioManager.playSFX("menuSelect");
-          }
-        });
-      });
-
-    // BGM Volume Control via scroll
-    const bgmPlayer = document.querySelector(".bgm-player");
-    if (bgmPlayer) {
-      bgmPlayer.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.05 : 0.05;
-        const newVolume = Math.max(0, Math.min(1, audioManager.volume + delta));
-        audioManager.setVolume(newVolume);
-      });
-
-      // Double-click to reset volume
-      bgmPlayer.addEventListener("dblclick", () => {
-        audioManager.setVolume(0.5);
-      });
-    }
-
-    // Keyboard shortcuts
-    document.addEventListener("keydown", (e) => {
-      // Alt+G: Toggle guide
-      if (e.altKey && e.key === "g") {
-        e.preventDefault();
-        guideSystem.toggle();
-      }
-      // Alt+M: Toggle music
-      if (e.altKey && e.key === "m") {
-        e.preventDefault();
-        audioManager.toggle();
-      }
-      // Alt+C: Clear cache
-      if (e.altKey && e.key === "c") {
-        e.preventDefault();
-        githubManager.clearCache();
-        console.log("🗑️ Cache cleared!");
-      }
-      // Alt+R: Refresh stats
-      if (e.altKey && e.key === "r") {
-        e.preventDefault();
-        publicAPI.refreshStats();
-      }
-    });
-
-    // Di bagian document.addEventListener("DOMContentLoaded", ...)
-    document.addEventListener("DOMContentLoaded", async () => {
-      const audio = new AudioManager();
-      const achievement = new AchievementSystem();
-      achievement.setAudioManager(audio);
-
-      const github = new GitHubManager(CONFIG.USERNAME);
-      const ui = new UIRenderer();
-      ui.setGitHubManager(github);
-      ui.setAudioManager(audio);
-      ui.setupFilterTabs();
-
-      // Tampilkan skeleton loading
-      ui.renderSkeleton(3);
-      ui.showLoader(true);
-
-      // Unlock first visit achievement
-      if (!localStorage.getItem("maple_first_visit")) {
-        localStorage.setItem("maple_first_visit", "1");
-        setTimeout(() => achievement.unlock("first_visit"), 1500);
-      }
-
-      try {
-        console.log("🚀 Loading portfolio data...");
-
-        // Fetch repos
-        const repos = await github.fetchAllRepos();
-        console.log(`📦 Got ${repos.length} repositories`);
-
-        // Fetch total commits
-        const totalCommits = await github.fetchTotalCommits();
-        console.log(`📊 Total commits: ${totalCommits}+`);
-
-        // Fetch user profile untuk active since & last active
-        const userData = await github.fetchUserProfile();
-        console.log(`👤 User: ${userData.name || userData.login}`);
-
-        // Update stats dengan data user
-        ui.updateStats(repos, totalCommits, userData);
-
-        // Animate stats
-        await ui.animateStats(github);
-
-        // Render carousel dan projects
-        ui.renderCarousel();
-        ui.renderProjects("all");
-
-        console.log("✅ Portfolio loaded successfully!");
-        console.log(`📊 Total repos: ${repos.length}`);
-        console.log(`⭐ Total stars: ${github.totalStars}`);
-        console.log(`📝 Total commits: ${totalCommits}+`);
-        console.log(
-          `📅 Active since: ${userData?.created_at ? new Date(userData.created_at).getFullYear() : "N/A"}`,
-        );
-        console.log(
-          `🕐 Last active: ${userData?.updated_at ? timeAgo(userData.updated_at) : "N/A"}`,
-        );
-        console.log(
-          `📄 Repos with README: ${repos.filter((r) => r.readme).length}`,
-        );
-        console.log(
-          `🌐 Repos with Pages: ${repos.filter((r) => r.has_pages || r.homepage).length}`,
-        );
-      } catch (error) {
-        console.error("❌ Failed to load:", error);
-        ui.renderError("Gagal menghubungkan ke server. Coba lagi nanti.", () =>
-          location.reload(),
-        );
-
-        // Fallback: tampilkan data kosong
-        const statsEls = ["repoCount", "starCount", "commitCount"];
-        statsEls.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = "—";
-        });
-      } finally {
-        ui.showLoader(false);
-      }
-    });
-    // Log initialization
+    // ── Step 11: Log initialization ──
     console.log("🍁 Maple's Portfolio v4.0 initialized!");
     console.log("🤖 AI Dialogue System active");
     console.log("📄 Multi-source README fetching enabled");
@@ -4098,11 +4009,217 @@
   };
 
   // ═══════════════════════════════════════════
+  // 13a. LOAD PORTFOLIO DATA
+  // ═══════════════════════════════════════════
+  async function loadPortfolioData(
+    audioManager,
+    achievementSystem,
+    githubManager,
+    uiRenderer,
+  ) {
+    // Setup filter tabs
+    uiRenderer.setupFilterTabs();
+
+    // Render skeleton loading
+    uiRenderer.renderSkeleton(3);
+    uiRenderer.showLoader(true);
+
+    // Unlock first visit achievement
+    if (!localStorage.getItem("maple_first_visit")) {
+      localStorage.setItem("maple_first_visit", "1");
+      setTimeout(() => achievementSystem.unlock("first_visit"), 1500);
+    }
+
+    try {
+      console.log("🚀 Loading portfolio data...");
+
+      // Fetch repos
+      const repos = await githubManager.fetchAllRepos();
+      console.log(`📦 Got ${repos.length} repositories`);
+
+      // Fetch total commits
+      const totalCommits = await githubManager.fetchTotalCommits();
+      console.log(`📊 Total commits: ${totalCommits}+`);
+
+      // Fetch user profile
+      const userData = await githubManager.fetchUserProfile();
+      console.log(`👤 User: ${userData?.name || userData?.login || "Unknown"}`);
+
+      // Update stats
+      uiRenderer.updateStats(repos, totalCommits, userData);
+
+      // Animate stats
+      await uiRenderer.animateStats(githubManager);
+
+      // Render carousel & projects
+      uiRenderer.renderCarousel();
+      uiRenderer.renderProjects("all");
+
+      console.log("✅ Portfolio loaded successfully!");
+      console.log(`📊 Total repos: ${repos.length}`);
+      console.log(`⭐ Total stars: ${githubManager.totalStars || 0}`);
+      console.log(`📝 Total commits: ${totalCommits}+`);
+      console.log(
+        `📅 Active since: ${userData?.created_at ? new Date(userData.created_at).getFullYear() : "N/A"}`,
+      );
+      console.log(
+        `🕐 Last active: ${userData?.updated_at ? timeAgo(userData.updated_at) : "N/A"}`,
+      );
+      console.log(
+        `📄 Repos with README: ${repos.filter((r) => r.readme).length}`,
+      );
+      console.log(
+        `🌐 Repos with Pages: ${repos.filter((r) => r.has_pages || r.homepage).length}`,
+      );
+    } catch (error) {
+      console.error("❌ Failed to load portfolio:", error);
+
+      uiRenderer.renderError(
+        "Gagal menghubungkan ke server. Coba lagi nanti.",
+        () => window.location.reload(),
+      );
+
+      // Fallback: tampilkan "—" untuk semua stats
+      ["repoCount", "starCount", "commitCount"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "—";
+      });
+    } finally {
+      uiRenderer.showLoader(false);
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // 13b. SETUP EVENT LISTENERS
+  // ═══════════════════════════════════════════
+  function setupEventListeners(
+    audioManager,
+    guideSystem,
+    githubManager,
+    publicAPI,
+  ) {
+    // ── Navbar hover SFX ──
+    document
+      .querySelectorAll(".nav-link:not(.nav-link--cta)")
+      .forEach((link) => {
+        link.addEventListener("mouseenter", () => {
+          if (!link.classList.contains("active")) {
+            audioManager.playSFX("menuSelect");
+          }
+        });
+      });
+
+    // ── BGM Volume Control via scroll ──
+    const bgmPlayer = document.querySelector(".bgm-player");
+    if (bgmPlayer) {
+      bgmPlayer.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.05 : 0.05;
+          const newVolume = Math.max(
+            0,
+            Math.min(1, audioManager.volume + delta),
+          );
+          audioManager.setVolume(newVolume);
+        },
+        { passive: false },
+      );
+
+      // Double-click to reset volume
+      bgmPlayer.addEventListener("dblclick", () => {
+        audioManager.setVolume(0.5);
+        audioManager.playSFX("menuSelect");
+      });
+    }
+
+    // ── Keyboard Shortcuts ──
+    document.addEventListener("keydown", (e) => {
+      // Jangan trigger jika user sedang mengetik di input/textarea
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // Alt+G: Toggle guide
+      if (e.altKey && e.key === "g") {
+        e.preventDefault();
+        guideSystem.toggle();
+      }
+
+      // Alt+M: Toggle music
+      if (e.altKey && e.key === "m") {
+        e.preventDefault();
+        audioManager.toggle();
+      }
+
+      // Alt+C: Clear cache
+      if (e.altKey && e.key === "c") {
+        e.preventDefault();
+        githubManager.clearCache();
+        console.log("🗑️ Cache cleared!");
+        audioManager.playSFX("questClear");
+      }
+
+      // Alt+R: Refresh stats
+      if (e.altKey && e.key === "r") {
+        e.preventDefault();
+        publicAPI.refreshStats().then((success) => {
+          if (!success) {
+            console.warn("⚠️ Stats refresh failed");
+          }
+        });
+      }
+
+      // Escape: Close VN dialogue
+      if (e.key === "Escape") {
+        publicAPI.closeVNDialogue();
+      }
+    });
+
+    // ── Service Worker Registration ──
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => {
+            console.log("📦 Service Worker registered:", reg.scope);
+          })
+          .catch((err) => {
+            console.warn("⚠️ Service Worker registration failed:", err);
+          });
+      });
+    }
+
+    // ── Handle online/offline events ──
+    window.addEventListener("online", () => {
+      console.log("🌐 Back online!");
+      audioManager.playSFX("questClear");
+      // Optional: refresh data
+      // publicAPI.refreshStats();
+    });
+
+    window.addEventListener("offline", () => {
+      console.log("📡 Offline - cached content available");
+    });
+  }
+
+  // ═══════════════════════════════════════════
   // 14. START APPLICATION
   // ═══════════════════════════════════════════
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeApp);
   } else {
+    // DOM already ready
     initializeApp();
   }
-})();
+
+  // ═══════════════════════════════════════════
+  // 15. HANDLE BFCACHE
+  // ═══════════════════════════════════════════
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      console.log("🍁 Page restored from bfcache");
+      // Re-initialize lazy loading for any new content
+      initLazyLoading();
+    }
+  });
+})(); // ← END IIFE

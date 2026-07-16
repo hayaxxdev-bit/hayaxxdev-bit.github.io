@@ -3,39 +3,21 @@
   <head>
     <!-- ════════════════════════════════════════════════════════════════
          META & SEO - OPTIMIZED FOR TOP SEARCH RANKINGS
+         hayaxxdev-bit · Portfolio & Game Developer
          ════════════════════════════════════════════════════════════════ -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- Primary Meta Tags -->
+    <!-- ════════════════════════════════════════════════════════════
+         PRIMARY META TAGS
+         ════════════════════════════════════════════════════════════ -->
     <title>
       hayaxxdev-bit | Portfolio & Game Developer - Fullstack Developer
     </title>
-
-    <!-- Consolidated & Updated Content Security Policy -->
-    <!-- GANTI CSP yang lama dengan ini -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' 
-                   https://www.googletagmanager.com 
-                   https://www.google-analytics.com 
-                   https://static.cloudflareinsights.com
-                   https://cdn.jsdelivr.net
-                   https://unpkg.com;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
-        img-src 'self' data: https: http:;
-        font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://hayaxxdev-bit-github-io.vercel.app https://image.thum.io https://www.google-analytics.com;
-        frame-src 'self' https:;
-        media-src 'self';
-        object-src 'none';
-        base-uri 'self';
-        form-action 'self';
-      "
-    />
-
     <meta
       name="title"
       content="hayaxxdev-bit | Portfolio & Game Developer - UI/UX Designer"
@@ -46,17 +28,28 @@
     />
     <meta
       name="keywords"
-      content="hayaxxdev, Fullstack developer, Game Developer, UI/UX, web developer, portfolio, bofuri, maple, anime, manga, digital art, kreator digital, web design, indonesia"
+      content="hayaxxdev, hayaxxdev-bit, fullstack developer, game developer, UI/UX, web developer, portfolio, bofuri, maple, anime, manga, digital art, kreator digital, web design, frontend, backend, indonesia, github, open source"
     />
+    <meta name="author" content="hayaxxdev-bit" />
+    <meta name="language" content="Indonesia" />
+    <meta name="rating" content="general" />
+
+    <!-- ════════════════════════════════════════════════════════════
+         ROBOTS & CRAWLING
+         ════════════════════════════════════════════════════════════ -->
     <meta
       name="robots"
       content="index, follow, max-snippet:-1, max-image-preview:large"
     />
-    <meta name="author" content="hayaxxdev-bit" />
-    <meta name="language" content="Indonesia" />
+    <meta
+      name="googlebot"
+      content="index, follow, max-snippet:-1, max-image-preview:large"
+    />
     <link rel="canonical" href="https://hayaxxdev-bit.my.id/" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- ════════════════════════════════════════════════════════════
+         OPEN GRAPH / FACEBOOK
+         ════════════════════════════════════════════════════════════ -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://hayaxxdev-bit.my.id/" />
     <meta
@@ -76,7 +69,9 @@
     <meta property="og:locale" content="id_ID" />
     <meta property="og:site_name" content="hayaxxdev-bit Portfolio" />
 
-    <!-- Twitter -->
+    <!-- ════════════════════════════════════════════════════════════
+         TWITTER CARD
+         ════════════════════════════════════════════════════════════ -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://hayaxxdev-bit.my.id/" />
     <meta
@@ -91,9 +86,11 @@
       name="twitter:image"
       content="https://hayaxxdev-bit.my.id/public/image/og-image.png"
     />
-    <meta name="twitter:creator" content="@hayaxxdev-bit" />
+    <meta name="twitter:creator" content="@hayaxxdev" />
 
-    <!-- JSON-LD Structured Data -->
+    <!-- ════════════════════════════════════════════════════════════
+         JSON-LD STRUCTURED DATA
+         ════════════════════════════════════════════════════════════ -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -102,7 +99,7 @@
         "url": "https://hayaxxdev-bit.my.id/",
         "image": "https://hayaxxdev-bit.my.id/public/image/character/bofuri.jpeg",
         "jobTitle": "Fullstack Developer & Game Developer",
-        "description": "Fullstack Developer & Game Developer spesialis UI interaktif, desain game, dan kreasi digital dengan estetika manga modern.",
+        "description": "Fullstack Developer & Game Developer spesialis UI interaktif, desain game, dan kreasi digital.",
         "sameAs": [
           "https://github.com/hayaxxdev-bit",
           "https://linkedin.com/in/hayaxxdev",
@@ -129,7 +126,9 @@
       }
     </script>
 
-    <!-- Theme Color -->
+    <!-- ════════════════════════════════════════════════════════════
+         THEME COLOR & PWA
+         ════════════════════════════════════════════════════════════ -->
     <meta name="theme-color" content="#050308" />
     <meta name="msapplication-navbutton-color" content="#050308" />
     <meta
@@ -137,109 +136,415 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="hayaxxdev" />
 
-    <!-- Fonts Domain Connections -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- 
-      CSP-COMPLIANT FONT LOADING
-      Removed inline 'onload' attribute triggers to meet your strict CSP rules.
-      Using standard high-priority stylesheets with font-display: swap.
-    -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
-    />
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="./public/css/main.css" />
-    <link rel="stylesheet" href="./public/css/achivment.css" />
-
-    <!-- ═══════════════════════════════════════════════
-     FAVICON & ICONS - COMPLETE SET
-     ═══════════════════════════════════════════════ -->
-    <link rel="icon" type="image/svg+xml" href="./public/image/favicon.svg" />
-    <link rel="icon" type="image/x-icon" href="./public/image/favicon.ico" />
-    <link
-      rel="shortcut icon"
-      type="image/x-icon"
-      href="./public/image/favicon.ico"
-    />
-
-    <!-- PNG Favicons -->
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="./public/image/favicon-16x16.png"
-    />
+    <!-- ════════════════════════════════════════════════════════════
+         FAVICON & ICONS
+         ════════════════════════════════════════════════════════════ -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/public/image/favicon.svg" />
     <link
       rel="icon"
       type="image/png"
       sizes="32x32"
-      href="./public/image/favicon-32x32.png"
+      href="/public/image/favicon-32x32.png"
     />
     <link
       rel="icon"
       type="image/png"
-      sizes="96x96"
-      href="./public/image/favicon-96x96.png"
+      sizes="16x16"
+      href="/public/image/favicon-16x16.png"
     />
-
-    <!-- Apple Touch Icons -->
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="./public/image/apple-touch-icon.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="152x152"
-      href="./public/image/apple-touch-icon-152x152.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="120x120"
-      href="./public/image/apple-touch-icon-120x120.png"
-    />
-
-    <meta name="apple-mobile-web-app-title" content="hayaxxdev" />
-
-    <!-- Android Chrome Icons -->
+    <link rel="apple-touch-icon" href="/public/image/apple-touch-icon.png" />
     <link
       rel="icon"
       type="image/png"
       sizes="192x192"
-      href="./public/image/android-chrome-192x192.png"
+      href="/public/image/android-chrome-192x192.png"
     />
     <link
       rel="icon"
       type="image/png"
       sizes="512x512"
-      href="./public/image/android-chrome-512x512.png"
+      href="/public/image/android-chrome-512x512.png"
     />
-
-    <!-- Microsoft Tiles -->
-    <meta
-      name="msapplication-TileImage"
-      content="./public/image/mstile-150x150.png"
-    />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="msapplication-TileColor" content="#050308" />
-    <meta name="msapplication-config" content="./public/browserconfig.xml" />
 
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="./public/site.webmanifest" />
+    <!-- ════════════════════════════════════════════════════════════
+         DNS PREFETCH & PRECONNECT (Performance)
+         ════════════════════════════════════════════════════════════ -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://api.github.com" />
+    <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
+    <link
+      rel="dns-prefetch"
+      href="https://hayaxxdev-bit-github-io.vercel.app"
+    />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
-    <!-- Security Headers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.github.com" />
+    <link rel="preconnect" href="https://hayaxxdev-bit-github-io.vercel.app" />
+
+    <!-- Preload Critical Assets -->
+    <!-- ═══════════════ CRITICAL CSS INLINE ═══════════════ -->
+    <style>
+      /* Critical CSS untuk above-the-fold */
+      /* Inline hanya CSS yang diperlukan untuk render pertama */
+      :root {
+        --void-deepest: #030108;
+        --purple: #a855f7;
+      }
+      body {
+        background: var(--void-deepest);
+        margin: 0;
+        font-family: system-ui, sans-serif;
+      }
+      .page-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: var(--void-deepest);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hero__avatar-img {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .skip-link {
+        position: absolute;
+        top: -100px;
+        left: 0;
+        z-index: 10000;
+        padding: 8px 16px;
+        background: var(--purple);
+        color: #fff;
+        text-decoration: none;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+
+    <!-- Load bundle CSS async -->
+    <link
+      rel="stylesheet"
+      href="/public/css/all.bundle.css"
+      media="print"
+      onload="
+        this.media = 'all';
+        this.onload = null;
+      "
+    />
+    <noscript
+      ><link rel="stylesheet" href="/public/css/all.bundle.css"
+    /></noscript>
+    <link rel="preload" href="/public/js/script.js" as="script" />
+    <link rel="preload" href="/public/image/character/bofuri.jpeg" as="image" />
+
+    <!-- ════════════════════════════════════════════════════════════
+         FONTS (Async Loading)
+         ════════════════════════════════════════════════════════════ -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Kanit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&display=swap"
+      media="print"
+      onload="
+        this.media = 'all';
+        this.onload = null;
+      "
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap"
+      />
+    </noscript>
+
+    <!-- ════════════════════════════════════════════════════════════
+         SECURITY HEADERS (via meta)
+         ════════════════════════════════════════════════════════════ -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta
+      http-equiv="Referrer-Policy"
+      content="strict-origin-when-cross-origin"
+    />
 
-    <!-- PWA Support -->
+    <!-- ════════════════════════════════════════════════════════════
+         ALTERNATE LINKS
+         ════════════════════════════════════════════════════════════ -->
+    <link rel="alternate" hreflang="id" href="https://hayaxxdev-bit.my.id/" />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://hayaxxdev-bit.my.id/en/"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://hayaxxdev-bit.my.id/"
+    />
     <link rel="me" href="https://github.com/hayaxxdev-bit" />
-  </head>
 
+    <!-- ════════════════════════════════════════════════════════════
+         GLOBAL CONFIGURATION (MUST LOAD FIRST)
+         ════════════════════════════════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════
+     GLOBAL CONFIGURATION (MUST LOAD FIRST)
+     ════════════════════════════════════════════════════════════ -->
+    <script>
+      /**
+       * Global Configuration Object
+       * Access via window.__CONFIG only
+       * DO NOT create alias CONFIG here - let script.js handle it
+       */
+      window.__CONFIG = {
+        // ── Environment Detection ──
+        isProduction: window.location.hostname === "hayaxxdev-bit.my.id",
+        isVercel: window.location.hostname.includes("vercel.app"),
+        isLocal:
+          ["localhost", "127.0.0.1", "0.0.0.0"].includes(
+            window.location.hostname,
+          ) ||
+          window.location.port === "5500" ||
+          window.location.protocol === "file:",
+        isGitHubPages: window.location.hostname.includes("github.io"),
+
+        // ── Domain ──
+        domain: "hayaxxdev-bit.my.id",
+        baseUrl:
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? window.location.origin
+            : "https://hayaxxdev-bit.my.id",
+
+        // ── API Endpoints ──
+        api: {
+          github: "https://api.github.com",
+          rawGithub: "https://raw.githubusercontent.com",
+          vercel: "https://hayaxxdev-bit-github-io.vercel.app",
+          health: "https://hayaxxdev-bit-github-io.vercel.app/api/health",
+          githubProxy: "https://hayaxxdev-bit-github-io.vercel.app/api/github",
+        },
+
+        // ── GitHub Info ──
+        github: {
+          username: "hayaxxdev-bit",
+          repo: "hayaxxdev-bit",
+        },
+
+        // ── Maintenance ──
+        maintenance: {
+          checkInterval: 30000,
+          maxFailures: 2,
+          page: "/maintenance.html",
+          gracePeriod: 5000,
+        },
+
+        // ── Analytics ──
+        analytics: {
+          gaId: "G-E87BE53RJ2",
+        },
+
+        // ── Social Links ──
+        social: {
+          github: "https://github.com/hayaxxdev-bit",
+          linkedin: "https://linkedin.com/in/hayaxxdev",
+          twitter: "https://twitter.com/hayaxxdev",
+          instagram: "https://instagram.com/hayaxxdev",
+          email: "mailto:hayaxxdev@gmail.com",
+        },
+
+        // ── Version ──
+        version: "2.4.1",
+        buildDate: "2025-01-15",
+      };
+
+      // ── Console Welcome ──
+      console.log(
+        "%c🍁 %chayaxxdev-bit Portfolio %cv" + window.__CONFIG.version,
+        "font-size: 1.2em;",
+        "font-weight: bold; color: #a855f7;",
+        "color: #94a3b8; font-size: 0.8em;",
+      );
+      console.log(
+        '%c"防御力に全振りしたら、最強になった"',
+        "font-style: italic; color: #cbd5e1;",
+      );
+      console.log(
+        "%c🔧 " +
+          (window.__CONFIG.isLocal ? "Development Mode" : "Production Mode"),
+        "color: #f59e0b;",
+      );
+    </script>
+    <!-- ════════════════════════════════════════════════════════════
+         GOOGLE ANALYTICS 4 (Deferred)
+         ════════════════════════════════════════════════════════════ -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+
+      // Default consent
+      gtag("consent", "default", {
+        analytics_storage: "denied",
+        ad_storage: "denied",
+        functionality_storage: "granted",
+        personalization_storage: "denied",
+        security_storage: "granted",
+      });
+
+      // Deferred GA loading
+      function loadGA() {
+        var script = document.createElement("script");
+        script.src = "https://www.googletagmanager.com/gtag/js?id=G-E87BE53RJ2";
+        script.async = true;
+        document.head.appendChild(script);
+        script.onload = function () {
+          gtag("js", new Date());
+          gtag("config", "G-E87BE53RJ2", {
+            send_page_view: true,
+            anonymize_ip: true,
+          });
+        };
+      }
+
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(loadGA, { timeout: 3000 });
+      } else {
+        window.addEventListener("load", function () {
+          setTimeout(loadGA, 3000);
+        });
+      }
+    </script>
+
+    <!-- ════════════════════════════════════════════════════════════
+         MAINTENANCE MODE DETECTOR
+         ════════════════════════════════════════════════════════════ -->
+    <script>
+      (function () {
+        // Access global config
+        var config = window.__CONFIG;
+        if (!config) {
+          console.warn("⚠️ Config not found, skipping maintenance check");
+          return;
+        }
+
+        // Skip on localhost
+        if (config.isLocal) {
+          console.log("🔧 Localhost - maintenance check skipped");
+          return;
+        }
+
+        var isMaintenanceMode = false;
+        var consecutiveFailures = 0;
+        var maxFailures = config.maintenance.maxFailures || 2;
+        var checkInterval = config.maintenance.checkInterval || 30000;
+        var maintenancePage = config.maintenance.page || "/maintenance.html";
+        var healthUrl = config.api.health;
+
+        function checkBackendStatus() {
+          try {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function () {
+              controller.abort();
+            }, 5000);
+
+            fetch(healthUrl, {
+              method: "GET",
+              signal: controller.signal,
+              headers: {
+                "Cache-Control": "no-cache",
+                Accept: "application/json",
+              },
+            })
+              .then(function (response) {
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                  consecutiveFailures = 0;
+                  return response.json().catch(function () {
+                    return {};
+                  });
+                } else if (response.status === 503) {
+                  redirectToMaintenance();
+                  return null;
+                } else {
+                  handleFailure();
+                  return null;
+                }
+              })
+              .then(function (data) {
+                if (!data) return;
+
+                if (
+                  data.maintenance === true ||
+                  responseHasMaintenanceHeader()
+                ) {
+                  redirectToMaintenance();
+                } else if (isMaintenanceMode) {
+                  isMaintenanceMode = false;
+                  sessionStorage.removeItem("maintenance_redirect");
+                  console.log("✅ Services restored!");
+                }
+              })
+              .catch(function (error) {
+                handleFailure();
+              });
+          } catch (e) {
+            handleFailure();
+          }
+        }
+
+        function responseHasMaintenanceHeader() {
+          // This is a simplified check - in real implementation,
+          // you'd check the response headers from the fetch
+          return false;
+        }
+
+        function handleFailure() {
+          consecutiveFailures++;
+          if (consecutiveFailures >= maxFailures && !isMaintenanceMode) {
+            redirectToMaintenance();
+          }
+        }
+
+        function redirectToMaintenance() {
+          if (isMaintenanceMode) return;
+          isMaintenanceMode = true;
+          sessionStorage.setItem("maintenance_redirect", "true");
+          window.location.href = maintenancePage;
+        }
+
+        // Start after page load
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            checkBackendStatus();
+            setInterval(checkBackendStatus, checkInterval);
+          }, config.maintenance.gracePeriod || 5000);
+        });
+
+        // Expose for debugging
+        window.__maintenance = {
+          check: checkBackendStatus,
+          status: function () {
+            return isMaintenanceMode;
+          },
+        };
+      })();
+    </script>
+  </head>
   <body>
     <!-- ════════════════════════════════════════════════════════════════
      PAGE LOADER
@@ -642,19 +947,32 @@
               <div class="hero__avatar-wrap">
                 <div class="hero__avatar-ring ring--1" aria-hidden="true"></div>
                 <div class="hero__avatar-ring ring--2" aria-hidden="true"></div>
-                <img
-                  src="./public/image/character/bofuri.jpeg"
-                  alt="hayaxxdev - Fullstack Developer & Game Developer"
-                  class="hero__avatar-img"
-                  width="180"
-                  height="180"
-                  loading="eager"
-                  fetchpriority="high"
-                  onerror="
-                    this.src =
-                      'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%22180%22%3E%3Crect fill=%22%23141414%22 width=%22180%22 height=%22180%22/%3E%3Ctext fill=%22%23c9a84c%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2240%22 font-family=%22sans-serif%22%3ENK%3C/text%3E%3C/svg%3E'
-                  "
-                />
+                <!-- ✅ SESUDAH - Responsive Images -->
+                <picture>
+                  <source
+                    srcset="
+                      /public/image/character/bofuri-180.webp 180w,
+                      /public/image/character/bofuri-360.webp 360w
+                    "
+                    type="image/webp"
+                    sizes="180px"
+                  />
+                  <source
+                    srcset="/public/image/character/bofuri-optimized.jpg 180w"
+                    type="image/jpeg"
+                    sizes="180px"
+                  />
+                  <img
+                    src="/public/image/character/bofuri-180.webp"
+                    alt="hayaxxdev - Fullstack Developer & Game Developer spesialis UI interaktif dan desain game"
+                    class="hero__avatar-img"
+                    width="180"
+                    height="180"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                  />
+                </picture>
                 <div class="hero__avatar-glow" aria-hidden="true"></div>
               </div>
               <div class="hero__avatar-label" role="status">
@@ -1542,6 +1860,9 @@
          ════════════════════════════════════════════════════════════════ -->
     <script src="./public/js/script.js" defer></script>
     <script src="./public/js/optimizer.js" defer></script>
+    <script src="/public/js/config.js" defer></script>
+    <script src="/public/js/utils.js" defer></script>
+    <script src="/public/js/script.js" defer></script>
 
     <!-- ════════════════════════════════════════════════════════════════
          ANALYTICS (Google Analytics 4)
@@ -1574,146 +1895,47 @@
       }
     </script>
     <!-- MAINTENANCE MODE DETECTOR -->
-    <!-- MAINTENANCE MODE DETECTOR - GitHub Pages + Vercel -->
     <script>
-      (function () {
-        // ═══════════════════════════════════════════════
-        // KONFIGURASI - SUDAH DISESUAIKAN
-        // ═══════════════════════════════════════════════
-        const BACKEND_URL = "https://hayaxxdev-bit-github-io.vercel.app";
-        const HEALTH_ENDPOINT = `${BACKEND_URL}/api/health`;
-        const MAINTENANCE_PAGE = "/maintenance.html";
-        const CHECK_INTERVAL = 30000; // Cek setiap 30 detik
-        const INITIAL_DELAY = 3000; // Tunggu 3 detik setelah load
+      // ═══════════════════════════════════════════
+      // DI AWAL script.js - HANYA SATU KALI
+      // ═══════════════════════════════════════════
 
-        let isMaintenance = false;
-        let failures = 0;
-        const MAX_FAILURES = 2;
-
-        // ═══════════════════════════════════════════════
-        // FUNGSI CEK STATUS BACKEND
-        // ═══════════════════════════════════════════════
-        async function checkHealth() {
-          try {
-            // Abort controller untuk timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-            const response = await fetch(HEALTH_ENDPOINT, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-                "Cache-Control": "no-cache",
-              },
-              signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            // Reset failure counter jika berhasil terhubung
-            failures = 0;
-
-            // Cek status response
-            if (response.status === 503) {
-              // Vercel mengembalikan 503 = maintenance mode
-              redirectToMaintenance();
-              return;
-            }
-
-            if (response.ok) {
-              const data = await response.json().catch(() => ({}));
-
-              if (data.maintenance === true) {
-                redirectToMaintenance();
-              } else {
-                // Backend normal, hapus flag maintenance
-                isMaintenance = false;
-                sessionStorage.removeItem("maintenance_redirect");
-                console.log("✅ Backend status: Healthy");
-              }
-            } else {
-              // Response tidak ok tapi bukan 503
-              handleFailure();
-            }
-          } catch (error) {
-            // Network error atau timeout
-            console.warn("⚠️ Health check failed:", error.message);
-            handleFailure();
-          }
-        }
-
-        // ═══════════════════════════════════════════════
-        // HANDLE FAILURE
-        // ═══════════════════════════════════════════════
-        function handleFailure() {
-          failures++;
-          console.log(`❌ Failure ${failures}/${MAX_FAILURES}`);
-
-          if (failures >= MAX_FAILURES && !isMaintenance) {
-            redirectToMaintenance();
-          }
-        }
-
-        // ═══════════════════════════════════════════════
-        // REDIRECT KE MAINTENANCE
-        // ═══════════════════════════════════════════════
-        function redirectToMaintenance() {
-          if (isMaintenance) return; // Hindari redirect berulang
-
-          isMaintenance = true;
-          sessionStorage.setItem("maintenance_redirect", "true");
-
-          console.log("🔧 Redirecting to maintenance page...");
-
-          // Cek apakah kita tidak sedang di halaman maintenance
-          if (!window.location.pathname.includes("maintenance.html")) {
-            window.location.href = MAINTENANCE_PAGE;
-          }
-        }
-
-        // ═══════════════════════════════════════════════
-        // EXPOSE UNTUK DEBUGGING
-        // ═══════════════════════════════════════════════
-        window.__maintenance = {
-          check: checkHealth,
-          activate: redirectToMaintenance,
-          status: () => isMaintenance,
-          getFailures: () => failures,
+      // Cek apakah CONFIG sudah ada di window
+      if (!window.__CONFIG) {
+        console.warn("⚠️ __CONFIG not found, using fallback");
+        window.__CONFIG = {
+          isProduction: false,
+          isLocal: true,
+          api: {
+            github: "https://api.github.com",
+            health: "https://hayaxxdev-bit-github-io.vercel.app/api/health",
+          },
+          github: { username: "hayaxxdev-bit" },
+          maintenance: {
+            checkInterval: 30000,
+            maxFailures: 2,
+            page: "/maintenance.html",
+          },
         };
+      }
 
-        // ═══════════════════════════════════════════════
-        // INITIALIZATION
-        // ═══════════════════════════════════════════════
-        window.addEventListener("load", () => {
-          console.log("🔄 Starting maintenance detector...");
-          console.log("📍 Backend:", BACKEND_URL);
+      // ⚠️ PENTING: Jangan pakai var/let/const untuk CONFIG jika sudah ada di global scope
+      // Gunakan langsung window.__CONFIG atau buat referensi lokal dengan nama berbeda
 
-          // Cek apakah user baru kembali dari maintenance
-          const wasRedirected = sessionStorage.getItem("maintenance_redirect");
-          if (
-            wasRedirected === "true" &&
-            !window.location.pathname.includes("maintenance.html")
-          ) {
-            console.log("🔄 User returned from maintenance, re-checking...");
-            checkHealth();
-          }
+      // Cara 1: Gunakan langsung (RECOMMENDED)
+      // window.__CONFIG.api.health
 
-          // First check after initial delay
-          setTimeout(() => {
-            checkHealth();
-            // Periodic checks
-            setInterval(checkHealth, CHECK_INTERVAL);
-          }, INITIAL_DELAY);
-        });
+      // Cara 2: Buat referensi lokal di dalam function/block scope
+      // function fetchData() {
+      //   var config = window.__CONFIG;
+      //   console.log(config.api.health);
+      // }
 
-        // Cek juga saat halaman menjadi visible lagi
-        document.addEventListener("visibilitychange", () => {
-          if (document.visibilityState === "visible") {
-            console.log("👁️ Page visible again, checking health...");
-            checkHealth();
-          }
-        });
-      })();
+      // Cara 3: Gunakan destructuring di dalam function
+      // function init() {
+      //   var api = window.__CONFIG.api;
+      //   var isLocal = window.__CONFIG.isLocal;
+      // }
     </script>
   </body>
 </html>

@@ -1,10 +1,11 @@
 # ═══════════════════════════════════════════
 # .htaccess - hayaxxdev-bit Portfolio
-# Apache Configuration
+# Apache Configuration for hayaxxdev-bit.my.id
 # ═══════════════════════════════════════════
 
 # ═══════════════ ENABLE REWRITE ENGINE ═══════════════
 RewriteEngine On
+RewriteBase /
 
 # ═══════════════ CACHING ═══════════════
 <IfModule mod_expires.c>
@@ -39,42 +40,58 @@ RewriteEngine On
   
   # Web Manifest
   ExpiresByType application/manifest+json "access plus 1 month"
+  
+  # Audio
+  ExpiresByType audio/mpeg "access plus 1 year"
+  ExpiresByType audio/mp3 "access plus 1 year"
 </IfModule>
 
 # ═══════════════ CACHE CONTROL HEADERS ═══════════════
 <IfModule mod_headers.c>
-  # Images - immutable
-  <FilesMatch "\.(webp|jpe?g|png|gif|svg|ico|svgz)$">
+  # Images - 1 YEAR (immutable)
+  <FilesMatch "\.(webp|avif|jpe?g|png|gif|svg|ico|svgz)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   
-  # CSS & JS
+  # CSS & JS - 1 YEAR (dengan versioning)
   <FilesMatch "\.(css|js)$">
-    Header set Cache-Control "public, max-age=2592000, must-revalidate"
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   
-  # Fonts - immutable
+  # Fonts - 1 YEAR (immutable)
   <FilesMatch "\.(woff2?|ttf|otf|eot)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   
-  # HTML - no cache
+  # HTML - 1 DAY
   <FilesMatch "\.(html|htm)$">
-    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header set Cache-Control "public, max-age=86400, must-revalidate"
   </FilesMatch>
   
-  # Security Headers
-  <IfModule mod_headers.c>
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "DENY"
-    Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-  </IfModule>
+  # Manifest - 1 WEEK
+  <FilesMatch "\.(webmanifest|json)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  
+  # Audio - 1 YEAR
+  <FilesMatch "\.(mp3|ogg|wav)$">
+    Header set Cache-Control "public, max-age=31536000"
+  </FilesMatch>
+
+  # ═══════════════ SECURITY HEADERS ═══════════════
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  
+  # HSTS (uncomment if SSL is active)
+  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 </IfModule>
 
 # ═══════════════ GZIP COMPRESSION ═══════════════
 <IfModule mod_deflate.c>
+  # Compress HTML, CSS, JavaScript, Text, XML, fonts
   AddOutputFilterByType DEFLATE text/html
   AddOutputFilterByType DEFLATE text/css
   AddOutputFilterByType DEFLATE text/javascript
@@ -82,22 +99,32 @@ RewriteEngine On
   AddOutputFilterByType DEFLATE application/json
   AddOutputFilterByType DEFLATE application/xml
   AddOutputFilterByType DEFLATE text/xml
+  AddOutputFilterByType DEFLATE text/plain
   AddOutputFilterByType DEFLATE image/svg+xml
   AddOutputFilterByType DEFLATE application/manifest+json
+  AddOutputFilterByType DEFLATE application/x-font-ttf
+  AddOutputFilterByType DEFLATE font/opentype
   AddOutputFilterByType DEFLATE font/woff2
+  
+  # Remove browser bugs for legacy browsers
+  BrowserMatch ^Mozilla/4 gzip-only-text/html
+  BrowserMatch ^Mozilla/4\.0[678] no-gzip
+  BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+  Header append Vary User-Agent
 </IfModule>
 
 # ═══════════════ ERROR PAGES ═══════════════
+# Custom error pages dengan path yang benar
 ErrorDocument 400 /error.html?code=400
 ErrorDocument 401 /error.html?code=401
 ErrorDocument 403 /error.html?code=403
 ErrorDocument 404 /404.html
 ErrorDocument 405 /error.html?code=405
 ErrorDocument 408 /error.html?code=408
-ErrorDocument 500 /error.html?code=500
-ErrorDocument 502 /error.html?code=502
-ErrorDocument 503 /error.html?code=503
-ErrorDocument 504 /error.html?code=504
+ErrorDocument 500 /500.html
+ErrorDocument 502 /500.html?code=502
+ErrorDocument 503 /maintenance.html
+ErrorDocument 504 /500.html?code=504
 
 # ═══════════════ SECURITY ═══════════════
 
@@ -105,49 +132,130 @@ ErrorDocument 504 /error.html?code=504
 Options -Indexes
 
 # Protect sensitive files
-<FilesMatch "\.(env|git|htpasswd|ini|phps|fla|psd|log|sh|md|yml|yaml)$">
+<FilesMatch "\.(env|git|htpasswd|ini|phps|fla|psd|log|sh|md|yml|yaml|lock|json)$">
     Order Allow,Deny
     Deny from all
 </FilesMatch>
 
-# Protect hidden files
+# Allow important JSON files
+<FilesMatch "^(package\.json|site\.webmanifest|manifest\.json)$">
+    Order Deny,Allow
+    Allow from all
+</FilesMatch>
+
+# Protect hidden files (kecuali .htaccess)
 <FilesMatch "^\.">
     Order Allow,Deny
     Deny from all
 </FilesMatch>
 
-# Protect .htaccess itself
+# Allow .htaccess itself
 <Files ".htaccess">
     Order Allow,Deny
-    Deny from all
+    Allow from all
 </Files>
 
 # ═══════════════ REWRITE RULES ═══════════════
 
-# Force HTTPS
+# Force HTTPS (kecuali localhost)
 RewriteCond %{HTTPS} off
 RewriteCond %{HTTP_HOST} !^localhost [NC]
 RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+RewriteCond %{HTTP_HOST} !^192\.168\. [NC]
+RewriteCond %{HTTP_HOST} !^10\. [NC]
 RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 
-# Force WWW (uncomment jika perlu)
+# Force non-WWW ke WWW? (pilih salah satu)
+# Opsi 1: Force WWW
 # RewriteCond %{HTTP_HOST} !^www\. [NC]
 # RewriteRule ^(.*)$ https://www.%{HTTP_HOST}/$1 [R=301,L]
 
-# Remove trailing slashes
+# Opsi 2: Force non-WWW (RECOMMENDED)
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+# Remove trailing slashes (kecuali direktori)
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)/$ /$1 [L,R=301]
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [L,R=301]
 
-# Block access to admin paths
-RewriteCond %{REQUEST_URI} ^/admin.*$
+# ═══════════════ CUSTOM RULES ═══════════════
+
+# Redirect old paths
+RewriteRule ^home/?$ / [L,R=301]
+RewriteRule ^beranda/?$ / [L,R=301]
+RewriteRule ^projects/?$ /?route=project [L,R=301]
+RewriteRule ^karya/?$ /?route=project [L,R=301]
+RewriteRule ^about/?$ /?route=about [L,R=301]
+RewriteRule ^tentang/?$ /?route=about [L,R=301]
+RewriteRule ^contact/?$ /?route=contact [L,R=301]
+RewriteRule ^kontak/?$ /?route=contact [L,R=301]
+
+# Character info redirects
+RewriteRule ^maple/?$ /character-info/maple.html [L,R=301]
+RewriteRule ^sally/?$ /character-info/maple.html [L,R=301]
+
+# Game redirect
+RewriteRule ^game/?$ /public/bofuri_maple_odyssey_game.html [L,R=301]
+
+# ═══════════════ BLOCK EXPLOITS ═══════════════
+
+# Block access to common attack paths
+RewriteCond %{REQUEST_URI} ^/wp- [NC,OR]
+RewriteCond %{REQUEST_URI} ^/wordpress [NC,OR]
+RewriteCond %{REQUEST_URI} ^/admin [NC,OR]
+RewriteCond %{REQUEST_URI} ^/administrator [NC,OR]
+RewriteCond %{REQUEST_URI} ^/phpmyadmin [NC,OR]
+RewriteCond %{REQUEST_URI} ^/\.env [NC,OR]
+RewriteCond %{REQUEST_URI} ^/\.git [NC]
 RewriteRule ^(.*)$ /404.html [L,R=404]
 
-# Block access to wp-* paths (mencegah bot WordPress)
-RewriteCond %{REQUEST_URI} ^/wp-.*$
-RewriteRule ^(.*)$ /404.html [L,R=404]
-
-# Block common exploit attempts
+# Block SQL injection attempts
 RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]
 RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
-RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2})
+RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2}) [OR]
+RewriteCond %{QUERY_STRING} SELECT.*FROM [NC,OR]
+RewriteCond %{QUERY_STRING} UNION.*SELECT [NC,OR]
+RewriteCond %{QUERY_STRING} INSERT.*INTO [NC]
 RewriteRule ^(.*)$ /404.html [L,R=404]
+
+# Block bad user agents
+RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
+RewriteCond %{HTTP_USER_AGENT} (bot|crawl|spider|scan|checker|sqlmap|nikto|acunetix|wpscan) [NC]
+RewriteRule ^(.*)$ /404.html [L,R=404]
+
+# Block hotlinking (kecuali dari domain sendiri)
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !^https?://(www\.)?hayaxxdev-bit\.my\.id [NC]
+RewriteCond %{HTTP_REFERER} !^https?://(www\.)?hayaxxdev-bit\.github\.io [NC]
+RewriteCond %{HTTP_REFERER} !^https?://(www\.)?localhost [NC]
+RewriteCond %{HTTP_REFERER} !^https?://(www\.)?127\.0\.0\.1 [NC]
+RewriteRule \.(webp|jpe?g|png|gif|svg|mp3)$ - [F,NC,L]
+
+# ═══════════════ MIME TYPES ═══════════════
+<IfModule mod_mime.c>
+  # Audio
+  AddType audio/mpeg .mp3
+  AddType audio/ogg .ogg
+  AddType audio/wav .wav
+  
+  # Web Manifest
+  AddType application/manifest+json .webmanifest
+  
+  # Fonts
+  AddType font/woff2 .woff2
+  AddType font/woff .woff
+  AddType application/vnd.ms-fontobject .eot
+  AddType font/ttf .ttf
+  AddType font/otf .otf
+  
+  # Images
+  AddType image/webp .webp
+  AddType image/svg+xml .svg .svgz
+</IfModule>
+
+# ═══════════════ DEFAULT CHARSET ═══════════════
+AddDefaultCharset UTF-8
+
+# ═══════════════ SERVER SIGNATURE ═══════════════
+ServerSignature Off

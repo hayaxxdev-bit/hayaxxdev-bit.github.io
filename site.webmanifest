@@ -1,0 +1,139 @@
+{
+  "name": "hayaxxdev-bit Portfolio",
+  "short_name": "hayaxxdev",
+  "description": "Portfolio & Game Developer - Fullstack Developer dengan estetika manga modern",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050308",
+  "theme_color": "#050308",
+  "orientation": "any",
+  "scope": "/",
+  "categories": ["portfolio", "developer", "gamedev", "design", "web"],
+  "lang": "id-ID",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Beranda",
+      "short_name": "Home",
+      "description": "Kembali ke halaman utama",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/public/icons/shortcut-home-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Karya",
+      "short_name": "Projects",
+      "description": "Lihat semua karya dan proyek",
+      "url": "/?route=project",
+      "icons": [
+        {
+          "src": "/public/icons/shortcut-projects-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Tentang Saya",
+      "short_name": "About",
+      "description": "Tentang hayaxxdev",
+      "url": "/?route=about",
+      "icons": [
+        {
+          "src": "/public/icons/shortcut-about-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Kontak",
+      "short_name": "Contact",
+      "description": "Hubungi hayaxxdev",
+      "url": "/?route=contact",
+      "icons": [
+        {
+          "src": "/public/icons/shortcut-contact-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/public/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/public/image/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "Halaman Beranda Desktop"
+    }
+  ],
+  "display_override": ["standalone", "minimal-ui"],
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  }
+}

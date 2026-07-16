@@ -1,0 +1,8 @@
+# Redirects for hayaxxdev-bit.my.id
+/error /error.html 200
+/500 /500.html 200
+/maintenance /maintenance.html 200
+/offline /offline.html 200
+
+# SPA fallback (jika diperlukan)
+/* /index.html 200

@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#030108" />
+  
+  <title>500 · Server Error | hayaxxdev</title>
+  <meta name="description" content="Terjadi kesalahan pada server. Tim Maple Tree sedang memperbaikinya!" />
+  <meta name="robots" content="noindex, nofollow" />
+  
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/svg+xml" href="/public/image/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/public/image/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/public/image/favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="/public/image/apple-touch-icon.png" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Kanit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       500 ERROR PAGE - Maple Bofuri Theme
+       hayaxxdev-bit · hayaxxdev-bit.my.id
+       ═══════════════════════════════════════════════════════════ */
+    
+    :root {
+      /* Palette */
+      --void-deepest: #030108;
+      --void-deep: #05020c;
+      --void: #080314;
+      --void-surface: #0f0720;
+      --void-surface-2: #160b2d;
+      --void-surface-3: #1e103a;
+      
+      /* Accent - Error Theme */
+      --crimson: #f43f5e;
+      --crimson-glow: rgba(244, 63, 94, 0.55);
+      --rose: #fb7185;
+      --rose-glow: rgba(251, 113, 133, 0.5);
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.4);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.35);
+      
+      /* Neutrals */
+      --white: #f8fafc;
+      --gray-100: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-500: #94a3b8;
+      --gray-700: #475569;
+      
+      /* Typography */
+      --font-manga: 'Zen Kaku Gothic New', 'Kanit', 'Outfit', sans-serif;
+      --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Effects */
+      --glass-bg: rgba(8, 3, 20, 0.75);
+      --glass-border: rgba(244, 63, 94, 0.3);
+      --shadow-card: 0 25px 50px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(244, 63, 94, 0.2);
+      --transition-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+      
+      /* Radius */
+      --radius-sm: 10px;
+      --radius-md: 18px;
+      --radius-lg: 26px;
+      --radius-xl: 34px;
+      --radius-full: 9999px;
+    }
+    
+    /* ═══════════════ RESET ═══════════════ */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      font-size: 16px;
+      -webkit-tap-highlight-color: transparent;
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: var(--font-body);
+      background: var(--void-deepest);
+      color: var(--gray-300);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+      line-height: 1.6;
+      padding: 1.5rem;
+    }
+    
+    /* ═══════════════ BACKGROUND LAYER ═══════════════ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    .bg-layer__orbs {
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 25% 20%, rgba(244,63,94,0.2) 0%, transparent 45%),
+        radial-gradient(circle at 75% 55%, rgba(251,113,133,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(168,85,247,0.08) 0%, transparent 55%),
+        radial-gradient(circle at 20% 70%, rgba(245,158,11,0.06) 0%, transparent 40%);
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+    
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(15px, -20px); }
+      66% { transform: translate(-10px, 10px); }
+    }
+    
+    .bg-layer__grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(244,63,94,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251,113,133,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 70%);
+    }
+    
+    .bg-layer__noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+    
+    .bg-layer__particles {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(1px 1px at 12% 18%, rgba(244,63,94,0.5), transparent),
+        radial-gradient(1px 1px at 30% 52%, rgba(251,113,133,0.4), transparent),
+        radial-gradient(1px 1px at 50% 28%, rgba(168,85,247,0.4), transparent),
+        radial-gradient(1px 1px at 72% 62%, rgba(244,63,94,0.4), transparent),
+        radial-gradient(1.5px 1.5px at 88% 18%, rgba(251,113,133,0.5), transparent),
+        radial-gradient(1px 1px at 22% 72%, rgba(245,158,11,0.3), transparent),
+        radial-gradient(1px 1px at 60% 12%, rgba(244,63,94,0.4), transparent);
+      background-size: 200px 200px;
+      animation: particleDrift 20s linear infinite;
+    }
+    
+    @keyframes particleDrift {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(0.3deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+    
+    /* ═══════════════ MAIN CARD ═══════════════ */
+    .error-card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 580px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card), 0 0 80px rgba(244, 63, 94, 0.15);
+      overflow: hidden;
+      transition: all 0.4s var(--transition-smooth);
+      animation: cardEntry 0.8s var(--transition-smooth);
+    }
+    
+    @keyframes cardEntry {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .error-card:hover {
+      border-color: rgba(251, 113, 133, 0.55);
+      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.8), 0 0 100px rgba(244, 63, 94, 0.25);
+    }
+    
+    /* Danger stripe edge */
+    .card__edge {
+      position: absolute;
+      top: 0;
+      left: 8%;
+      right: 8%;
+      height: 2.5px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--crimson) 0px,
+        var(--crimson) 10px,
+        transparent 10px,
+        transparent 20px,
+        var(--rose) 20px,
+        var(--rose) 30px,
+        transparent 30px,
+        transparent 40px
+      );
+      z-index: 5;
+      animation: dangerStripe 4s linear infinite;
+    }
+    
+    @keyframes dangerStripe {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 0; }
+    }
+    
+    /* Corner brackets */
+    .card__bracket {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border: 2px solid transparent;
+      z-index: 4;
+      transition: 0.3s;
+      opacity: 0.8;
+    }
+    
+    .error-card:hover .card__bracket {
+      opacity: 1;
+    }
+    
+    .card__bracket--tl {
+      top: 14px;
+      left: 14px;
+      border-top: 2px solid var(--crimson);
+      border-left: 2px solid var(--crimson);
+      border-radius: 5px 0 0 0;
+    }
+    
+    .card__bracket--tr {
+      top: 14px;
+      right: 14px;
+      border-top: 2px solid var(--rose);
+      border-right: 2px solid var(--rose);
+      border-radius: 0 5px 0 0;
+    }
+    
+    .card__bracket--bl {
+      bottom: 14px;
+      left: 14px;
+      border-bottom: 2px solid var(--rose);
+      border-left: 2px solid var(--rose);
+      border-radius: 0 0 0 5px;
+    }
+    
+    .card__bracket--br {
+      bottom: 14px;
+      right: 14px;
+      border-bottom: 2px solid var(--crimson);
+      border-right: 2px solid var(--crimson);
+      border-radius: 0 0 5px 0;
+    }
+    
+    /* Watermark */
+    .card__watermark {
+      position: absolute;
+      bottom: -35px;
+      right: -20px;
+      font-family: var(--font-manga);
+      font-size: 8rem;
+      font-weight: 900;
+      color: rgba(244, 63, 94, 0.03);
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      line-height: 1;
+      transform: rotate(-12deg);
+      letter-spacing: -0.05em;
+    }
+    
+    /* Card body */
+    .card__body {
+      position: relative;
+      z-index: 2;
+      padding: 2.8rem 2.4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1.4rem;
+    }
+    
+    /* ═══════════════ ILLUSTRATION ═══════════════ */
+    .illustration {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.2rem;
+    }
+    
+    .illustration__wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .illustration__emote {
+      font-size: 5.5rem;
+      filter: drop-shadow(0 0 30px rgba(244,63,94,0.8)) drop-shadow(0 12px 20px rgba(0,0,0,0.8));
+      animation: floatDistress 3.5s ease-in-out infinite;
+      display: block;
+      line-height: 1;
+      position: relative;
+      z-index: 2;
+    }
+    
+    @keyframes floatDistress {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      15% { transform: translateY(-8px) rotate(-3deg); }
+      35% { transform: translateY(-4px) rotate(3deg); }
+      55% { transform: translateY(-14px) rotate(-2deg); }
+      75% { transform: translateY(-6px) rotate(1deg); }
+    }
+    
+    .illustration__spark {
+      position: absolute;
+      font-size: 1.6rem;
+      animation: sparkExplode 2.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 10px rgba(251,113,133,0.9));
+      z-index: 3;
+    }
+    
+    .illustration__spark--1 { top: -8px; right: -18px; animation-delay: 0s; }
+    .illustration__spark--2 { bottom: 5px; left: -22px; animation-delay: 0.7s; font-size: 1.2rem; }
+    .illustration__spark--3 { top: 14px; left: -18px; animation-delay: 1.4s; font-size: 1rem; }
+    
+    @keyframes sparkExplode {
+      0%, 100% { transform: translateY(0) scale(0.6); opacity: 0.2; }
+      50% { transform: translateY(-18px) scale(1.3); opacity: 1; }
+    }
+    
+    /* ═══════════════ ERROR CODE ═══════════════ */
+    .error-code {
+      font-family: var(--font-manga);
+      font-weight: 900;
+      font-size: clamp(4.5rem, 14vw, 7.5rem);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, #fecaca 0%, #f87171 35%, #e11d48 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 30px rgba(244,63,94,0.7)) drop-shadow(0 6px 12px #000);
+      margin: -0.3rem 0;
+      position: relative;
+    }
+    
+    /* ═══════════════ TITLE ═══════════════ */
+    .title-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .title-jp {
+      font-family: var(--font-manga);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--rose);
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+    
+    .title-main {
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+    
+    .title-separator {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--crimson), var(--rose), var(--purple));
+      margin: 0.2rem auto 0;
+      border-radius: 4px;
+    }
+    
+    /* ═══════════════ SPEECH BUBBLE ═══════════════ */
+    .speech-bubble {
+      background: rgba(15, 7, 32, 0.8);
+      border: 1px solid rgba(244,63,94,0.45);
+      border-radius: 20px 20px 20px 6px;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      text-align: left;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 15px 30px -10px rgba(0,0,0,0.7);
+      transition: 0.3s;
+    }
+    
+    .speech-bubble:hover {
+      border-color: var(--rose);
+      box-shadow: 0 0 25px rgba(251,113,133,0.3);
+    }
+    
+    .speech-bubble__avatar {
+      font-size: 2.2rem;
+      filter: drop-shadow(0 0 10px var(--crimson-glow));
+      flex-shrink: 0;
+      animation: floatDistress 4s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+    
+    .speech-bubble__text {
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      color: var(--gray-100);
+      font-style: italic;
+      line-height: 1.7;
+    }
+    
+    .speech-bubble__text strong {
+      color: var(--rose);
+      font-weight: 700;
+      font-style: normal;
+    }
+    
+    /* ═══════════════ BUTTONS ═══════════════ */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      width: 100%;
+      margin-top: 0.3rem;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.8rem;
+      border-radius: 3rem;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      border: 1px solid transparent;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s var(--transition-smooth);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      transition: left 0.6s ease;
+    }
+    
+    .btn:hover::after {
+      left: 100%;
+    }
+    
+    .btn--primary {
+      background: linear-gradient(135deg, #be123c, #e11d48);
+      color: white;
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 8px 25px rgba(244,63,94,0.5);
+    }
+    
+    .btn--primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(244,63,94,0.7);
+      border-color: white;
+    }
+    
+    .btn--primary:active {
+      transform: translateY(-1px);
+      transition: all 0.1s ease;
+    }
+    
+    .btn--primary:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      transform: none;
+    }
+    
+    .btn--secondary {
+      background: rgba(20, 10, 40, 0.7);
+      color: var(--gray-100);
+      border-color: rgba(168,85,247,0.45);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    
+    .btn--secondary:hover {
+      background: rgba(168,85,247,0.18);
+      border-color: var(--purple);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(168,85,247,0.35);
+    }
+    
+    .btn--secondary:active {
+      transform: translateY(-1px);
+      transition: all 0.1s ease;
+    }
+    
+    .btn svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    
+    .btn:hover svg {
+      transform: translateX(3px);
+    }
+    
+    .btn--secondary:hover svg {
+      transform: translateX(4px);
+    }
+    
+    /* ═══════════════ STATUS ROW ═══════════════ */
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      background: rgba(0,0,0,0.4);
+      padding: 0.55rem 1.4rem;
+      border-radius: 3rem;
+      border: 1px solid rgba(244,63,94,0.2);
+      margin-top: 0.2rem;
+    }
+    
+    .status-row__item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    
+    .status-row__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--crimson);
+      box-shadow: 0 0 8px var(--crimson-glow);
+      animation: dotPulse 1.8s ease-in-out infinite;
+    }
+    
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(0.7); }
+    }
+    
+    .status-row__label {
+      color: var(--rose);
+      font-weight: 600;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+    }
+    
+    .status-row__value {
+      color: var(--gray-100);
+      font-weight: 500;
+    }
+    
+    /* ═══════════════ FOOTER ═══════════════ */
+    .footer-note {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--gray-700);
+      letter-spacing: 0.05em;
+      margin-top: -0.2rem;
+    }
+    
+    .footer-note span {
+      color: var(--rose);
+      font-weight: 600;
+    }
+    
+    /* ═══════════════ RESPONSIVE ═══════════════ */
+    @media (max-width: 520px) {
+      .card__body {
+        padding: 2rem 1.4rem;
+        gap: 1.1rem;
+      }
+      
+      .illustration__emote {
+        font-size: 3.8rem;
+      }
+      
+      .illustration__spark {
+        font-size: 1.1rem;
+      }
+      
+      .illustration__spark--2 {
+        font-size: 0.9rem;
+      }
+      
+      .illustration__spark--3 {
+        font-size: 0.8rem;
+      }
+      
+      .error-code {
+        font-size: 3.5rem;
+      }
+      
+      .title-main {
+        font-size: 1.2rem;
+      }
+      
+      .title-jp {
+        font-size: 0.8rem;
+      }
+      
+      .speech-bubble {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1rem;
+      }
+      
+      .speech-bubble__avatar {
+        font-size: 1.8rem;
+      }
+      
+      .speech-bubble__text {
+        font-size: 0.82rem;
+      }
+      
+      .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem 1.4rem;
+        font-size: 0.8rem;
+      }
+      
+      .status-row {
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0.5rem 1rem;
+      }
+      
+      .card__watermark {
+        font-size: 5rem;
+        bottom: -22px;
+        right: -12px;
+      }
+      
+      .card__bracket {
+        width: 18px;
+        height: 18px;
+      }
+      
+      .card__bracket--tl { top: 10px; left: 10px; }
+      .card__bracket--tr { top: 10px; right: 10px; }
+      .card__bracket--bl { bottom: 10px; left: 10px; }
+      .card__bracket--br { bottom: 10px; right: 10px; }
+    }
+    
+    /* ═══════════════ REDUCED MOTION ═══════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      .illustration__emote,
+      .speech-bubble__avatar,
+      .bg-layer__orbs,
+      .bg-layer__particles {
+        animation: none;
+      }
+      
+      .illustration__spark {
+        animation: none;
+        opacity: 0.5;
+      }
+      
+      .status-row__dot {
+        animation: none;
+      }
+      
+      .error-card {
+        animation: none;
+      }
+      
+      .btn,
+      .btn::after {
+        transition: none;
+      }
+      
+      .btn:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ═══════════════ BACKGROUND ═══════════════ -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-layer__orbs"></div>
+    <div class="bg-layer__grid"></div>
+    <div class="bg-layer__noise"></div>
+    <div class="bg-layer__particles"></div>
+  </div>
+
+  <!-- ═══════════════ MAIN CARD ═══════════════ -->
+  <main class="error-card" role="main" aria-label="Server Error">
+    <!-- Danger Stripe -->
+    <div class="card__edge" aria-hidden="true"></div>
+    
+    <!-- Corner Brackets -->
+    <div class="card__bracket card__bracket--tl" aria-hidden="true"></div>
+    <div class="card__bracket card__bracket--tr" aria-hidden="true"></div>
+    <div class="card__bracket card__bracket--bl" aria-hidden="true"></div>
+    <div class="card__bracket card__bracket--br" aria-hidden="true"></div>
+    
+    <!-- Watermark -->
+    <span class="card__watermark" aria-hidden="true">修復</span>
+
+    <!-- Card Body -->
+    <div class="card__body">
+      <!-- Illustration -->
+      <div class="illustration">
+        <div class="illustration__wrapper">
+          <span class="illustration__emote" aria-hidden="true">💥😱</span>
+          <span class="illustration__spark illustration__spark--1" aria-hidden="true">⚡</span>
+          <span class="illustration__spark illustration__spark--2" aria-hidden="true">💢</span>
+          <span class="illustration__spark illustration__spark--3" aria-hidden="true">🔥</span>
+        </div>
+      </div>
+
+      <!-- Error Code -->
+      <p class="error-code" aria-label="Error 500">500</p>
+
+      <!-- Title -->
+      <div class="title-section">
+        <span class="title-jp" aria-hidden="true">サーバーエラー</span>
+        <h1 class="title-main">Atrocity Mode Aktif!</h1>
+        <div class="title-separator" aria-hidden="true"></div>
+      </div>
+
+      <!-- Maple Dialogue -->
+      <div class="speech-bubble">
+        <span class="speech-bubble__avatar" aria-hidden="true">🛡️🍁</span>
+        <p class="speech-bubble__text">
+          "Waduh! Kayaknya server-nya lagi kena <strong>debuff</strong> nih...
+          Tenang aja, <strong>Absolute Defense</strong>-ku udah aktif!
+          Tim <strong>Maple Tree</strong> lagi beresin, coba lagi nanti ya~ ✨"
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions">
+        <button class="btn btn--primary" id="retryBtn" type="button" aria-label="Coba lagi memuat halaman">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Coba Lagi
+        </button>
+        <a href="/" class="btn btn--secondary" aria-label="Kembali ke halaman beranda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          Kembali ke Beranda
+        </a>
+      </div>
+
+      <!-- Status Row -->
+      <div class="status-row">
+        <div class="status-row__item">
+          <span class="status-row__dot" aria-hidden="true"></span>
+          <span class="status-row__label">STATUS</span>
+          <span class="status-row__value" id="statusCode">500</span>
+        </div>
+        <div class="status-row__item">
+          <span class="status-row__label">⏱️ TIMESTAMP</span>
+          <span class="status-row__value" id="errorTimestamp">—</span>
+        </div>
+      </div>
+
+      <!-- Footer Note -->
+      <p class="footer-note">
+        <span>hayaxxdev</span> · Error Code: 500 · Internal Server Error
+      </p>
+    </div>
+  </main>
+
+  <!-- ═══════════════ SCRIPTS ═══════════════ -->
+  <script>
+    (function() {
+      // ── Update Timestamp ──
+      var tsEl = document.getElementById('errorTimestamp');
+      if (tsEl) {
+        var now = new Date();
+        tsEl.textContent = now.toISOString().substring(0, 19).replace('T', ' ');
+      }
+      
+      // ── Update Status Code from URL ──
+      var statusEl = document.getElementById('statusCode');
+      if (statusEl) {
+        var params = new URLSearchParams(window.location.search);
+        var code = params.get('code');
+        if (code && /^\d{3}$/.test(code)) {
+          statusEl.textContent = code;
+        }
+      }
+      
+      // ── Retry Button ──
+      var retryBtn = document.getElementById('retryBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function() {
+          // Loading state
+          retryBtn.textContent = '⏳ Mencoba...';
+          retryBtn.disabled = true;
+          retryBtn.setAttribute('aria-busy', 'true');
+          
+          // Reload after short delay
+          setTimeout(function() {
+            window.location.reload();
+          }, 800);
+        });
+      }
+      
+      // ── Keyboard Shortcut ──
+      document.addEventListener('keydown', function(e) {
+        // R key to retry
+        if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          var activeEl = document.activeElement;
+          // Don't trigger if typing in input
+          if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+          
+          if (retryBtn && !retryBtn.disabled) {
+            retryBtn.click();
+          }
+        }
+        
+        // H key to go home
+        if (e.key === 'h' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          var activeEl = document.activeElement;
+          if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+          
+          window.location.href = '/';
+        }
+      });
+      
+      // ── Handle bfcache ──
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+          var tsEl2 = document.getElementById('errorTimestamp');
+          if (tsEl2) {
+            var now2 = new Date();
+            tsEl2.textContent = now2.toISOString().substring(0, 19).replace('T', ' ');
+          }
+        }
+      });
+      
+      // ── Console Info ──
+      console.log('%c🍁 %c500 Error Page %cLoaded', 
+        'font-size: 1.2em;', 
+        'font-weight: bold; color: #f43f5e;', 
+        'color: #94a3b8;'
+      );
+      console.log('%cPress R to retry · Press H to go home', 'color: #94a3b8; font-style: italic;');
+    })();
+  </script>
+</body>
+</html>

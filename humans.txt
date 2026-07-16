@@ -1,0 +1,14 @@
+# humans.txt
+# hayaxxdev-bit.my.id
+
+/* TEAM */
+Developer: hayaxxdev-bit
+Contact: hayaxxdev@gmail.com
+GitHub: https://github.com/hayaxxdev-bit
+Location: Indonesia
+
+/* SITE */
+Last update: 2025-01-15
+Language: Indonesia
+Framework: Vanilla HTML/CSS/JS
+Hosting: GitHub Pages + Vercel API

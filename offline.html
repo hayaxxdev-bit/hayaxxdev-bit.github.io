@@ -2,216 +2,742 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#7c3aed" />
-  
-  <title>Offline · hayaxxdev</title>
-  <meta name="description" content="Koneksi terputus. Maple juga kadang disconnect dari server!" />
-  
+  <meta name="theme-color" content="#030108" />
+  <title>Offline · Tidak Ada Koneksi | hayaxxdev</title>
+  <meta name="description" content="Koneksi internet terputus. Maple sedang mencari sinyal!" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>" />
-  
+
+  <!-- Fonts: Modern Manga Aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+
   <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES (Design Tokens)
+       ============================================================ */
     :root {
-      --purple: #7c3aed;
-      --purple-soft: #a78bfa;
-      --bg: #0a0a14;
-      --bg-card: rgba(26, 26, 46, 0.8);
-      --text: #e2e8f0;
-      --text-secondary: #94a3b8;
-      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      /* Palette: Cyber-Manga Void */
+      --void-deepest: #030108;
+      --void-deep: #05020c;
+      --void: #080314;
+      --void-surface: #0f0720;
+      --void-surface-2: #160b2d;
+      --void-surface-3: #1e103a;
+
+      /* Accent: Neo Cyan / Blue / Purple (Connection Theme) */
+      --neon-cyan: #22d3ee;
+      --neon-cyan-glow: rgba(34, 211, 238, 0.55);
+      --neon-blue: #3b82f6;
+      --neon-blue-glow: rgba(59, 130, 246, 0.5);
+      --neon-purple: #a855f7;
+      --neon-purple-glow: rgba(168, 85, 247, 0.4);
+      --neon-rose: #fb7185;
+      --neon-rose-glow: rgba(251, 113, 133, 0.4);
+
+      /* Neutrals */
+      --white: #f8fafc;
+      --gray-100: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-500: #94a3b8;
+      --gray-700: #475569;
+      --gray-900: #1e1b2e;
+
+      /* Typography */
+      --font-manga: 'Zen Kaku Gothic New', 'Kanit', 'Outfit', sans-serif;
+      --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Inter', 'Plus Jakarta Sans', system-ui;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Spacing & Radius */
+      --space-xs: 6px;
+      --space-sm: 12px;
+      --space-md: 20px;
+      --space-lg: 28px;
+      --space-xl: 40px;
+      --space-2xl: 56px;
+      --radius-sm: 10px;
+      --radius-md: 18px;
+      --radius-lg: 26px;
+      --radius-xl: 34px;
+      --radius-full: 9999px;
+
+      /* Effects */
+      --glass-bg: rgba(8, 3, 20, 0.7);
+      --glass-border: rgba(34, 211, 238, 0.3);
+      --shadow-float: 0 25px 50px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(34, 211, 238, 0.25);
+      --transition-smooth: cubic-bezier(0.23, 1, 0.32, 1);
     }
-    
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+    html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: var(--font-sans);
-      background: var(--bg);
-      color: var(--text);
+      font-family: var(--font-body);
+      background: var(--void-deepest);
+      color: var(--gray-300);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow-x: hidden;
+      position: relative;
+      line-height: 1.5;
+      padding: 1.5rem;
     }
-    
-    /* Background particles */
-    body::before {
-      content: '';
+
+    /* ============================================================
+       MODULAR BACKGROUND LAYER
+       ============================================================ */
+    .bg-layer {
       position: fixed;
       inset: 0;
-      background: 
-        radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.06), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(204, 17, 51, 0.04), transparent 40%);
+      z-index: 0;
       pointer-events: none;
     }
-    
-    .offline-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(124, 58, 237, 0.2);
-      border-radius: 16px;
-      padding: 40px 30px;
-      text-align: center;
-      max-width: 420px;
-      width: 90%;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.5);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .offline-card::after {
-      content: '圏外';
+    .bg-layer__orbs {
       position: absolute;
-      bottom: -15px;
-      right: -5px;
-      font-family: 'Spectral SC', 'Noto Serif JP', serif;
-      font-size: 5rem;
-      color: rgba(124, 58, 237, 0.04);
-      pointer-events: none;
-      user-select: none;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 25% 30%, rgba(34,211,238,0.2) 0%, transparent 45%),
+        radial-gradient(circle at 75% 55%, rgba(59,130,246,0.18) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(168,85,247,0.1) 0%, transparent 55%),
+        radial-gradient(circle at 20% 70%, rgba(251,113,133,0.06) 0%, transparent 45%);
     }
-    
-    .offline-icon {
-      font-size: 4rem;
-      margin-bottom: 16px;
-      animation: float 3s ease-in-out infinite;
+    .bg-layer__grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(34,211,238,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at 50% 50%, black 35%, transparent 75%);
+    }
+    .bg-layer__scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 4px);
+      opacity: 0.2;
+      mix-blend-mode: overlay;
+    }
+    .bg-layer__particles {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(1px 1px at 12% 22%, rgba(34,211,238,0.6), transparent),
+        radial-gradient(1px 1px at 32% 58%, rgba(59,130,246,0.5), transparent),
+        radial-gradient(1px 1px at 52% 32%, rgba(168,85,247,0.5), transparent),
+        radial-gradient(1px 1px at 72% 68%, rgba(34,211,238,0.5), transparent),
+        radial-gradient(1.5px 1.5px at 88% 22%, rgba(59,130,246,0.6), transparent),
+        radial-gradient(1px 1px at 22% 78%, rgba(168,85,247,0.4), transparent),
+        radial-gradient(1px 1px at 62% 18%, rgba(34,211,238,0.5), transparent);
+      background-size: 200px 200px;
+      animation: particleDrift 24s linear infinite;
+    }
+    @keyframes particleDrift {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(0.3deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    /* ============================================================
+       MAIN CARD CONTAINER
+       ============================================================ */
+    .offline-card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 620px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-float), 0 0 80px rgba(34, 211, 238, 0.18);
+      overflow: hidden;
+      transition: all 0.4s var(--transition-smooth);
+    }
+    .offline-card:hover {
+      border-color: rgba(59, 130, 246, 0.55);
+      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.8), 0 0 110px rgba(34, 211, 238, 0.28);
+    }
+
+    /* Card decorative top line (Connection lost wave) */
+    .card__edge {
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 2.5px;
+      background: repeating-linear-gradient(90deg, 
+        var(--neon-cyan) 0px, var(--neon-cyan) 6px,
+        transparent 6px, transparent 12px,
+        var(--neon-blue) 12px, var(--neon-blue) 18px,
+        transparent 18px, transparent 24px,
+        var(--neon-cyan) 24px, var(--neon-cyan) 30px,
+        transparent 30px, transparent 36px);
+      z-index: 5;
+      animation: signalWave 3s ease-in-out infinite;
+      opacity: 0.7;
+    }
+    @keyframes signalWave {
+      0%,100% { opacity: 0.4; background-position: 0 0; }
+      50% { opacity: 0.9; background-position: 36px 0; }
+    }
+
+    /* Corner brackets */
+    .card__bracket {
+      position: absolute;
+      width: 26px; height: 26px;
+      border: 2px solid transparent;
+      z-index: 4;
+      transition: 0.3s;
+    }
+    .card__bracket--tl { top: 16px; left: 16px; border-top: 2px solid var(--neon-cyan); border-left: 2px solid var(--neon-cyan); border-radius: 5px 0 0 0; }
+    .card__bracket--tr { top: 16px; right: 16px; border-top: 2px solid var(--neon-blue); border-right: 2px solid var(--neon-blue); border-radius: 0 5px 0 0; }
+    .card__bracket--bl { bottom: 16px; left: 16px; border-bottom: 2px solid var(--neon-blue); border-left: 2px solid var(--neon-blue); border-radius: 0 0 0 5px; }
+    .card__bracket--br { bottom: 16px; right: 16px; border-bottom: 2px solid var(--neon-cyan); border-right: 2px solid var(--neon-cyan); border-radius: 0 0 5px 0; }
+
+    .card__body {
+      position: relative;
+      z-index: 2;
+      padding: 2.8rem 2.4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1.5rem;
+    }
+
+    /* ============================================================
+       MODULE: OFFLINE ILLUSTRATION (MANGA STYLE)
+       ============================================================ */
+    .illustration {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.2rem;
+    }
+    .illustration__wrapper {
+      position: relative;
       display: inline-block;
     }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    .illustration__emote {
+      font-size: 5.5rem;
+      filter: drop-shadow(0 0 35px rgba(34,211,238,0.8)) drop-shadow(0 12px 20px rgba(0,0,0,0.8));
+      animation: floatSearch 4s infinite ease-in-out;
+      display: block;
+      line-height: 1;
+      position: relative;
+      z-index: 2;
     }
-    
-    .offline-title {
-      font-family: var(--font-mono);
-      font-size: 1.3rem;
+    .illustration__spark {
+      position: absolute;
+      font-size: 1.6rem;
+      animation: sparkFloat 2.5s infinite ease-in-out;
+      filter: drop-shadow(0 0 10px rgba(34,211,238,0.9));
+      z-index: 3;
+    }
+    .illustration__spark--1 { top: -10px; right: -18px; animation-delay: 0s; }
+    .illustration__spark--2 { bottom: 8px; left: -22px; animation-delay: 0.8s; font-size: 1.2rem; }
+    .illustration__spark--3 { top: 14px; left: -18px; animation-delay: 1.6s; font-size: 1rem; }
+
+    @keyframes floatSearch {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-10px) rotate(-2deg); }
+      50% { transform: translateY(-6px) rotate(1deg); }
+      75% { transform: translateY(-14px) rotate(-1deg); }
+    }
+    @keyframes sparkFloat {
+      0%,100% { transform: translateY(0) scale(0.6); opacity: 0.2; }
+      50% { transform: translateY(-16px) scale(1.3); opacity: 1; }
+    }
+
+    /* Signal strength bars (animated) */
+    .signal-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 28px;
+      margin: -0.3rem 0 0.3rem;
+      position: relative;
+      z-index: 2;
+    }
+    .signal-bar {
+      width: 5px;
+      background: var(--neon-cyan);
+      border-radius: 2px;
+      animation: signalStrength 1.8s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--neon-cyan-glow);
+    }
+    .signal-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .signal-bar:nth-child(2) { height: 14px; animation-delay: 0.2s; }
+    .signal-bar:nth-child(3) { height: 20px; animation-delay: 0.4s; opacity: 0.5; }
+    .signal-bar:nth-child(4) { height: 26px; animation-delay: 0.6s; opacity: 0.3; }
+    .signal-bar:nth-child(5) { height: 28px; animation-delay: 0.8s; opacity: 0.15; }
+
+    @keyframes signalStrength {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ============================================================
+       MODULE: STATUS TEXT
+       ============================================================ */
+    .status-text {
+      font-family: var(--font-manga);
+      font-weight: 900;
+      font-size: clamp(3.5rem, 10vw, 5.5rem);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, #cffafe 0%, #22d3ee 35%, #2563eb 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 35px rgba(34,211,238,0.7)) drop-shadow(0 6px 12px #000);
+      margin: -0.4rem 0;
+      position: relative;
+    }
+
+    /* ============================================================
+       MODULE: TITLE SECTION
+       ============================================================ */
+    .title-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .title-jp {
+      font-family: var(--font-manga);
+      font-size: 1rem;
       font-weight: 700;
-      color: var(--purple-soft);
-      margin-bottom: 10px;
+      letter-spacing: 0.22em;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      opacity: 0.95;
     }
-    
-    .offline-message {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.7;
-      margin-bottom: 24px;
+    .title-main {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.04em;
     }
-    
+    .title-separator {
+      width: 70px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-blue), var(--neon-purple));
+      margin: 0.25rem auto 0;
+      border-radius: 4px;
+    }
+
+    /* ============================================================
+       MODULE: DIALOGUE BUBBLE (MANGA STYLE)
+       ============================================================ */
+    .speech-bubble {
+      background: rgba(15, 7, 32, 0.8);
+      border: 1px solid rgba(34,211,238,0.5);
+      border-radius: 20px 20px 20px 6px;
+      padding: 1.3rem 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      text-align: left;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 15px 30px -10px rgba(0,0,0,0.7);
+      transition: 0.3s;
+    }
+    .speech-bubble:hover {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 28px rgba(59,130,246,0.35);
+    }
+    .speech-bubble__avatar {
+      font-size: 2.4rem;
+      filter: drop-shadow(0 0 12px var(--neon-cyan-glow));
+      flex-shrink: 0;
+    }
+    .speech-bubble__text {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--gray-100);
+      font-style: italic;
+    }
+    .speech-bubble__text strong {
+      color: var(--neon-cyan);
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    /* ============================================================
+       MODULE: ACTION BUTTONS (FUTURISTIC)
+       ============================================================ */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      width: 100%;
+      margin-top: 0.3rem;
+    }
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
+      gap: 0.6rem;
+      padding: 0.85rem 2rem;
+      border-radius: 3rem;
+      font-family: var(--font-display);
       font-weight: 600;
-      background: rgba(124, 58, 237, 0.12);
-      color: var(--purple-soft);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      cursor: pointer;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
       text-decoration: none;
-      transition: all 0.3s ease;
+      border: 1px solid transparent;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s var(--transition-smooth);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
-    
-    .btn:hover {
-      background: rgba(124, 58, 237, 0.2);
-      border-color: rgba(124, 58, 237, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+    .btn--primary {
+      background: linear-gradient(135deg, #0e7490, #22d3ee);
+      color: #0a0a1a;
+      border-color: rgba(255,255,255,0.3);
+      box-shadow: 0 8px 25px rgba(34,211,238,0.5);
+      font-weight: 700;
     }
-    
-    .btn:active {
-      transform: translateY(0);
+    .btn--primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(34,211,238,0.8);
+      border-color: white;
     }
-    
-    .status-text {
-      margin-top: 16px;
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      opacity: 0.5;
+    .btn--secondary {
+      background: rgba(20, 10, 40, 0.7);
+      color: var(--gray-100);
+      border-color: rgba(168,85,247,0.5);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .btn--secondary:hover {
+      background: rgba(168,85,247,0.2);
+      border-color: var(--neon-purple);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(168,85,247,0.4);
+    }
+    .btn svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      transition: transform 0.2s;
+    }
+    .btn:hover svg { transform: scale(1.1); }
+    .btn--secondary:hover svg { transform: rotate(15deg); }
+
+    /* ============================================================
+       MODULE: CONNECTION STATUS
+       ============================================================ */
+    .connection-status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
       font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--gray-500);
+      background: rgba(0,0,0,0.4);
+      padding: 0.6rem 1.5rem;
+      border-radius: 3rem;
+      border: 1px solid rgba(34,211,238,0.25);
+      margin-top: 0.2rem;
     }
-    
-    @media (max-width: 480px) {
-      .offline-card {
-        padding: 30px 20px;
-      }
-      .offline-icon {
-        font-size: 3rem;
-      }
-      .offline-card::after {
-        font-size: 3.5rem;
-      }
+    .connection-status__item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
-    
-    @media (prefers-reduced-motion: reduce) {
-      .offline-icon {
-        animation: none;
-      }
-      .btn {
-        transition: none;
-      }
+    .connection-status__label {
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+    .connection-status__value {
+      color: var(--gray-100);
+    }
+    .connection-status__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--neon-rose);
+      box-shadow: 0 0 8px var(--neon-rose-glow);
+      animation: dotPulse 1.8s infinite;
+    }
+    @keyframes dotPulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.7); }
+    }
+
+    /* ============================================================
+       MODULE: FOOTER NOTE
+       ============================================================ */
+    .footer-note {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--gray-700);
+      letter-spacing: 0.05em;
+      margin-top: -0.3rem;
+    }
+    .footer-note span {
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+
+    /* ============================================================
+       MODULE: RECONNECT COUNTDOWN
+       ============================================================ */
+    .reconnect-info {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--neon-cyan);
+      background: rgba(34,211,238,0.08);
+      padding: 0.6rem 1.2rem;
+      border-radius: 2rem;
+      border: 1px solid rgba(34,211,238,0.2);
+      animation: fadeInUp 0.5s ease;
+    }
+    .reconnect-info.active {
+      display: block;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 500px) {
+      .card__body { padding: 2rem 1.4rem; gap: 1.2rem; }
+      .illustration__emote { font-size: 4rem; }
+      .illustration__spark { font-size: 1.2rem; }
+      .illustration__spark--2 { font-size: 1rem; }
+      .illustration__spark--3 { font-size: 0.9rem; }
+      .speech-bubble { flex-direction: column; align-items: center; text-align: center; }
+      .btn { width: 100%; justify-content: center; }
+      .status-text { font-size: 3.2rem; }
+      .connection-status { flex-direction: column; gap: 0.3rem; }
+      .signal-bars { height: 22px; }
     }
   </style>
 </head>
 <body>
+  <!-- Background Layer -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-layer__orbs"></div>
+    <div class="bg-layer__grid"></div>
+    <div class="bg-layer__scanlines"></div>
+    <div class="bg-layer__particles"></div>
+  </div>
+
+  <!-- Main Offline Card -->
   <main class="offline-card">
-    <div class="offline-icon" aria-hidden="true">📡</div>
-    <h1 class="offline-title">Koneksi Terputus</h1>
-    <p class="offline-message">
-      Sepertinya kamu sedang <strong>offline</strong>. 
-      <strong>Maple</strong> juga kadang disconnect dari server kok~ 
-      Coba periksa koneksi internetmu ya! 🍁
-    </p>
-    <button class="btn" id="retryBtn" type="button">
-      🔄 Coba Lagi
-    </button>
-    <p class="status-text" id="statusText">Menunggu koneksi...</p>
+    <div class="card__edge" aria-hidden="true"></div>
+    <div class="card__bracket card__bracket--tl"></div>
+    <div class="card__bracket card__bracket--tr"></div>
+    <div class="card__bracket card__bracket--bl"></div>
+    <div class="card__bracket card__bracket--br"></div>
+
+    <div class="card__body">
+      <!-- Manga Illustration -->
+      <div class="illustration">
+        <div class="illustration__wrapper">
+          <span class="illustration__emote" aria-hidden="true">📡😵</span>
+          <span class="illustration__spark illustration__spark--1" aria-hidden="true">〰️</span>
+          <span class="illustration__spark illustration__spark--2" aria-hidden="true">❓</span>
+          <span class="illustration__spark illustration__spark--3" aria-hidden="true">💫</span>
+        </div>
+      </div>
+
+      <!-- Signal Strength Bars -->
+      <div class="signal-bars" aria-hidden="true">
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+      </div>
+
+      <!-- Status Text -->
+      <div class="status-text">OFFLINE</div>
+
+      <!-- Title Section -->
+      <div class="title-section">
+        <span class="title-jp">接続なし</span>
+        <h1 class="title-main">Koneksi Terputus!</h1>
+        <div class="title-separator"></div>
+      </div>
+
+      <!-- Manga Speech Bubble -->
+      <div class="speech-bubble">
+        <span class="speech-bubble__avatar">📡🍁</span>
+        <p class="speech-bubble__text">
+          "Eh? Kok tiba-tiba <strong>disconnect</strong> gini sih?
+          Kayaknya sinyal di dungeon ini lagi <strong>chaotic</strong> deh...
+          Coba cek koneksi kamu dulu ya, nanti kita <strong>reconnect</strong> bareng-bareng! ✨"
+        </p>
+      </div>
+
+      <!-- Reconnect Countdown -->
+      <div class="reconnect-info" id="reconnectInfo">
+        🔄 Mencoba menyambungkan ulang dalam <strong id="countdownTimer">10</strong> detik...
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions">
+        <button class="btn btn--primary" id="retryBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Coba Sambungkan
+        </button>
+        <a href="/" class="btn btn--secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          Kembali (Cache)
+        </a>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="connection-status">
+        <div class="connection-status__item">
+          <span class="connection-status__dot" aria-hidden="true"></span>
+          <span class="connection-status__label">STATUS</span>
+          <span class="connection-status__value">Disconnected</span>
+        </div>
+        <div class="connection-status__item">
+          <span class="connection-status__label">⏱️ TERAKHIR ONLINE</span>
+          <span class="connection-status__value" id="lastOnline">—</span>
+        </div>
+      </div>
+
+      <!-- Footer Note -->
+      <p class="footer-note">
+        <span>hayaxxdev</span> · Koneksi Terputus · Cek Internet Kamu
+      </p>
+    </div>
   </main>
 
+  <!-- Script: Retry, Reconnect & Status -->
   <script>
     (function() {
-      var retryBtn = document.getElementById('retryBtn');
-      var statusText = document.getElementById('statusText');
-      
-      // Retry button
-      retryBtn.addEventListener('click', function() {
-        retryBtn.textContent = '⏳ Mencoba...';
-        retryBtn.disabled = true;
-        retryBtn.style.opacity = '0.7';
-        retryBtn.style.cursor = 'wait';
-        statusText.textContent = 'Mencoba menyambungkan...';
-        
-        setTimeout(function() {
-          window.location.reload();
-        }, 600);
-      });
-      
-      // Auto-retry when back online
-      window.addEventListener('online', function() {
-        statusText.textContent = '✅ Koneksi terdeteksi! Memuat ulang...';
-        statusText.style.color = '#34d399';
-        setTimeout(function() {
-          window.location.reload();
-        }, 500);
-      });
-      
-      // Update status
-      window.addEventListener('offline', function() {
-        statusText.textContent = '❌ Tidak ada koneksi';
-        statusText.style.color = '#e8798a';
-      });
-      
-      // Initial status check
-      if (!navigator.onLine) {
-        statusText.textContent = '❌ Tidak ada koneksi';
-        statusText.style.color = '#e8798a';
+      // Update last online timestamp
+      const lastOnlineEl = document.getElementById('lastOnline');
+      if (lastOnlineEl) {
+        const now = new Date();
+        lastOnlineEl.textContent = now.toISOString().substring(0, 19).replace('T', ' ');
       }
+
+      // Retry button with loading state
+      const retryBtn = document.getElementById('retryBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function() {
+          retryBtn.textContent = '⏳ Menyambungkan...';
+          retryBtn.disabled = true;
+          retryBtn.style.opacity = '0.7';
+          retryBtn.style.cursor = 'wait';
+
+          // Try to reload
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        });
+      }
+
+      // Auto-reconnect countdown
+      const reconnectInfo = document.getElementById('reconnectInfo');
+      const countdownTimer = document.getElementById('countdownTimer');
+      let countdown = 10;
+      let reconnectAttempts = 0;
+      const maxAttempts = 3;
+
+      // Show reconnect info after 3 seconds
+      setTimeout(() => {
+        if (reconnectInfo && countdownTimer) {
+          reconnectInfo.classList.add('active');
+          
+          const timer = setInterval(() => {
+            countdown--;
+            countdownTimer.textContent = countdown;
+
+            if (countdown <= 0) {
+              clearInterval(timer);
+              reconnectAttempts++;
+              
+              if (reconnectAttempts <= maxAttempts) {
+                // Try to fetch a small resource to check connectivity
+                fetch(window.location.origin + '/favicon.ico', { 
+                  method: 'HEAD', 
+                  cache: 'no-cache',
+                  mode: 'no-cors'
+                })
+                .then(() => {
+                  window.location.reload();
+                })
+                .catch(() => {
+                  // Still offline, reset countdown
+                  countdown = 15;
+                  countdownTimer.textContent = countdown;
+                  reconnectInfo.querySelector('strong').textContent = countdown;
+                  
+                  const retryTimer = setInterval(() => {
+                    countdown--;
+                    countdownTimer.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                      clearInterval(retryTimer);
+                      window.location.reload();
+                    }
+                  }, 1000);
+                });
+              } else {
+                reconnectInfo.textContent = '⚠️ Gagal menyambungkan. Silakan coba manual.';
+                reconnectInfo.style.color = 'var(--neon-rose)';
+              }
+            }
+          }, 1000);
+        }
+      }, 3000);
+
+      // Online/Offline event listeners
+      window.addEventListener('online', () => {
+        window.location.reload();
+      });
+
+      window.addEventListener('offline', () => {
+        if (lastOnlineEl) {
+          const now = new Date();
+          lastOnlineEl.textContent = now.toISOString().substring(0, 19).replace('T', ' ');
+        }
+      });
+
+      // Handle bfcache
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted && lastOnlineEl) {
+          const now = new Date();
+          lastOnlineEl.textContent = now.toISOString().substring(0, 19).replace('T', ' ');
+        }
+      });
+
+      // Periodic connection check
+      setInterval(() => {
+        if (navigator.onLine) {
+          window.location.reload();
+        }
+      }, 15000); // Check every 15 seconds
     })();
   </script>
 </body>
