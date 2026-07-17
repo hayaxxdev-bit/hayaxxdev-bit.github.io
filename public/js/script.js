@@ -93,108 +93,763 @@
   };
 
   // ═══════════════════════════════════════════
-  // 3. CACHE MANAGER
+  // 3. CACHE MANAGER (ENHANCED)
   // ═══════════════════════════════════════════
   class CacheManager {
     constructor() {
       this.prefix = "maple_cache_";
+      this.version = "v2";
+      this.memoryCache = new Map(); // In-memory cache untuk akses instant
+      this.pendingWrites = new Map(); // Batch writes untuk mengurangi I/O
+      this.writeQueueTimer = null;
+      this.stats = {
+        hits: 0,
+        misses: 0,
+        writes: 0,
+        evictions: 0,
+      };
+
+      // Bersihkan cache dari versi lama saat inisialisasi
+      this._migrateFromOldVersions();
     }
+
+    /**
+     * Generate cache key dengan prefix dan version
+     */
     _getKey(key) {
-      return this.prefix + key;
+      return `${this.prefix}${this.version}_${key}`;
     }
-    set(key, data, ttl = CONFIG.CACHE_DURATION) {
-      try {
-        localStorage.setItem(
-          this._getKey(key),
-          JSON.stringify({ data, timestamp: Date.now(), ttl }),
-        );
+
+    /**
+     * SET - Simpan data ke cache (dengan batch writing)
+     * @param {string} key - Cache key
+     * @param {*} data - Data yang akan disimpan
+     * @param {number} ttl - Time to live dalam milliseconds
+     * @param {boolean} immediate - Jika true, tulis langsung ke localStorage
+     */
+    async set(key, data, ttl = CONFIG.CACHE_DURATION, immediate = false) {
+      const cacheKey = this._getKey(key);
+      const cacheItem = {
+        data,
+        timestamp: Date.now(),
+        ttl,
+        size: this._estimateSize(data),
+      };
+
+      // 1. Simpan ke memory cache (instant)
+      this.memoryCache.set(cacheKey, cacheItem);
+
+      // 2. Tulis ke localStorage (bisa ditunda)
+      if (immediate) {
+        return this._writeToStorage(cacheKey, cacheItem);
+      } else {
+        // Batch writing: kumpulkan writes, eksekusi dalam batch
+        this.pendingWrites.set(cacheKey, cacheItem);
+        this._scheduleBatchWrite();
         return true;
-      } catch (e) {
-        console.warn("Cache write failed:", e);
-        return false;
       }
     }
-    get(key) {
+
+    /**
+     * GET - Ambil data dari cache
+     * @param {string} key - Cache key
+     * @param {boolean} forceRefresh - Jika true, skip cache dan return null
+     */
+    get(key, forceRefresh = false) {
+      if (forceRefresh) {
+        this.stats.misses++;
+        return null;
+      }
+
+      const cacheKey = this._getKey(key);
+
+      // 1. Cek memory cache dulu (paling cepat)
+      if (this.memoryCache.has(cacheKey)) {
+        const item = this.memoryCache.get(cacheKey);
+        if (!this._isExpired(item)) {
+          this.stats.hits++;
+          return this._deepClone(item.data); // Return clone untuk mencegah mutasi
+        } else {
+          // Expired di memory, hapus
+          this.memoryCache.delete(cacheKey);
+        }
+      }
+
+      // 2. Cek localStorage
       try {
-        const raw = localStorage.getItem(this._getKey(key));
-        if (!raw) return null;
-        const item = JSON.parse(raw);
-        if (Date.now() - item.timestamp > item.ttl) {
-          localStorage.removeItem(this._getKey(key));
+        const raw = localStorage.getItem(cacheKey);
+        if (!raw) {
+          this.stats.misses++;
           return null;
         }
-        return item.data;
+
+        const item = JSON.parse(raw);
+
+        if (this._isExpired(item)) {
+          // Expired, hapus dari storage
+          localStorage.removeItem(cacheKey);
+          this.stats.evictions++;
+          this.stats.misses++;
+          return null;
+        }
+
+        // Masukkan ke memory cache untuk akses berikutnya
+        this.memoryCache.set(cacheKey, item);
+        this.stats.hits++;
+
+        return this._deepClone(item.data);
       } catch (e) {
+        console.warn(`Cache read failed for ${key}:`, e.message);
+        localStorage.removeItem(cacheKey); // Hapus data corrupt
+        this.stats.misses++;
         return null;
       }
     }
-    remove(key) {
-      localStorage.removeItem(this._getKey(key));
-    }
-    clear() {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith(this.prefix)) localStorage.removeItem(key);
+
+    /**
+     * GET MULTI - Ambil multiple cache keys sekaligus
+     * @param {string[]} keys - Array of cache keys
+     * @returns {Object} Object dengan key-value pairs
+     */
+    getMulti(keys) {
+      const result = {};
+      keys.forEach((key) => {
+        result[key] = this.get(key);
       });
+      return result;
+    }
+
+    /**
+     * SET MULTI - Simpan multiple items sekaligus
+     * @param {Object} items - Object dengan key-value pairs
+     * @param {number} ttl - Time to live
+     */
+    async setMulti(items, ttl = CONFIG.CACHE_DURATION) {
+      const promises = Object.entries(items).map(([key, data]) =>
+        this.set(key, data, ttl),
+      );
+      return Promise.all(promises);
+    }
+
+    /**
+     * REMOVE - Hapus item dari cache
+     */
+    remove(key) {
+      const cacheKey = this._getKey(key);
+      this.memoryCache.delete(cacheKey);
+      this.pendingWrites.delete(cacheKey);
+
+      try {
+        localStorage.removeItem(cacheKey);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
+     * HAS - Cek apakah key ada di cache dan belum expired
+     */
+    has(key) {
+      const cacheKey = this._getKey(key);
+
+      // Cek memory cache
+      if (this.memoryCache.has(cacheKey)) {
+        return !this._isExpired(this.memoryCache.get(cacheKey));
+      }
+
+      // Cek localStorage
+      const raw = localStorage.getItem(cacheKey);
+      if (!raw) return false;
+
+      try {
+        const item = JSON.parse(raw);
+        return !this._isExpired(item);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
+     * CLEAR - Bersihkan semua cache dengan prefix ini
+     * @param {boolean} softClear - Jika true, hanya hapus yang expired
+     */
+    clear(softClear = false) {
+      // Bersihkan memory cache
+      this.memoryCache.clear();
+      this.pendingWrites.clear();
+
+      try {
+        const keys = Object.keys(localStorage);
+        let removedCount = 0;
+
+        keys.forEach((key) => {
+          if (key.startsWith(this.prefix)) {
+            if (softClear) {
+              // Hanya hapus yang expired
+              try {
+                const item = JSON.parse(localStorage.getItem(key));
+                if (this._isExpired(item)) {
+                  localStorage.removeItem(key);
+                  removedCount++;
+                }
+              } catch (e) {
+                localStorage.removeItem(key);
+                removedCount++;
+              }
+            } else {
+              // Hapus semua
+              localStorage.removeItem(key);
+              removedCount++;
+            }
+          }
+        });
+
+        console.log(`🗑️ Cache cleared: ${removedCount} items removed`);
+        this.stats.evictions += removedCount;
+        return removedCount;
+      } catch (e) {
+        console.warn("Cache clear failed:", e.message);
+        return 0;
+      }
+    }
+
+    /**
+     * GET SIZE - Dapatkan total ukuran cache
+     * @returns {Object} {count, estimatedSize}
+     */
+    getSize() {
+      let totalSize = 0;
+      let count = 0;
+
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach((key) => {
+          if (key.startsWith(this.prefix)) {
+            totalSize += localStorage.getItem(key).length * 2; // UTF-16 = 2 bytes per char
+            count++;
+          }
+        });
+      } catch (e) {}
+
+      return {
+        count,
+        estimatedSizeMB: (totalSize / (1024 * 1024)).toFixed(2),
+      };
+    }
+
+    /**
+     * GET STATS - Dapatkan statistik cache
+     */
+    getStats() {
+      const hitRate =
+        this.stats.hits + this.stats.misses > 0
+          ? (
+              (this.stats.hits / (this.stats.hits + this.stats.misses)) *
+              100
+            ).toFixed(1)
+          : 0;
+
+      return {
+        ...this.stats,
+        hitRate: `${hitRate}%`,
+        memoryCacheSize: this.memoryCache.size,
+        pendingWrites: this.pendingWrites.size,
+        ...this.getSize(),
+      };
+    }
+
+    /**
+     * WARM - Pre-load frequently used cache items
+     * @param {string[]} keys - Keys to pre-load
+     */
+    warm(keys) {
+      console.log(`🔥 Warming cache: ${keys.length} items`);
+      keys.forEach((key) => this.get(key));
+      return this;
+    }
+
+    // ═══════════════ PRIVATE METHODS ═══════════════
+
+    /**
+     * Check if cache item is expired
+     */
+    _isExpired(item) {
+      if (!item || !item.timestamp) return true;
+      const ttl = item.ttl || CONFIG.CACHE_DURATION;
+      return Date.now() - item.timestamp > ttl;
+    }
+
+    /**
+     * Write item to localStorage
+     */
+    _writeToStorage(cacheKey, item) {
+      try {
+        const serialized = JSON.stringify(item);
+        localStorage.setItem(cacheKey, serialized);
+        this.stats.writes++;
+        return true;
+      } catch (e) {
+        if (e.name === "QuotaExceededError") {
+          // Storage penuh! Bersihkan cache expired terlebih dahulu
+          console.warn("⚠️ Storage quota exceeded, cleaning expired cache...");
+          this.clear(true); // Soft clear
+
+          // Coba lagi
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(item));
+            return true;
+          } catch (retryError) {
+            // Masih penuh, hapus cache tertua
+            console.warn("⚠️ Removing oldest cache items...");
+            this._evictOldest(10); // Hapus 10 item tertua
+
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(item));
+              return true;
+            } catch (finalError) {
+              console.error(
+                "❌ Cache write failed after cleanup:",
+                finalError.message,
+              );
+              return false;
+            }
+          }
+        }
+
+        console.warn("Cache write failed:", e.message);
+        return false;
+      }
+    }
+
+    /**
+     * Schedule batch write to localStorage
+     */
+    _scheduleBatchWrite() {
+      if (this.writeQueueTimer) return;
+
+      this.writeQueueTimer = setTimeout(() => {
+        this._executeBatchWrite();
+      }, 500); // Tunda 500ms untuk mengumpulkan writes
+    }
+
+    /**
+     * Execute all pending writes
+     */
+    _executeBatchWrite() {
+      if (this.pendingWrites.size === 0) {
+        this.writeQueueTimer = null;
+        return;
+      }
+
+      console.log(`💾 Writing ${this.pendingWrites.size} items to cache...`);
+
+      this.pendingWrites.forEach((item, cacheKey) => {
+        this._writeToStorage(cacheKey, item);
+      });
+
+      this.pendingWrites.clear();
+      this.writeQueueTimer = null;
+    }
+
+    /**
+     * Evict oldest items from cache
+     */
+    _evictOldest(count = 5) {
+      try {
+        const cacheItems = [];
+        const keys = Object.keys(localStorage);
+
+        keys.forEach((key) => {
+          if (key.startsWith(this.prefix)) {
+            try {
+              const item = JSON.parse(localStorage.getItem(key));
+              cacheItems.push({ key, timestamp: item.timestamp || 0 });
+            } catch (e) {}
+          }
+        });
+
+        // Sort by oldest first
+        cacheItems.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Remove oldest items
+        const toRemove = cacheItems.slice(0, count);
+        toRemove.forEach((item) => {
+          localStorage.removeItem(item.key);
+          this.memoryCache.delete(item.key);
+        });
+
+        this.stats.evictions += toRemove.length;
+      } catch (e) {}
+    }
+
+    /**
+     * Estimate size of data in bytes
+     */
+    _estimateSize(data) {
+      try {
+        return new Blob([JSON.stringify(data)]).size;
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    /**
+     * Deep clone data to prevent mutation
+     */
+    _deepClone(data) {
+      // Untuk data sederhana, JSON parse/stringify sudah cukup
+      // Untuk data kompleks, bisa gunakan structuredClone
+      if (typeof structuredClone === "function") {
+        return structuredClone(data);
+      }
+      try {
+        return JSON.parse(JSON.stringify(data));
+      } catch (e) {
+        // Fallback: shallow copy untuk data yang tidak bisa di-serialize
+        if (Array.isArray(data)) return [...data];
+        if (typeof data === "object" && data !== null) return { ...data };
+        return data;
+      }
+    }
+
+    /**
+     * Migrate cache from old versions
+     */
+    _migrateFromOldVersions() {
+      try {
+        const keys = Object.keys(localStorage);
+        let migratedCount = 0;
+
+        keys.forEach((key) => {
+          // Cari cache versi lama (tanpa version prefix)
+          if (key.startsWith(this.prefix) && !key.includes("_v")) {
+            try {
+              const data = localStorage.getItem(key);
+              localStorage.removeItem(key); // Hapus versi lama
+              migratedCount++;
+            } catch (e) {}
+          }
+        });
+
+        if (migratedCount > 0) {
+          console.log(
+            `🔄 Migrated ${migratedCount} items from old cache version`,
+          );
+        }
+      } catch (e) {}
+    }
+
+    /**
+     * Destroy - cleanup sebelum halaman unload
+     */
+    destroy() {
+      // Flush pending writes
+      if (this.pendingWrites.size > 0) {
+        this._executeBatchWrite();
+      }
+
+      this.memoryCache.clear();
+      this.pendingWrites.clear();
     }
   }
 
   // ═══════════════════════════════════════════
   // 4. AUDIO MANAGER
   // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // 4. AUDIO MANAGER v2.0 - ENHANCED
+  // ═══════════════════════════════════════════
   class AudioManager {
     static instance = null;
+
     constructor() {
       if (AudioManager.instance) return AudioManager.instance;
       AudioManager.instance = this;
+
+      // Core audio
       this.context = null;
       this.masterGain = null;
       this.bgmGain = null;
       this.sfxGain = null;
       this.currentSource = null;
+      this.nextSource = null; // Untuk crossfade
+
+      // State
       this.isPlaying = false;
-      this.volume = CONFIG.BGM_VOLUME;
-      this.currentTrackIndex = 0;
       this.isInitialized = false;
-      this.playlist = [
-        {
-          name: "🎵 Lo-Fi Anime Beats",
-          url: "./public/music/Clarity-phonk.wav",
-        },
-        { name: "🎵 Maple's Defense", url: "./public/music/maple-theme.mp3" },
-        { name: "🎵 Adventure Time", url: "./public/music/adventure.mp3" },
-      ];
+      this.isCrossfading = false;
+
+      // Volume
+      this.bgmVolume = CONFIG.BGM_VOLUME;
+      this.sfxVolume = CONFIG.SFX_VOLUME;
+      this.masterVolume = 1.0;
+      this.isMuted = false;
+
+      // Playlist management
+      this.currentTrackIndex = 0;
+      this.shuffleMode = false;
+      this.repeatMode = "all"; // 'off', 'one', 'all'
+      this.shuffledIndices = [];
+
+      // Audio analysis
+      this.analyser = null;
+      this.frequencyData = null;
+      this.visualizerCallbacks = [];
+
+      // Enhanced SFX with spatial audio
+      this.sfxNodes = new Map();
+      this.listenerPosition = { x: 0, y: 0, z: 0 };
+
+      // UI
       this.uiElements = {
         toggle: document.getElementById("bgmToggle"),
         next: document.getElementById("bgmNext"),
+        prev: document.getElementById("bgmPrev"),
         label: document.getElementById("bgmLabel"),
         volumeFill: document.querySelector(".bgm-volume-fill"),
+        volumeSlider: document.getElementById("bgmVolumeSlider"),
+        trackInfo: document.getElementById("bgmTrackInfo"),
+        playlistContainer: document.getElementById("bgmPlaylist"),
       };
-      this.sfxMap = {
-        menuSelect: this._createSFX("square", [880, 1174.66], 0.08, 0.12),
-        questClear: this._createMelodySFX(
-          [523.25, 659.25, 783.99, 1046.5],
-          0.1,
-          0.25,
-        ),
-        close: this._createSFX("sine", [600, 150], 0.06, 0.2, true),
-        dialogue: this._createSFX("sine", [440, 660], 0.04, 0.12, true),
-        guideStart: this._createMelodySFX([523.25, 659.25, 783.99], 0.06, 0.15),
-        achievement: this._createMelodySFX(
-          [523.25, 659.25, 783.99, 1046.5],
-          0.15,
-          0.3,
-        ),
+
+      // Enhanced playlist
+      this.playlist = [
+        {
+          id: "track_1",
+          name: "Lo-Fi Anime Beats",
+          artist: "Maple's Studio",
+          url: "./public/music/Clarity-phonk.wav",
+          duration: 0,
+          category: "chill",
+          bpm: 85,
+        },
+        {
+          id: "track_2",
+          name: "Maple's Defense",
+          artist: "Bofuri OST",
+          url: "./public/music/maple-theme.mp3",
+          duration: 0,
+          category: "epic",
+          bpm: 120,
+        },
+        {
+          id: "track_3",
+          name: "Adventure Time",
+          artist: "Guild Members",
+          url: "./public/music/adventure.mp3",
+          duration: 0,
+          category: "adventure",
+          bpm: 140,
+        },
+        {
+          id: "track_4",
+          name: "Sally's Speed",
+          artist: "Blue Flash Records",
+          url: "./public/music/sally-theme.mp3",
+          duration: 0,
+          category: "action",
+          bpm: 160,
+          fallback: true, // Gunakan synthesized audio jika file tidak ada
+        },
+      ];
+
+      // SFX presets dengan dynamic generation
+      this.sfxPresets = {
+        menuSelect: {
+          type: "square",
+          frequencies: [880, 1174.66],
+          gainValue: 0.08,
+          duration: 0.12,
+          category: "ui",
+        },
+        questClear: {
+          type: "melody",
+          notes: [523.25, 659.25, 783.99, 1046.5],
+          gainValue: 0.1,
+          noteDuration: 0.25,
+          category: "achievement",
+        },
+        close: {
+          type: "sine",
+          frequencies: [600, 150],
+          gainValue: 0.06,
+          duration: 0.2,
+          exponential: true,
+          category: "ui",
+        },
+        dialogue: {
+          type: "sine",
+          frequencies: [440, 660],
+          gainValue: 0.04,
+          duration: 0.12,
+          exponential: true,
+          category: "ui",
+        },
+        guideStart: {
+          type: "melody",
+          notes: [523.25, 659.25, 783.99],
+          gainValue: 0.06,
+          noteDuration: 0.15,
+          category: "guide",
+        },
+        achievement: {
+          type: "melody",
+          notes: [523.25, 659.25, 783.99, 1046.5],
+          gainValue: 0.15,
+          noteDuration: 0.3,
+          category: "achievement",
+        },
+        error: {
+          type: "sawtooth",
+          frequencies: [200, 100],
+          gainValue: 0.05,
+          duration: 0.3,
+          exponential: true,
+          category: "system",
+        },
+        success: {
+          type: "triangle",
+          frequencies: [523.25, 783.99],
+          gainValue: 0.08,
+          duration: 0.2,
+          category: "system",
+        },
+        hover: {
+          type: "sine",
+          frequencies: [600],
+          gainValue: 0.02,
+          duration: 0.05,
+          category: "ui",
+        },
       };
-      this.bindEvents();
+
+      // Compile SFX map
+      this.sfxMap = {};
+      this._compileSFXMap();
+
+      // Auto-save state
+      this._loadState();
+
+      // Bind events
+      this._bindEvents();
     }
-    _createSFX(type, frequencies, gainValue, duration, exponential = false) {
-      return () => {
+
+    // ═══════════════ INITIALIZATION ═══════════════
+
+    init() {
+      if (this.isInitialized) return this;
+
+      try {
+        // Create audio context with optimal settings
+        this.context = new (window.AudioContext || window.webkitAudioContext)({
+          latencyHint: "interactive",
+          sampleRate: 44100,
+        });
+
+        // Master chain: BGM/SFX → Master → Analyser → Destination
+        this.masterGain = this.context.createGain();
+        this.bgmGain = this.context.createGain();
+        this.sfxGain = this.context.createGain();
+
+        // Analyser untuk visualisasi
+        this.analyser = this.context.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+
+        // Set initial volumes
+        this.masterGain.gain.value = this.masterVolume;
+        this.bgmGain.gain.value = this.bgmVolume;
+        this.sfxGain.gain.value = this.sfxVolume;
+
+        // Connect audio graph
+        this.bgmGain.connect(this.analyser);
+        this.sfxGain.connect(this.analyser);
+        this.analyser.connect(this.masterGain);
+        this.masterGain.connect(this.context.destination);
+
+        // Setup spatial audio listener
+        if (this.context.listener) {
+          this.context.listener.positionX.value = 0;
+          this.context.listener.positionY.value = 0;
+          this.context.listener.positionZ.value = 0;
+        }
+
+        this.isInitialized = true;
+        console.log(
+          "🎵 Audio Engine Initialized | Sample Rate:",
+          this.context.sampleRate,
+        );
+
+        // Start visualizer loop
+        this._startVisualizer();
+
+        return this;
+      } catch (error) {
+        console.warn("🎵 Audio initialization failed:", error.message);
+        return this;
+      }
+    }
+
+    ensureContext() {
+      if (!this.isInitialized) this.init();
+      if (this.context?.state === "suspended") {
+        this.context.resume();
+      }
+      return this.context;
+    }
+
+    // ═══════════════ SFX GENERATION ═══════════════
+
+    _compileSFXMap() {
+      Object.entries(this.sfxPresets).forEach(([name, preset]) => {
+        if (preset.type === "melody") {
+          this.sfxMap[name] = this._createMelodySFX(
+            preset.notes,
+            preset.gainValue,
+            preset.noteDuration,
+            name,
+          );
+        } else {
+          this.sfxMap[name] = this._createSFX(
+            preset.type,
+            preset.frequencies,
+            preset.gainValue,
+            preset.duration,
+            preset.exponential || false,
+            name,
+          );
+        }
+      });
+    }
+
+    _createSFX(
+      type,
+      frequencies,
+      gainValue,
+      duration,
+      exponential = false,
+      name = "",
+    ) {
+      return (options = {}) => {
         if (!this.ensureContext()) return;
+        if (this.isMuted && options.ignoreMute !== true) return;
+
         const now = this.context.currentTime;
+        const { pan = 0, detune = 0, filterFreq = null } = options;
+
+        // Create nodes
         const osc = this.context.createOscillator();
         const gain = this.context.createGain();
+        const panner = pan !== 0 ? this.context.createStereoPanner() : null;
+        const filter = filterFreq ? this.context.createBiquadFilter() : null;
+
+        // Oscillator settings
         osc.type = type;
-        if (exponential) {
+        osc.detune.value = detune;
+
+        // Frequency automation
+        if (exponential && frequencies.length === 2) {
           osc.frequency.setValueAtTime(frequencies[0], now);
           osc.frequency.exponentialRampToValueAtTime(
             frequencies[1],
@@ -208,93 +863,258 @@
             );
           });
         }
-        gain.gain.setValueAtTime(gainValue, now);
+
+        // Gain envelope
+        gain.gain.setValueAtTime(gainValue * this.sfxVolume, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-        osc.connect(gain);
-        gain.connect(this.sfxGain);
+
+        // Filter settings
+        if (filter) {
+          filter.type = "lowpass";
+          filter.frequency.value = filterFreq;
+        }
+
+        // Connect chain
+        let lastNode = osc;
+        if (filter) {
+          lastNode.connect(filter);
+          lastNode = filter;
+        }
+        lastNode.connect(gain);
+        if (panner) {
+          gain.connect(panner);
+          panner.connect(this.sfxGain);
+          panner.pan.value = pan;
+        } else {
+          gain.connect(this.sfxGain);
+        }
+
+        // Play
         osc.start(now);
-        osc.stop(now + duration);
+        osc.stop(now + duration + 0.01);
+
+        // Cleanup
+        osc.onended = () => {
+          osc.disconnect();
+          gain.disconnect();
+          if (panner) panner.disconnect();
+          if (filter) filter.disconnect();
+        };
+
+        return { osc, gain, panner, filter };
       };
     }
-    _createMelodySFX(notes, gainValue, noteDuration) {
-      return () => {
+
+    _createMelodySFX(notes, gainValue, noteDuration, name = "") {
+      return (options = {}) => {
         if (!this.ensureContext()) return;
+        if (this.isMuted && options.ignoreMute !== true) return;
+
         const now = this.context.currentTime;
+        const { pan = 0, detune = 0 } = options;
+
+        const activeNodes = [];
+
         notes.forEach((freq, i) => {
           const osc = this.context.createOscillator();
           const gain = this.context.createGain();
-          osc.type = i % 2 === 0 ? "triangle" : "sine";
+
+          // Varied waveforms for richness
+          osc.type = i % 3 === 0 ? "triangle" : i % 3 === 1 ? "sine" : "square";
           osc.frequency.value = freq;
+          osc.detune.value = detune;
+
           const start = now + i * (noteDuration / notes.length);
-          gain.gain.setValueAtTime(gainValue, start);
-          gain.gain.exponentialRampToValueAtTime(0.001, start + noteDuration);
+          gain.gain.setValueAtTime(gainValue * this.sfxVolume, start);
+          gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            start + noteDuration * 1.5,
+          );
+
           osc.connect(gain);
           gain.connect(this.sfxGain);
+
           osc.start(start);
-          osc.stop(start + noteDuration);
+          osc.stop(start + noteDuration * 1.5);
+
+          osc.onended = () => {
+            osc.disconnect();
+            gain.disconnect();
+          };
+
+          activeNodes.push({ osc, gain });
         });
+
+        return activeNodes;
       };
     }
-    init() {
-      if (this.isInitialized) return this;
-      try {
-        this.context = new (window.AudioContext || window.webkitAudioContext)();
-        this.masterGain = this.context.createGain();
-        this.bgmGain = this.context.createGain();
-        this.sfxGain = this.context.createGain();
-        this.masterGain.gain.value = 1;
-        this.bgmGain.gain.value = this.volume;
-        this.sfxGain.gain.value = CONFIG.SFX_VOLUME;
-        this.bgmGain.connect(this.masterGain);
-        this.sfxGain.connect(this.masterGain);
-        this.masterGain.connect(this.context.destination);
-        this.isInitialized = true;
-      } catch (error) {
-        console.warn("Audio initialization failed:", error);
-      }
-      return this;
-    }
-    ensureContext() {
-      if (!this.isInitialized) this.init();
-      if (this.context?.state === "suspended") this.context.resume();
-      return this.context;
-    }
-    async playTrack(index) {
+
+    // ═══════════════ BGM PLAYBACK ═══════════════
+
+    async playTrack(index, crossfade = false) {
       if (!this.ensureContext()) return;
+
       const track = this.playlist[index];
       if (!track) return;
-      this.stopTrack();
+
+      // Handle fallback untuk file yang tidak ada
+      if (track.fallback) {
+        this._generateFallbackTrack(track);
+        return;
+      }
+
       try {
+        // Fetch dan decode audio
         const response = await fetch(track.url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-        this.currentSource = this.context.createBufferSource();
-        this.currentSource.buffer = audioBuffer;
-        this.currentSource.loop = true;
-        this.currentSource.connect(this.bgmGain);
-        this.currentSource.start(0);
+
+        // Update track duration
+        track.duration = audioBuffer.duration;
+
+        // Create source
+        const source = this.context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = true;
+
+        if (crossfade && this.currentSource) {
+          // Crossfade transition
+          await this._crossfadeTo(source);
+        } else {
+          // Stop current and play new
+          this.stopTrack();
+          source.connect(this.bgmGain);
+          source.start(0);
+          this.currentSource = source;
+        }
+
         this.isPlaying = true;
+        this.currentTrackIndex = index;
+        this._saveState();
         this.updateUI();
+
+        console.log(`🎵 Now Playing: ${track.name} | ${track.artist}`);
       } catch (error) {
-        console.warn("Failed to load track:", error.message);
-        this.isPlaying = false;
-        this.updateUI();
+        console.warn(`Failed to load track "${track.name}":`, error.message);
+
+        // Coba track berikutnya jika gagal
+        if (this.repeatMode !== "one") {
+          console.log("⏭ Skipping to next track...");
+          this.next();
+        }
       }
     }
+
+    async _crossfadeTo(newSource) {
+      if (this.isCrossfading) return;
+      this.isCrossfading = true;
+
+      const crossfadeDuration = 1.5; // 1.5 detik crossfade
+      const now = this.context.currentTime;
+
+      // Fade out current
+      if (this.currentSource) {
+        const fadeOutGain = this.context.createGain();
+        fadeOutGain.gain.setValueAtTime(this.bgmVolume, now);
+        fadeOutGain.gain.linearRampToValueAtTime(
+          0.001,
+          now + crossfadeDuration,
+        );
+
+        this.currentSource.disconnect();
+        this.currentSource.connect(fadeOutGain);
+        fadeOutGain.connect(this.bgmGain);
+
+        // Stop setelah fade out
+        setTimeout(() => {
+          try {
+            this.currentSource.stop();
+            this.currentSource.disconnect();
+            fadeOutGain.disconnect();
+          } catch (e) {}
+        }, crossfadeDuration * 1000);
+      }
+
+      // Fade in new
+      const fadeInGain = this.context.createGain();
+      fadeInGain.gain.setValueAtTime(0.001, now);
+      fadeInGain.gain.linearRampToValueAtTime(
+        this.bgmVolume,
+        now + crossfadeDuration,
+      );
+
+      newSource.connect(fadeInGain);
+      fadeInGain.connect(this.bgmGain);
+      newSource.start(now);
+
+      this.currentSource = newSource;
+
+      setTimeout(() => {
+        this.isCrossfading = false;
+      }, crossfadeDuration * 1000);
+    }
+
+    _generateFallbackTrack(track) {
+      // Generate synthesized BGM untuk fallback
+      if (!this.ensureContext()) return;
+
+      this.stopTrack();
+
+      const duration = 16; // 16 detik loop
+      const sampleRate = this.context.sampleRate;
+      const buffer = this.context.createBuffer(
+        2,
+        sampleRate * duration,
+        sampleRate,
+      );
+
+      // Generate simple ambient pad
+      for (let channel = 0; channel < 2; channel++) {
+        const data = buffer.getChannelData(channel);
+        for (let i = 0; i < data.length; i++) {
+          const t = i / sampleRate;
+          // Simple chord progression
+          data[i] =
+            (Math.sin(2 * Math.PI * 130.81 * t) * 0.3 +
+              Math.sin(2 * Math.PI * 164.81 * t) * 0.2 +
+              Math.sin(2 * Math.PI * 196.0 * t) * 0.15) *
+            (0.5 + 0.5 * Math.sin(0.5 * Math.PI * t));
+        }
+      }
+
+      const source = this.context.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(this.bgmGain);
+      source.start(0);
+
+      this.currentSource = source;
+      this.isPlaying = true;
+      this.updateUI();
+
+      console.log(`🎹 Generated fallback track for: ${track.name}`);
+    }
+
     stopTrack() {
       if (this.currentSource) {
         try {
           this.currentSource.stop();
           this.currentSource.disconnect();
-        } catch (e) {}
+        } catch (e) {
+          // May already be stopped
+        }
         this.currentSource = null;
       }
       this.isPlaying = false;
       this.updateUI();
     }
+
+    // ═══════════════ PLAYBACK CONTROLS ═══════════════
+
     toggle() {
       if (!this.ensureContext()) return;
+
       if (this.isPlaying) {
         this.stopTrack();
         this.playSFX("close");
@@ -303,94 +1123,421 @@
         this.playSFX("menuSelect");
       }
     }
+
     next() {
-      this.currentTrackIndex =
-        (this.currentTrackIndex + 1) % this.playlist.length;
-      if (this.isPlaying) this.playTrack(this.currentTrackIndex);
+      const nextIndex = this._getNextIndex();
+      this.playTrack(nextIndex, true); // Crossfade ke track berikutnya
+      this.playSFX("menuSelect");
+    }
+
+    previous() {
+      const prevIndex = this._getPrevIndex();
+      this.playTrack(prevIndex, true);
+      this.playSFX("menuSelect");
+    }
+
+    _getNextIndex() {
+      if (this.repeatMode === "one") return this.currentTrackIndex;
+
+      if (this.shuffleMode) {
+        if (this.shuffledIndices.length === 0) {
+          this._generateShuffledIndices();
+        }
+        return this.shuffledIndices.shift();
+      }
+
+      return (this.currentTrackIndex + 1) % this.playlist.length;
+    }
+
+    _getPrevIndex() {
+      return (
+        (this.currentTrackIndex - 1 + this.playlist.length) %
+        this.playlist.length
+      );
+    }
+
+    _generateShuffledIndices() {
+      this.shuffledIndices = [...Array(this.playlist.length).keys()]
+        .filter((i) => i !== this.currentTrackIndex) // Exclude current
+        .sort(() => Math.random() - 0.5);
+    }
+
+    // ═══════════════ VOLUME CONTROL ═══════════════
+
+    setVolume(value) {
+      this.bgmVolume = Math.max(0, Math.min(1, value));
+      if (this.bgmGain) {
+        this.bgmGain.gain.linearRampToValueAtTime(
+          this.bgmVolume,
+          this.context.currentTime + 0.1,
+        );
+      }
+      this._saveState();
       this.updateUI();
     }
-    setVolume(value) {
-      this.volume = Math.max(0, Math.min(1, value));
-      if (this.bgmGain) this.bgmGain.gain.value = this.volume;
-      if (this.uiElements.volumeFill)
-        this.uiElements.volumeFill.style.width = `${this.volume * 100}%`;
+
+    setSFXVolume(value) {
+      this.sfxVolume = Math.max(0, Math.min(1, value));
+      this._saveState();
     }
-    playSFX(type) {
+
+    setMasterVolume(value) {
+      this.masterVolume = Math.max(0, Math.min(1, value));
+      if (this.masterGain) {
+        this.masterGain.gain.linearRampToValueAtTime(
+          this.masterVolume,
+          this.context.currentTime + 0.1,
+        );
+      }
+    }
+
+    toggleMute() {
+      this.isMuted = !this.isMuted;
+      if (this.masterGain) {
+        this.masterGain.gain.linearRampToValueAtTime(
+          this.isMuted ? 0 : this.masterVolume,
+          this.context.currentTime + 0.1,
+        );
+      }
+      this.updateUI();
+      this.playSFX(this.isMuted ? "close" : "menuSelect");
+    }
+
+    // ═══════════════ SPATIAL AUDIO ═══════════════
+
+    playSpatialSFX(type, position = { x: 0, y: 0, z: 0 }) {
       if (!this.ensureContext()) return;
-      this.sfxMap[type]?.();
+
+      const preset = this.sfxPresets[type];
+      if (!preset) return;
+
+      // Calculate pan based on position relative to listener
+      const dx = position.x - this.listenerPosition.x;
+      const dy = position.y - this.listenerPosition.y;
+      const pan = Math.max(-1, Math.min(1, dx / 10)); // Normalize to -1..1
+
+      // Calculate distance attenuation
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const attenuation = Math.max(0, 1 - distance / 20);
+
+      const options = {
+        pan,
+        gainValue: (preset.gainValue || 0.08) * attenuation,
+        ignoreMute: false,
+      };
+
+      this.sfxMap[type]?.(options);
     }
+
+    setListenerPosition(x, y, z = 0) {
+      this.listenerPosition = { x, y, z };
+      if (this.context?.listener) {
+        this.context.listener.positionX.value = x;
+        this.context.listener.positionY.value = y;
+        this.context.listener.positionZ.value = z;
+      }
+    }
+
+    // ═══════════════ VISUALIZER ═══════════════
+
+    _startVisualizer() {
+      const updateVisualizer = () => {
+        if (this.analyser) {
+          this.analyser.getByteFrequencyData(this.frequencyData);
+
+          // Notify callbacks
+          this.visualizerCallbacks.forEach((cb) => {
+            try {
+              cb(this.frequencyData);
+            } catch (e) {}
+          });
+        }
+
+        if (this.isInitialized) {
+          requestAnimationFrame(updateVisualizer);
+        }
+      };
+
+      requestAnimationFrame(updateVisualizer);
+    }
+
+    onVisualizerData(callback) {
+      this.visualizerCallbacks.push(callback);
+      return () => {
+        this.visualizerCallbacks = this.visualizerCallbacks.filter(
+          (cb) => cb !== callback,
+        );
+      };
+    }
+
+    getFrequencyData() {
+      return this.frequencyData;
+    }
+
+    getBassLevel() {
+      if (!this.frequencyData) return 0;
+      // Average of low frequencies (bass)
+      let sum = 0;
+      for (let i = 0; i < 8; i++) {
+        sum += this.frequencyData[i];
+      }
+      return sum / 8 / 255;
+    }
+
+    // ═══════════════ PLAYLIST MANAGEMENT ═══════════════
+
+    addTrack(track) {
+      this.playlist.push({
+        id: `track_${Date.now()}`,
+        ...track,
+        duration: 0,
+      });
+      this._saveState();
+    }
+
+    removeTrack(index) {
+      if (this.playlist.length <= 1) return; // Jangan hapus track terakhir
+      this.playlist.splice(index, 1);
+      if (this.currentTrackIndex >= this.playlist.length) {
+        this.currentTrackIndex = 0;
+      }
+      this._saveState();
+    }
+
+    setShuffleMode(enabled) {
+      this.shuffleMode = enabled;
+      if (enabled) this._generateShuffledIndices();
+      this._saveState();
+      this.playSFX("menuSelect");
+    }
+
+    setRepeatMode(mode) {
+      this.repeatMode = mode; // 'off', 'one', 'all'
+      this._saveState();
+      this.playSFX("menuSelect");
+    }
+
+    // ═══════════════ STATE PERSISTENCE ═══════════════
+
+    _saveState() {
+      try {
+        const state = {
+          currentTrackIndex: this.currentTrackIndex,
+          bgmVolume: this.bgmVolume,
+          sfxVolume: this.sfxVolume,
+          masterVolume: this.masterVolume,
+          isMuted: this.isMuted,
+          shuffleMode: this.shuffleMode,
+          repeatMode: this.repeatMode,
+          playlist: this.playlist.map((t) => ({
+            id: t.id,
+            name: t.name,
+            artist: t.artist,
+            url: t.url,
+            category: t.category,
+          })),
+        };
+        localStorage.setItem("maple_audio_state", JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    _loadState() {
+      try {
+        const raw = localStorage.getItem("maple_audio_state");
+        if (!raw) return;
+        const state = JSON.parse(raw);
+
+        this.currentTrackIndex = state.currentTrackIndex || 0;
+        this.bgmVolume = state.bgmVolume || CONFIG.BGM_VOLUME;
+        this.sfxVolume = state.sfxVolume || CONFIG.SFX_VOLUME;
+        this.masterVolume = state.masterVolume || 1.0;
+        this.isMuted = state.isMuted || false;
+        this.shuffleMode = state.shuffleMode || false;
+        this.repeatMode = state.repeatMode || "all";
+      } catch (e) {}
+    }
+
+    // ═══════════════ UI ═══════════════
+
+    playSFX(type, options = {}) {
+      if (!this.ensureContext()) return;
+      if (this.isMuted && options.ignoreMute !== true) return;
+      this.sfxMap[type]?.(options);
+    }
+
     updateUI() {
       const { toggle, label } = this.uiElements;
+
       if (toggle) {
         toggle.classList.toggle("bgm-toggle--playing", this.isPlaying);
         const svg = toggle.querySelector("svg");
-        if (svg)
+        if (svg) {
           svg.innerHTML = this.isPlaying
             ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
             : '<path d="M8 5v14l11-7z"/>';
+        }
       }
-      if (label && this.playlist[this.currentTrackIndex])
-        label.textContent = this.playlist[this.currentTrackIndex].name;
+
+      if (label && this.playlist[this.currentTrackIndex]) {
+        const track = this.playlist[this.currentTrackIndex];
+        label.textContent = `${track.name} - ${track.artist}`;
+      }
+
+      if (this.uiElements.volumeFill) {
+        this.uiElements.volumeFill.style.width = `${this.bgmVolume * 100}%`;
+      }
     }
-    bindEvents() {
+
+    _bindEvents() {
+      // Toggle play/pause
       this.uiElements.toggle?.addEventListener("click", () => this.toggle());
+
+      // Next track
       this.uiElements.next?.addEventListener("click", () => {
         this.playSFX("menuSelect");
         this.next();
       });
+
+      // Previous track
+      this.uiElements.prev?.addEventListener("click", () => {
+        this.playSFX("menuSelect");
+        this.previous();
+      });
+
+      // Volume slider
+      this.uiElements.volumeSlider?.addEventListener("input", (e) => {
+        this.setVolume(parseFloat(e.target.value));
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        // Media keys atau custom shortcuts
+        if (e.code === "Space" && e.target === document.body) {
+          e.preventDefault();
+          this.toggle();
+        } else if (e.code === "ArrowRight" && e.ctrlKey) {
+          e.preventDefault();
+          this.next();
+        } else if (e.code === "ArrowLeft" && e.ctrlKey) {
+          e.preventDefault();
+          this.previous();
+        } else if (e.code === "KeyM" && e.ctrlKey) {
+          e.preventDefault();
+          this.toggleMute();
+        }
+      });
+
+      // Auto-play on user interaction (respect browser policy)
+      const autoPlayHandler = () => {
+        if (!this.isPlaying && this.isInitialized) {
+          this.playTrack(this.currentTrackIndex);
+        }
+        document.removeEventListener("click", autoPlayHandler);
+        document.removeEventListener("keydown", autoPlayHandler);
+      };
+
+      document.addEventListener("click", autoPlayHandler, { once: true });
+      document.addEventListener("keydown", autoPlayHandler, { once: true });
     }
+
+    // ═══════════════ CLEANUP ═══════════════
+
     destroy() {
+      this._saveState();
       this.stopTrack();
+      this.visualizerCallbacks = [];
+
       if (this.context) {
         try {
           this.context.close();
         } catch (e) {}
         this.context = null;
       }
+
       this.isInitialized = false;
+      AudioManager.instance = null;
+      console.log("🎵 Audio Engine Destroyed");
     }
   }
 
   // ═══════════════════════════════════════════
-  // 5. ACHIEVEMENT SYSTEM
+  // 5. ACHIEVEMENT SYSTEM v2.0 - ENHANCED
   // ═══════════════════════════════════════════
   class AchievementSystem {
     constructor() {
+      // Core data
       this.achievements = new Map();
+      this.categories = new Map();
+      this.secrets = new Set(); // Secret achievements (hidden until unlocked)
+
+      // Player stats
+      this.playerLevel = 1;
+      this.totalXP = 0;
+      this.xpToNextLevel = 100;
+      this.comboCount = 0;
+      this.comboTimer = null;
+      this.comboTimeout = 10000; // 10 detik untuk combo chain
+
+      // Tracking data
+      this.trackers = new Map(); // Progress trackers untuk milestone achievements
+      this.sessionStartTime = Date.now();
+      this.bgmPlayTime = 0;
+      this.bgmPlayInterval = null;
+      this.easterEggsFound = new Set();
+      this.dialogsCompleted = 0;
+      this.projectsViewed = new Set();
+
+      // UI
       this.toastContainer = document.getElementById("achievementToasts");
+      this.xpBarElement = document.getElementById("xpProgressBar");
+      this.levelElement = document.getElementById("playerLevel");
+      this.statsElement = document.getElementById("achievementStats");
+
+      // Audio reference
       this.audioManager = null;
-      this.defineAchievements();
-      this.loadFromStorage();
+
+      // Event callbacks
+      this.onAchievementUnlocked = null;
+      this.onLevelUp = null;
+
+      // Initialize
+      this._defineAchievements();
+      this._defineCategories();
+      this._loadFromStorage();
+      this._initTrackers();
+      this._startBGMTracking();
+      this._checkSessionAchievements();
+
+      console.log(
+        `🏆 Achievement System Initialized | Level ${this.playerLevel} | ${this.getTotalXP()} XP`,
+      );
     }
-    defineAchievements() {
-      [
+
+    // ═══════════════ ACHIEVEMENT DEFINITIONS ═══════════════
+
+    _defineAchievements() {
+      const achievements = [
+        // ── EXPLORATION ACHIEVEMENTS ──
         {
           id: "first_visit",
           name: "Petualang Baru!",
           desc: "Pertama kali mengunjungi guild Maple",
           icon: "🏠",
           xp: 100,
+          category: "exploration",
+          rarity: "common",
+          isSecret: false,
         },
         {
-          id: "dialog_master",
-          name: "Teman Ngobrol",
-          desc: "Menyelesaikan 5 dialog dengan Maple",
-          icon: "💬",
-          xp: 200,
-        },
-        {
-          id: "project_explorer",
-          name: "Penjelajah Karya",
-          desc: "Melihat semua proyek di halaman karya",
-          icon: "🔍",
-          xp: 150,
-        },
-        {
-          id: "guide_complete",
-          name: "Tur Selesai!",
-          desc: "Menyelesaikan Maple's Guide Tour",
-          icon: "🗺️",
+          id: "returning_hero",
+          name: "Pahlawan yang Kembali",
+          desc: "Mengunjungi guild 3 hari berturut-turut",
+          icon: "🏰",
           xp: 300,
+          category: "exploration",
+          rarity: "rare",
+          isSecret: false,
+          tracker: { type: "consecutive_days", target: 3 },
         },
         {
           id: "night_owl",
@@ -398,6 +1545,141 @@
           desc: "Berkunjung di malam hari (00:00 - 05:00)",
           icon: "🦉",
           xp: 100,
+          category: "exploration",
+          rarity: "uncommon",
+          isSecret: false,
+        },
+        {
+          id: "full_moon_visitor",
+          name: "Pengunjung Bulan Purnama",
+          desc: "Berkunjung saat bulan purnama",
+          icon: "🌕",
+          xp: 500,
+          category: "exploration",
+          rarity: "legendary",
+          isSecret: true,
+        },
+
+        // ── INTERACTION ACHIEVEMENTS ──
+        {
+          id: "dialog_initiate",
+          name: "Salam Kenal!",
+          desc: "Memulai dialog pertama dengan Maple",
+          icon: "👋",
+          xp: 50,
+          category: "interaction",
+          rarity: "common",
+          isSecret: false,
+        },
+        {
+          id: "dialog_master",
+          name: "Teman Ngobrol",
+          desc: "Menyelesaikan 5 dialog dengan Maple",
+          icon: "💬",
+          xp: 200,
+          category: "interaction",
+          rarity: "uncommon",
+          isSecret: false,
+          tracker: { type: "dialogs", target: 5 },
+        },
+        {
+          id: "dialog_legend",
+          name: "Sahabat Maple",
+          desc: "Menyelesaikan 50 dialog dengan Maple",
+          icon: "💝",
+          xp: 1000,
+          category: "interaction",
+          rarity: "legendary",
+          isSecret: false,
+          tracker: { type: "dialogs", target: 50 },
+        },
+        {
+          id: "speed_reader",
+          name: "Pembaca Cepat",
+          desc: "Melewati dialog dalam 1 detik",
+          icon: "⚡",
+          xp: 50,
+          category: "interaction",
+          rarity: "common",
+          isSecret: true,
+        },
+
+        // ── PROJECT ACHIEVEMENTS ──
+        {
+          id: "project_explorer",
+          name: "Penjelajah Karya",
+          desc: "Melihat semua proyek di halaman karya",
+          icon: "🔍",
+          xp: 150,
+          category: "projects",
+          rarity: "uncommon",
+          isSecret: false,
+          tracker: { type: "projects_viewed", target: "all" },
+        },
+        {
+          id: "project_collector",
+          name: "Kolektor Proyek",
+          desc: "Mengunjungi 10 halaman demo proyek",
+          icon: "📚",
+          xp: 300,
+          category: "projects",
+          rarity: "rare",
+          isSecret: false,
+          tracker: { type: "demos_visited", target: 10 },
+        },
+        {
+          id: "star_gazer",
+          name: "Penatap Bintang",
+          desc: "Repository dengan total 100+ stars",
+          icon: "⭐",
+          xp: 500,
+          category: "projects",
+          rarity: "epic",
+          isSecret: false,
+        },
+
+        // ── GUIDE ACHIEVEMENTS ──
+        {
+          id: "guide_start",
+          name: "Langkah Pertama",
+          desc: "Memulai Maple's Guide Tour",
+          icon: "🚶",
+          xp: 50,
+          category: "guide",
+          rarity: "common",
+          isSecret: false,
+        },
+        {
+          id: "guide_complete",
+          name: "Tur Selesai!",
+          desc: "Menyelesaikan Maple's Guide Tour",
+          icon: "🗺️",
+          xp: 300,
+          category: "guide",
+          rarity: "rare",
+          isSecret: false,
+        },
+        {
+          id: "guide_speedrun",
+          name: "Speedrunner!",
+          desc: "Menyelesaikan guide tour dalam 30 detik",
+          icon: "🏃",
+          xp: 500,
+          category: "guide",
+          rarity: "legendary",
+          isSecret: true,
+        },
+
+        // ── MUSIC ACHIEVEMENTS ──
+        {
+          id: "music_initiate",
+          name: "Music Starter",
+          desc: "Memainkan BGM pertama kali",
+          icon: "🔈",
+          xp: 50,
+          category: "music",
+          rarity: "common",
+          isSecret: false,
         },
         {
           id: "music_lover",
@@ -405,115 +1687,849 @@
           desc: "Memainkan BGM selama 5 menit",
           icon: "🎵",
           xp: 150,
+          category: "music",
+          rarity: "uncommon",
+          isSecret: false,
+          tracker: { type: "bgm_time", target: 300 }, // 300 detik
         },
+        {
+          id: "music_addict",
+          name: "Kecanduan Musik",
+          desc: "Memainkan BGM selama 1 jam total",
+          icon: "🎧",
+          xp: 500,
+          category: "music",
+          rarity: "epic",
+          isSecret: false,
+          tracker: { type: "bgm_time", target: 3600 },
+        },
+        {
+          id: "dj_maple",
+          name: "DJ Maple",
+          desc: "Ganti track 20 kali dalam satu sesi",
+          icon: "🎛️",
+          xp: 300,
+          category: "music",
+          rarity: "rare",
+          isSecret: true,
+        },
+
+        // ── EASTER EGG ACHIEVEMENTS ──
         {
           id: "secret_finder",
           name: "Pemburu Rahasia",
           desc: "Menemukan 3 easter egg",
           icon: "🥚",
           xp: 400,
+          category: "secrets",
+          rarity: "epic",
+          isSecret: false,
+          tracker: { type: "easter_eggs", target: 3 },
         },
-      ].forEach((def) => {
+        {
+          id: "secret_master",
+          name: "Master Rahasia",
+          desc: "Menemukan semua easter egg",
+          icon: "🐉",
+          xp: 1000,
+          category: "secrets",
+          rarity: "legendary",
+          isSecret: true,
+          tracker: { type: "easter_eggs", target: "all" },
+        },
+        {
+          id: "konami_code",
+          name: "Kode Kuno",
+          desc: "Masukkan Konami Code (↑↑↓↓←→←→BA)",
+          icon: "🎮",
+          xp: 800,
+          category: "secrets",
+          rarity: "legendary",
+          isSecret: true,
+        },
+        {
+          id: "console_wizard",
+          name: "Penyihir Console",
+          desc: "Buka DevTools dan ketik 'maple.power()'",
+          icon: "🔮",
+          xp: 500,
+          category: "secrets",
+          rarity: "epic",
+          isSecret: true,
+        },
+
+        // ── SKILL ACHIEVEMENTS ──
+        {
+          id: "fast_clicker",
+          name: "Klik Cepat",
+          desc: "Klik 100 kali di area manapun",
+          icon: "🖱️",
+          xp: 200,
+          category: "skills",
+          rarity: "uncommon",
+          isSecret: true,
+          tracker: { type: "clicks", target: 100 },
+        },
+        {
+          id: "scroll_master",
+          name: "Master Scroll",
+          desc: "Scroll sejauh 10,000px dalam satu sesi",
+          icon: "📜",
+          xp: 300,
+          category: "skills",
+          rarity: "rare",
+          isSecret: true,
+        },
+      ];
+
+      // Store achievements
+      achievements.forEach((def) => {
         this.achievements.set(def.id, {
           ...def,
           unlocked: false,
           unlockedAt: null,
+          progress: 0,
+          progressTarget: def.tracker?.target || 0,
         });
+
+        if (def.isSecret) {
+          this.secrets.add(def.id);
+        }
       });
     }
+
+    _defineCategories() {
+      this.categories = new Map([
+        ["exploration", { name: "Eksplorasi", icon: "🗺️", color: "#4ade80" }],
+        ["interaction", { name: "Interaksi", icon: "💬", color: "#60a5fa" }],
+        ["projects", { name: "Proyek", icon: "📂", color: "#f59e0b" }],
+        ["guide", { name: "Panduan", icon: "📖", color: "#a78bfa" }],
+        ["music", { name: "Musik", icon: "🎵", color: "#f472b6" }],
+        ["secrets", { name: "Rahasia", icon: "🔮", color: "#fb923c" }],
+        ["skills", { name: "Keahlian", icon: "⚡", color: "#ef4444" }],
+      ]);
+    }
+
+    // ═══════════════ TRACKING INITIALIZATION ═══════════════
+
+    _initTrackers() {
+      // Click tracking
+      this._totalClicks = 0;
+      document.addEventListener("click", () => {
+        this._totalClicks++;
+        this._updateTracker("fast_clicker", this._totalClicks);
+      });
+
+      // Scroll tracking
+      this._totalScrollDistance = 0;
+      let lastScrollY = window.scrollY;
+      window.addEventListener("scroll", () => {
+        this._totalScrollDistance += Math.abs(window.scrollY - lastScrollY);
+        lastScrollY = window.scrollY;
+        this._updateTracker(
+          "scroll_master",
+          Math.floor(this._totalScrollDistance / 100),
+        );
+      });
+
+      // Konami Code detection
+      this._konamiBuffer = [];
+      const konamiCode = [
+        "ArrowUp",
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowLeft",
+        "ArrowRight",
+        "KeyB",
+        "KeyA",
+      ];
+      document.addEventListener("keydown", (e) => {
+        this._konamiBuffer.push(e.code);
+        if (this._konamiBuffer.length > konamiCode.length) {
+          this._konamiBuffer.shift();
+        }
+        if (this._konamiBuffer.join(",") === konamiCode.join(",")) {
+          this.unlock("konami_code");
+        }
+      });
+
+      // Console wizard detection
+      window.maple = {
+        power: () => {
+          this.unlock("console_wizard");
+          return "🍁 Maple's power activated! Achievement unlocked!";
+        },
+        stats: () => this.getStats(),
+        achievements: () => this.getAchievementList(),
+        secret: () => "You found the secret! But there's more... 🥚",
+      };
+    }
+
+    _startBGMTracking() {
+      // Track BGM play time
+      setInterval(() => {
+        if (this.audioManager?.isPlaying) {
+          this.bgmPlayTime += 1;
+          this._updateTracker("music_lover", this.bgmPlayTime);
+          this._updateTracker("music_addict", this.bgmPlayTime);
+        }
+      }, 1000);
+    }
+
+    _checkSessionAchievements() {
+      // Night owl check
+      const hour = new Date().getHours();
+      if (hour >= 0 && hour < 5) {
+        setTimeout(() => this.unlock("night_owl"), 2000);
+      }
+
+      // Returning hero check
+      this._checkConsecutiveDays();
+
+      // Full moon check (approximately every 29.5 days)
+      const fullMoonDate = this._getNextFullMoon();
+      const today = new Date();
+      if (Math.abs(today - fullMoonDate) < 86400000) {
+        // Within 1 day
+        setTimeout(() => this.unlock("full_moon_visitor"), 5000);
+      }
+    }
+
+    _getNextFullMoon() {
+      // Simplified full moon calculation
+      const knownFullMoon = new Date("2024-01-25");
+      const daysSince = (Date.now() - knownFullMoon) / 86400000;
+      const lunarCycle = 29.53059;
+      const cyclesSince = Math.floor(daysSince / lunarCycle);
+      return new Date(
+        knownFullMoon.getTime() + cyclesSince * lunarCycle * 86400000,
+      );
+    }
+
+    // ═══════════════ ACHIEVEMENT MANAGEMENT ═══════════════
+
     setAudioManager(audioManager) {
       this.audioManager = audioManager;
     }
+
     unlock(achievementId) {
-      const a = this.achievements.get(achievementId);
-      if (!a || a.unlocked) return false;
-      a.unlocked = true;
-      a.unlockedAt = new Date().toISOString();
-      this.showToast(a);
-      this.saveToStorage();
-      this.audioManager?.playSFX("achievement");
+      const achievement = this.achievements.get(achievementId);
+      if (!achievement || achievement.unlocked) return false;
+
+      // Unlock achievement
+      achievement.unlocked = true;
+      achievement.unlockedAt = new Date().toISOString();
+      achievement.progress = achievement.progressTarget;
+
+      // Add XP
+      this._addXP(achievement.xp);
+
+      // Combo chain
+      this._handleCombo();
+
+      // Show notification
+      this._showToast(achievement);
+
+      // Trigger callbacks
+      if (this.onAchievementUnlocked) {
+        this.onAchievementUnlocked(achievement);
+      }
+
+      // Play sound
+      if (achievement.rarity === "legendary") {
+        this.audioManager?.playSFX("questClear");
+      } else {
+        this.audioManager?.playSFX("achievement");
+      }
+
+      // Special effects for rare achievements
+      if (achievement.rarity === "legendary" || achievement.rarity === "epic") {
+        this._triggerScreenEffect(achievement.rarity);
+      }
+
+      // Save progress
+      this._saveToStorage();
+
+      console.log(
+        `🏆 Achievement Unlocked: ${achievement.name} | +${achievement.xp} XP | Level ${this.playerLevel}`,
+      );
+
       return true;
     }
-    showToast(a) {
+
+    _updateTracker(achievementId, currentValue) {
+      const achievement = this.achievements.get(achievementId);
+      if (!achievement || achievement.unlocked) return;
+
+      const target = achievement.tracker?.target;
+      if (!target) return;
+
+      achievement.progress =
+        typeof target === "number"
+          ? Math.min(currentValue, target)
+          : currentValue;
+      achievement.progressTarget = target;
+
+      // Auto-unlock if target reached
+      if (typeof target === "number" && currentValue >= target) {
+        this.unlock(achievementId);
+      }
+    }
+
+    trackDialog() {
+      this.dialogsCompleted++;
+      this._updateTracker("dialog_initiate", 1);
+      this._updateTracker("dialog_master", this.dialogsCompleted);
+      this._updateTracker("dialog_legend", this.dialogsCompleted);
+
+      // Auto unlock dialog_initiate on first dialog
+      if (this.dialogsCompleted === 1) {
+        this.unlock("dialog_initiate");
+      }
+    }
+
+    trackProjectView(projectId) {
+      this.projectsViewed.add(projectId);
+      this._updateTracker("project_explorer", this.projectsViewed.size);
+    }
+
+    trackEasterEgg(easterEggId) {
+      this.easterEggsFound.add(easterEggId);
+      this._updateTracker("secret_finder", this.easterEggsFound.size);
+      this._updateTracker("secret_master", this.easterEggsFound.size);
+    }
+
+    trackGuideStart() {
+      this.unlock("guide_start");
+      this._guideStartTime = Date.now();
+    }
+
+    trackGuideComplete() {
+      const completionTime = (Date.now() - this._guideStartTime) / 1000;
+      this.unlock("guide_complete");
+
+      if (completionTime <= 30) {
+        setTimeout(() => this.unlock("guide_speedrun"), 1000);
+      }
+    }
+
+    trackMusicStart() {
+      this.unlock("music_initiate");
+    }
+
+    _handleCombo() {
+      this.comboCount++;
+
+      if (this.comboTimer) {
+        clearTimeout(this.comboTimer);
+      }
+
+      if (this.comboCount >= 3) {
+        this._showComboEffect(this.comboCount);
+      }
+
+      this.comboTimer = setTimeout(() => {
+        this.comboCount = 0;
+      }, this.comboTimeout);
+    }
+
+    _addXP(amount) {
+      this.totalXP += amount;
+
+      // Check level up
+      while (this.totalXP >= this.xpToNextLevel) {
+        this.totalXP -= this.xpToNextLevel;
+        this.playerLevel++;
+        this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
+
+        // Level up effects
+        this._showLevelUpEffect();
+
+        if (this.onLevelUp) {
+          this.onLevelUp(this.playerLevel);
+        }
+
+        this.audioManager?.playSFX("questClear");
+      }
+
+      this._updateXPBar();
+    }
+
+    // ═══════════════ UI METHODS ═══════════════
+
+    _showToast(achievement) {
       if (!this.toastContainer) return;
+
+      const rarityColors = {
+        common: "#9ca3af",
+        uncommon: "#4ade80",
+        rare: "#60a5fa",
+        epic: "#a78bfa",
+        legendary: "#fbbf24",
+      };
+
+      const rarityNames = {
+        common: "Common",
+        uncommon: "Uncommon",
+        rare: "Rare",
+        epic: "Epic",
+        legendary: "✦ Legendary ✦",
+      };
+
       const toast = document.createElement("div");
-      toast.className = "achievement-toast";
-      toast.innerHTML = `<span class="achievement-toast__icon">${a.icon}</span><div class="achievement-toast__content"><span class="achievement-toast__title">Achievement Unlocked!</span><span class="achievement-toast__name">${a.name}</span><span class="achievement-toast__desc">${a.desc}</span><span class="achievement-toast__xp">+${a.xp} XP</span></div>`;
+      toast.className = `achievement-toast achievement-toast--${achievement.rarity}`;
+      toast.style.setProperty(
+        "--rarity-color",
+        rarityColors[achievement.rarity],
+      );
+
+      toast.innerHTML = `
+      <div class="achievement-toast__glow"></div>
+      <span class="achievement-toast__icon">${achievement.icon}</span>
+      <div class="achievement-toast__content">
+        <span class="achievement-toast__rarity" style="color: ${rarityColors[achievement.rarity]}">
+          ${rarityNames[achievement.rarity]}
+        </span>
+        <span class="achievement-toast__title">Achievement Unlocked!</span>
+        <span class="achievement-toast__name">${achievement.name}</span>
+        <span class="achievement-toast__desc">${achievement.desc}</span>
+        <div class="achievement-toast__xp-bar">
+          <span class="achievement-toast__xp">+${achievement.xp} XP</span>
+          ${this.comboCount >= 3 ? `<span class="achievement-toast__combo">🔥 ${this.comboCount}x Combo!</span>` : ""}
+        </div>
+      </div>
+      <button class="achievement-toast__close" onclick="this.parentElement.remove()">✕</button>
+    `;
+
       this.toastContainer.appendChild(toast);
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.add("achievement-toast--show");
+      });
+
+      // Auto remove
+      const duration = achievement.rarity === "legendary" ? 6000 : 4000;
       setTimeout(() => {
         toast.classList.add("achievement-toast--fade-out");
         setTimeout(() => toast.remove(), 500);
-      }, 4000);
+      }, duration);
     }
+
+    _showLevelUpEffect() {
+      // Create floating level up text
+      const levelUpText = document.createElement("div");
+      levelUpText.className = "level-up-effect";
+      levelUpText.innerHTML = `
+      <span class="level-up-effect__icon">⬆️</span>
+      <span class="level-up-effect__text">Level Up!</span>
+      <span class="level-up-effect__level">Level ${this.playerLevel}</span>
+    `;
+      document.body.appendChild(levelUpText);
+
+      setTimeout(() => levelUpText.remove(), 3000);
+
+      if (this.levelElement) {
+        this.levelElement.textContent = this.playerLevel;
+        this.levelElement.classList.add("level-up-bounce");
+        setTimeout(
+          () => this.levelElement.classList.remove("level-up-bounce"),
+          1000,
+        );
+      }
+    }
+
+    _showComboEffect(count) {
+      console.log(`🔥 ${count}x Achievement Combo!`);
+    }
+
+    _triggerScreenEffect(rarity) {
+      // Screen flash effect for rare achievements
+      const flash = document.createElement("div");
+      flash.className = `screen-flash screen-flash--${rarity}`;
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 1000);
+    }
+
+    _updateXPBar() {
+      if (!this.xpBarElement) return;
+
+      const progress = (this.totalXP / this.xpToNextLevel) * 100;
+      this.xpBarElement.style.width = `${progress}%`;
+      this.xpBarElement.setAttribute("aria-valuenow", Math.floor(progress));
+    }
+
+    // ═══════════════ DATA METHODS ═══════════════
+
+    getStats() {
+      const unlocked = this.getUnlockedCount();
+      const total = this.achievements.size;
+      const byCategory = {};
+
+      this.categories.forEach((cat, key) => {
+        const catAchievements = Array.from(this.achievements.values()).filter(
+          (a) => a.category === key,
+        );
+        byCategory[key] = {
+          name: cat.name,
+          icon: cat.icon,
+          total: catAchievements.length,
+          unlocked: catAchievements.filter((a) => a.unlocked).length,
+        };
+      });
+
+      return {
+        level: this.playerLevel,
+        xp: this.totalXP,
+        xpToNextLevel: this.xpToNextLevel,
+        totalAchievements: total,
+        unlockedAchievements: unlocked,
+        completionPercent: ((unlocked / total) * 100).toFixed(1),
+        totalXP: this.getTotalXP(),
+        byCategory,
+        rareAchievements: Array.from(this.achievements.values())
+          .filter(
+            (a) =>
+              a.unlocked && (a.rarity === "legendary" || a.rarity === "epic"),
+          )
+          .map((a) => ({ name: a.name, rarity: a.rarity })),
+      };
+    }
+
+    getAchievementList(category = null, showSecrets = false) {
+      return Array.from(this.achievements.values())
+        .filter((a) => {
+          if (a.isSecret && !a.unlocked && !showSecrets) return false;
+          if (category && a.category !== category) return false;
+          return true;
+        })
+        .map((a) => ({
+          id: a.id,
+          name: a.isSecret && !a.unlocked ? "???" : a.name,
+          desc: a.isSecret && !a.unlocked ? "Achievement rahasia..." : a.desc,
+          icon: a.isSecret && !a.unlocked ? "❓" : a.icon,
+          rarity: a.rarity,
+          unlocked: a.unlocked,
+          unlockedAt: a.unlockedAt,
+          xp: a.xp,
+          progress: a.progress,
+          progressTarget: a.progressTarget,
+        }));
+    }
+
     getUnlockedCount() {
       return Array.from(this.achievements.values()).filter((a) => a.unlocked)
         .length;
     }
+
     getTotalXP() {
       return Array.from(this.achievements.values())
         .filter((a) => a.unlocked)
         .reduce((sum, a) => sum + a.xp, 0);
     }
-    saveToStorage() {
-      localStorage.setItem(
-        "maple_achievements",
-        JSON.stringify(
-          Array.from(this.achievements.entries()).map(([id, a]) => ({
-            id,
-            unlocked: a.unlocked,
-            unlockedAt: a.unlockedAt,
-          })),
-        ),
-      );
+
+    isUnlocked(achievementId) {
+      return this.achievements.get(achievementId)?.unlocked || false;
     }
-    loadFromStorage() {
+
+    // ═══════════════ PERSISTENCE ═══════════════
+
+    _saveToStorage() {
       try {
-        const raw = localStorage.getItem("maple_achievements");
-        if (!raw) return;
-        JSON.parse(raw).forEach((saved) => {
-          const a = this.achievements.get(saved.id);
-          if (a) {
-            a.unlocked = saved.unlocked;
-            a.unlockedAt = saved.unlockedAt;
-          }
-        });
+        const saveData = {
+          achievements: Array.from(this.achievements.entries()).map(
+            ([id, a]) => ({
+              id,
+              unlocked: a.unlocked,
+              unlockedAt: a.unlockedAt,
+              progress: a.progress,
+            }),
+          ),
+          playerLevel: this.playerLevel,
+          totalXP: this.totalXP,
+          xpToNextLevel: this.xpToNextLevel,
+          totalClicks: this._totalClicks,
+          dialogsCompleted: this.dialogsCompleted,
+          bgmPlayTime: this.bgmPlayTime,
+          easterEggsFound: Array.from(this.easterEggsFound),
+          projectsViewed: Array.from(this.projectsViewed),
+          visitHistory: this._updateVisitHistory(),
+        };
+
+        localStorage.setItem("maple_achievements_v2", JSON.stringify(saveData));
       } catch (e) {
-        console.warn("Failed to load achievements:", e);
+        console.warn("Failed to save achievements:", e.message);
       }
     }
-  }
 
+    _loadFromStorage() {
+      try {
+        const raw = localStorage.getItem("maple_achievements_v2");
+        if (!raw) {
+          // Try loading from old version
+          this._migrateFromV1();
+          return;
+        }
+
+        const saveData = JSON.parse(raw);
+
+        // Restore achievements
+        saveData.achievements?.forEach((saved) => {
+          const achievement = this.achievements.get(saved.id);
+          if (achievement) {
+            achievement.unlocked = saved.unlocked;
+            achievement.unlockedAt = saved.unlockedAt;
+            achievement.progress = saved.progress || 0;
+          }
+        });
+
+        // Restore player stats
+        this.playerLevel = saveData.playerLevel || 1;
+        this.totalXP = saveData.totalXP || 0;
+        this.xpToNextLevel = saveData.xpToNextLevel || 100;
+        this._totalClicks = saveData.totalClicks || 0;
+        this.dialogsCompleted = saveData.dialogsCompleted || 0;
+        this.bgmPlayTime = saveData.bgmPlayTime || 0;
+        this.easterEggsFound = new Set(saveData.easterEggsFound || []);
+        this.projectsViewed = new Set(saveData.projectsViewed || []);
+
+        this._updateXPBar();
+      } catch (e) {
+        console.warn("Failed to load achievements:", e.message);
+      }
+    }
+
+    _migrateFromV1() {
+      try {
+        const oldData = localStorage.getItem("maple_achievements");
+        if (!oldData) return;
+
+        const achievements = JSON.parse(oldData);
+        achievements.forEach((saved) => {
+          const achievement = this.achievements.get(saved.id);
+          if (achievement) {
+            achievement.unlocked = saved.unlocked;
+            achievement.unlockedAt = saved.unlockedAt;
+          }
+        });
+
+        console.log("📦 Migrated achievements from v1");
+        this._saveToStorage();
+        localStorage.removeItem("maple_achievements"); // Clean old data
+      } catch (e) {}
+    }
+
+    _updateVisitHistory() {
+      try {
+        const raw = localStorage.getItem("maple_visit_history");
+        const history = raw ? JSON.parse(raw) : [];
+        const today = new Date().toDateString();
+
+        if (history[history.length - 1] !== today) {
+          history.push(today);
+          if (history.length > 30) history.shift(); // Keep last 30 days
+        }
+
+        localStorage.setItem("maple_visit_history", JSON.stringify(history));
+        return history;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    _checkConsecutiveDays() {
+      try {
+        const raw = localStorage.getItem("maple_visit_history");
+        if (!raw) return;
+
+        const history = JSON.parse(raw);
+        if (history.length < 3) return;
+
+        const last3Days = history.slice(-3);
+        const dates = last3Days.map((d) => new Date(d));
+
+        // Check if dates are consecutive
+        let isConsecutive = true;
+        for (let i = 1; i < dates.length; i++) {
+          const diff = (dates[i] - dates[i - 1]) / 86400000;
+          if (Math.abs(diff - 1) > 0.1) {
+            isConsecutive = false;
+            break;
+          }
+        }
+
+        if (isConsecutive) {
+          setTimeout(() => this.unlock("returning_hero"), 1000);
+        }
+      } catch (e) {}
+    }
+
+    // ═══════════════ RESET ═══════════════
+
+    resetAll() {
+      if (
+        confirm(
+          "Apakah kamu yakin ingin mereset semua achievement? Ini tidak bisa dibatalkan!",
+        )
+      ) {
+        this.achievements.forEach((a) => {
+          a.unlocked = false;
+          a.unlockedAt = null;
+          a.progress = 0;
+        });
+        this.playerLevel = 1;
+        this.totalXP = 0;
+        this.xpToNextLevel = 100;
+        this._saveToStorage();
+        this._updateXPBar();
+        console.log("🔄 All achievements reset");
+        return true;
+      }
+      return false;
+    }
+  }
   // ═══════════════════════════════════════════
   // 6. GITHUB API MANAGER - MULTI-SOURCE
+  // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // 6. GITHUB MANAGER v2.0 - ENHANCED
   // ═══════════════════════════════════════════
   class GitHubManager {
     constructor(username) {
       this.username = username;
+
+      // Data stores
       this.repositories = [];
+      this.profile = null;
+      this.contributionData = null;
+      this.languageStats = null;
+      this.organizationData = [];
+
+      // State management
       this.isLoaded = false;
-      this.cache = new CacheManager();
+      this.isLoading = false;
+      this.loadProgress = 0;
+      this.lastFetchTime = null;
+
+      // Totals
       this.totalCommits = 0;
       this.totalStars = 0;
       this.totalForks = 0;
-      this.contributionData = null;
+      this.totalWatchers = 0;
+      this.totalContributors = 0;
+
+      // Infrastructure
+      this.cache = new CacheManager();
+      this.requestQueue = new RequestQueue();
+      this.rateLimiter = new RateLimiter({
+        maxRequests: 60,
+        perTimeWindow: 3600000, // 1 jam
+        minDelay: 100, // Minimum 100ms antar request
+      });
+
+      // API Configuration
       this.API_BASE = CONFIG.CUSTOM_API_BASE;
+      this.GITHUB_API = CONFIG.GITHUB_API_BASE;
       this.GITHUB_RAW = `${CONFIG.GITHUB_RAW_BASE}/${username}`;
+
+      // Event hooks
+      this.onProgress = null;
+      this.onError = null;
+      this.onComplete = null;
+
+      // Filters & sorting
+      this.excludedRepos = new Set(); // Repos to exclude
+      this.pinnedRepos = new Set(); // Repos to highlight
+
+      // Background sync
+      this.syncInterval = null;
+      this.autoSyncEnabled = false;
+
+      console.log(`📦 GitHubManager Initialized | User: ${username}`);
     }
 
-    async _fetchWithRetry(url, retries = CONFIG.RETRY_MAX) {
+    // ═══════════════ REQUEST INFRASTRUCTURE ═══════════════
+
+    async _fetchWithRetry(url, options = {}) {
+      const {
+        retries = CONFIG.RETRY_MAX,
+        retryDelay = CONFIG.RETRY_DELAY,
+        timeout = 15000,
+        headers = {},
+        priority = 1,
+        useRateLimit = true,
+      } = options;
+
+      // Wait for rate limiter if needed
+      if (useRateLimit) {
+        await this.rateLimiter.acquire();
+      }
+
       for (let attempt = 0; attempt < retries; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
         try {
-          const response = await fetch(url);
-          if (response.status === 404) throw new Error("Not found (404)");
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+              Accept: "application/json",
+              ...headers,
+            },
+          });
+
+          clearTimeout(timeoutId);
+
+          // Handle rate limiting
+          if (
+            response.status === 403 &&
+            response.headers.get("X-RateLimit-Remaining") === "0"
+          ) {
+            const resetTime =
+              parseInt(response.headers.get("X-RateLimit-Reset")) * 1000;
+            const waitTime = resetTime - Date.now();
+
+            if (waitTime > 0 && waitTime < 300000) {
+              // Max wait 5 minutes
+              console.warn(
+                `⏳ Rate limited. Waiting ${Math.ceil(waitTime / 1000)}s...`,
+              );
+              await this._sleep(waitTime + 1000);
+              continue;
+            }
+            throw new Error("Rate limited - please try again later");
+          }
+
+          if (response.status === 404) {
+            throw new Error(`Not found: ${url}`);
+          }
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
           return response;
         } catch (error) {
+          clearTimeout(timeoutId);
+
+          if (error.name === "AbortError") {
+            console.warn(`⏱️ Request timeout: ${url}`);
+          }
+
           console.warn(
             `⚠️ Attempt ${attempt + 1}/${retries}: ${error.message}`,
           );
-          if (attempt < retries - 1)
-            await this._sleep(CONFIG.RETRY_DELAY * Math.pow(2, attempt));
-          else throw error;
+
+          if (attempt < retries - 1) {
+            const delay =
+              retryDelay * Math.pow(2, attempt) + Math.random() * 1000;
+            await this._sleep(delay);
+          } else {
+            throw error;
+          }
         }
       }
     }
@@ -523,85 +2539,592 @@
     }
 
     // ═══════════════ FETCH USER PROFILE ═══════════════
+
     async fetchUserProfile() {
       const cacheKey = `profile_${this.username}`;
       const cached = this.cache.get(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        this.profile = cached;
+        return cached;
+      }
 
       console.log("👤 Fetching user profile...");
 
       try {
         // Strategy 1: Custom API
-        const customUrl = `${this.API_BASE}/api/user?username=${this.username}`;
-        const customResponse = await this._fetchWithRetry(customUrl, 1);
-        if (customResponse.ok) {
-          const data = await customResponse.json();
-          const profile = data.user || data.profile || data;
-          if (profile.login || profile.name) {
-            this.cache.set(cacheKey, profile);
-            return profile;
-          }
+        const profile = await this._fetchProfileFromCustomAPI();
+        if (profile) {
+          this.profile = profile;
+          this.cache.set(cacheKey, profile, 1800000); // 30 menit
+          return profile;
         }
       } catch (e) {
         console.warn("Custom API profile failed:", e.message);
       }
 
       try {
-        // Strategy 2: GitHub API langsung
-        const url = `${CONFIG.GITHUB_API_BASE}/users/${this.username}`;
-        const response = await fetch(url);
+        // Strategy 2: GitHub API
+        const profile = await this._fetchProfileFromGitHubAPI();
+        if (profile) {
+          this.profile = profile;
+          this.cache.set(cacheKey, profile, 1800000);
+          return profile;
+        }
+      } catch (e) {
+        console.warn("GitHub API profile failed:", e.message);
+      }
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // Strategy 3: Construct minimal profile from repos
+      return this._buildMinimalProfile();
+    }
 
-        const profile = await response.json();
+    async _fetchProfileFromCustomAPI() {
+      const url = `${this.API_BASE}/api/github?action=user&username=${this.username}`;
+      const response = await this._fetchWithRetry(url, { retries: 1 });
+      const data = await response.json();
 
-        // Transform data
-        const userData = {
-          login: profile.login,
-          name: profile.name || profile.login,
-          avatar_url: profile.avatar_url,
-          bio: profile.bio,
-          public_repos: profile.public_repos,
-          followers: profile.followers,
-          following: profile.following,
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
-          html_url: profile.html_url,
-          blog: profile.blog,
-          location: profile.location,
-          company: profile.company,
-        };
+      const profile = data.user || data.profile || data;
+      if (profile.login || profile.name) {
+        return this._normalizeProfile(profile);
+      }
+      return null;
+    }
 
-        this.cache.set(cacheKey, userData);
-        console.log("✅ User profile loaded");
-        return userData;
+    async _fetchProfileFromGitHubAPI() {
+      const url = `${this.GITHUB_API}/users/${this.username}`;
+      const response = await this._fetchWithRetry(url, { retries: 2 });
+      const data = await response.json();
+      return this._normalizeProfile(data);
+    }
+
+    _normalizeProfile(data) {
+      return {
+        login: data.login || this.username,
+        name: data.name || data.login || this.username,
+        avatar_url: data.avatar_url || null,
+        bio: data.bio || null,
+        public_repos: data.public_repos || 0,
+        followers: data.followers || 0,
+        following: data.following || 0,
+        created_at: data.created_at || null,
+        updated_at: data.updated_at || null,
+        html_url: data.html_url || `https://github.com/${this.username}`,
+        blog: data.blog || null,
+        location: data.location || null,
+        company: data.company || null,
+        twitter_username: data.twitter_username || null,
+      };
+    }
+
+    _buildMinimalProfile() {
+      const profile = {
+        login: this.username,
+        name: this.username,
+        avatar_url: null,
+        bio: null,
+        public_repos: this.repositories.length,
+        followers: 0,
+        following: 0,
+        created_at: this._getOldestRepoDate(),
+        updated_at: this._getNewestRepoDate(),
+        html_url: `https://github.com/${this.username}`,
+      };
+
+      this.profile = profile;
+      this.cache.set(`profile_${this.username}`, profile, 900000); // 15 menit
+      return profile;
+    }
+
+    // ═══════════════ FETCH ALL REPOS ═══════════════
+
+    async fetchAllRepos(options = {}) {
+      const {
+        forceRefresh = false,
+        includeForks = true,
+        sortBy = "updated",
+        onProgress = null,
+      } = options;
+
+      // Check cache first
+      if (!forceRefresh) {
+        const cached = this.cache.get(`repos_${this.username}`);
+        if (cached) {
+          console.log("📦 Using cached repositories");
+          this.repositories = cached;
+          this.isLoaded = true;
+          this._calculateTotals();
+          this._updateProgress(100);
+          return this.repositories;
+        }
+      }
+
+      if (this.isLoading) {
+        console.log("⏳ Already loading repositories...");
+        return this.repositories;
+      }
+
+      this.isLoading = true;
+      this._updateProgress(5);
+
+      console.log("🔍 Fetching repositories...");
+
+      try {
+        // Multi-source fetch dengan prioritas
+        let repos = await this._fetchReposFromCustomAPI();
+        this._updateProgress(30);
+
+        if (!repos || repos.length === 0) {
+          repos = await this._fetchReposFromGitHubAPI(includeForks);
+          this._updateProgress(50);
+        }
+
+        if (!repos || repos.length === 0) {
+          throw new Error("No repositories found from any source");
+        }
+
+        // Filter dan sort
+        repos = repos
+          .filter((repo) => !this.excludedRepos.has(repo.name))
+          .sort(this._sortRepos(sortBy));
+
+        this._updateProgress(60);
+
+        // Fetch README untuk featured repos terlebih dahulu
+        console.log(`📄 Fetching README for ${repos.length} repos...`);
+        const reposWithReadme = await this._fetchReadmesPrioritized(
+          repos,
+          (progress) => {
+            this._updateProgress(60 + Math.floor(progress * 0.35));
+          },
+        );
+
+        this.repositories = reposWithReadme;
+        this.isLoaded = true;
+        this.isLoading = false;
+        this.lastFetchTime = Date.now();
+
+        this._calculateTotals();
+        this.cache.set(`repos_${this.username}`, reposWithReadme);
+
+        this._updateProgress(100);
+
+        // Trigger callback
+        if (this.onComplete) {
+          this.onComplete(reposWithReadme);
+        }
+
+        console.log(`✅ Loaded ${reposWithReadme.length} repositories`);
+        return reposWithReadme;
       } catch (error) {
-        console.error("Failed to fetch profile:", error.message);
+        console.error("❌ Failed to fetch repos:", error.message);
 
-        // Fallback: gunakan data dari repos
-        const fallbackData = {
-          login: this.username,
-          name: this.username,
-          created_at:
-            this.repositories.length > 0
-              ? [...this.repositories].sort(
-                  (a, b) => new Date(a.created_at) - new Date(b.created_at),
-                )[0]?.created_at
-              : null,
-          updated_at:
-            this.repositories.length > 0
-              ? [...this.repositories].sort(
-                  (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
-                )[0]?.updated_at
-              : null,
-        };
+        // Try stale cache
+        const staleCache = this._getStaleCache(`repos_${this.username}`);
+        if (staleCache) {
+          console.warn("⚠️ Using stale cache data");
+          this.repositories = staleCache;
+          this.isLoaded = true;
+          this.isLoading = false;
+          this._calculateTotals();
+          return staleCache;
+        }
 
-        this.cache.set(cacheKey, fallbackData);
-        return fallbackData;
+        this.isLoading = false;
+
+        if (this.onError) {
+          this.onError(error);
+        }
+
+        throw error;
       }
     }
 
-    // Update fetchTotalCommits untuk estimasi yang lebih baik
+    async _fetchReposFromCustomAPI() {
+      try {
+        const url = `${this.API_BASE}/api/github?action=repos&username=${this.username}&per_page=100`;
+        console.log(`📡 Custom API: ${url}`);
+
+        const response = await this._fetchWithRetry(url, {
+          retries: 1,
+          priority: 2,
+        });
+        const data = await response.json();
+
+        let repos = [];
+        if (data.success && Array.isArray(data.repos)) {
+          repos = data.repos;
+        } else if (Array.isArray(data)) {
+          repos = data;
+        }
+
+        return repos.length > 0 ? this._normalizeRepos(repos) : null;
+      } catch (e) {
+        console.warn("Custom API repos failed:", e.message);
+        return null;
+      }
+    }
+
+    async _fetchReposFromGitHubAPI(includeForks = true) {
+      const allRepos = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        try {
+          const url = `${this.GITHUB_API}/users/${this.username}/repos?sort=updated&per_page=100&page=${page}`;
+          console.log(`📡 GitHub API (page ${page}): ${url}`);
+
+          const response = await this._fetchWithRetry(url, {
+            retries: 2,
+            priority: 1,
+          });
+          const repos = await response.json();
+
+          if (!Array.isArray(repos) || repos.length === 0) {
+            hasMore = false;
+          } else {
+            allRepos.push(...repos);
+            page++;
+
+            // Check if we might have more
+            hasMore = repos.length === 100;
+          }
+        } catch (e) {
+          console.warn(`GitHub API page ${page} failed:`, e.message);
+          hasMore = false;
+        }
+      }
+
+      if (!includeForks) {
+        return allRepos.filter((r) => !r.fork);
+      }
+
+      return allRepos.length > 0 ? this._normalizeRepos(allRepos) : null;
+    }
+
+    _normalizeRepos(repos) {
+      return repos.map((repo) => ({
+        // Core fields
+        id: repo.id || repo.name,
+        name: repo.name || repo.repo || "unknown",
+        full_name: repo.full_name || `${this.username}/${repo.name}`,
+        description: repo.description || null,
+        language: repo.language || null,
+
+        // Stats
+        stargazers_count: repo.stargazers_count || repo.stars || 0,
+        forks_count: repo.forks_count || repo.forks || 0,
+        watchers_count: repo.watchers_count || repo.watchers || 0,
+        open_issues_count: repo.open_issues_count || repo.open_issues || 0,
+        size: repo.size || 0,
+
+        // URLs
+        html_url:
+          repo.html_url ||
+          repo.url ||
+          `https://github.com/${this.username}/${repo.name}`,
+        homepage: repo.homepage || null,
+        clone_url: repo.clone_url || null,
+        demo_url: repo.demo_url || null, // Custom field for demo links
+
+        // Flags
+        fork: repo.fork || false,
+        has_pages: repo.has_pages || Boolean(repo.homepage),
+        has_issues: repo.has_issues !== false,
+        has_projects: repo.has_projects !== false,
+        has_wiki: repo.has_wiki !== false,
+        has_discussions: repo.has_discussions || false,
+        archived: repo.archived || false,
+        disabled: repo.disabled || false,
+
+        // Dates
+        created_at:
+          repo.created_at || repo.createdAt || new Date().toISOString(),
+        updated_at:
+          repo.updated_at || repo.updatedAt || new Date().toISOString(),
+        pushed_at: repo.pushed_at || repo.pushedAt || null,
+
+        // Metadata
+        topics: repo.topics || [],
+        license: repo.license?.spdx_id || repo.license || null,
+        default_branch: repo.default_branch || "main",
+        is_template: repo.is_template || false,
+
+        // Custom
+        isPinned: this.pinnedRepos.has(repo.name),
+        readme: null, // Will be populated later
+        category: null, // Will be categorized later
+        score: 0, // Will be calculated for sorting
+      }));
+    }
+
+    // ═══════════════ README FETCHING (PRIORITIZED) ═══════════════
+
+    // Di dalam GitHubManager class, tambahkan/modifikasi method ini:
+
+    async _fetchReadmesPrioritized(repos, progressCallback = null) {
+      // Phase 1: HANYA fetch README untuk featured repos (top 6)
+      const featured = [...repos]
+        .filter((r) => !r.fork || r.stargazers_count > 0)
+        .sort((a, b) => b.stargazers_count - a.stargazers_count)
+        .slice(0, 6);
+
+      console.log(
+        `📄 Fetching README for ${featured.length} featured repos...`,
+      );
+
+      // Fetch README dengan rate limiting yang lebih ketat
+      const featuredResults = [];
+      for (const repo of featured) {
+        try {
+          const readme = await this.fetchReadme(repo.name);
+          featuredResults.push({ ...repo, readme });
+        } catch (e) {
+          featuredResults.push({ ...repo, readme: null });
+        }
+        // Tambahkan delay antar request
+        await this._sleep(200);
+      }
+
+      if (progressCallback) progressCallback(0.5);
+
+      // Phase 2: Skip README untuk repos lainnya jika tidak diperlukan
+      const others = repos.filter((r) => !featured.includes(r));
+      const othersWithReadme = others.map((repo) => ({
+        ...repo,
+        readme: null,
+      }));
+
+      if (progressCallback) progressCallback(1.0);
+
+      return [...featuredResults, ...othersWithReadme];
+    }
+
+    async fetchReadme(repoName) {
+      const cacheKey = `readme_${repoName}`;
+
+      // Cek cache terlebih dahulu
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      // Cek apakah repo ini punya README (dari data repo)
+      const repo = this.repositories.find((r) => r.name === repoName);
+      if (repo?.size === 0) {
+        // Repo kosong, skip
+        return null;
+      }
+
+      try {
+        // Strategy 1: Custom API (paling cepat jika berhasil)
+        const readme = await this._fetchReadmeFromCustomAPI(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000); // 1 jam
+          return readme;
+        }
+      } catch (e) {
+        // Custom API failed, try next
+      }
+
+      try {
+        // Strategy 2: GitHub API
+        const readme = await this._fetchReadmeFromGitHubAPI(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {
+        // GitHub API failed
+      }
+
+      // Strategy 3: Raw hanya untuk branch main/master (jangan coba semua)
+      try {
+        const readme = await this._fetchReadmeFromRawOptimized(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {
+        // Raw failed
+      }
+
+      // Cache null result untuk menghindari repeat attempts
+      this.cache.set(cacheKey, null, 1800000); // 30 menit
+      return null;
+    }
+
+    async _fetchReadmeFromRawOptimized(repoName) {
+      // HANYA coba branch main dan master, HANYA README.md
+      const branches = ["main", "master"];
+
+      for (const branch of branches) {
+        try {
+          const url = `${this.GITHUB_RAW}/${repoName}/${branch}/README.md`;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3000); // 3 detik timeout
+
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeout);
+
+          if (response.ok) {
+            const text = await response.text();
+            if (text && text.length > 10 && !text.includes("<!DOCTYPE html>")) {
+              return text;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+
+      return null;
+    }
+    async _fetchReadmesInBatches(
+      repos,
+      batchSize = 5,
+      progressCallback = null,
+    ) {
+      const results = [];
+      const totalBatches = Math.ceil(repos.length / batchSize);
+
+      for (let i = 0; i < repos.length; i += batchSize) {
+        const batch = repos.slice(i, i + batchSize);
+        const batchNumber = Math.floor(i / batchSize) + 1;
+
+        const batchResults = await Promise.allSettled(
+          batch.map(async (repo) => {
+            const readme = await this.fetchReadme(repo.name);
+            return { ...repo, readme };
+          }),
+        );
+
+        results.push(
+          ...batchResults.map((r, idx) =>
+            r.status === "fulfilled"
+              ? r.value
+              : { ...batch[idx], readme: null },
+          ),
+        );
+
+        const progress = batchNumber / totalBatches;
+        if (progressCallback) progressCallback(progress);
+
+        console.log(
+          `  📄 README: ${Math.min(i + batchSize, repos.length)}/${repos.length} (${Math.floor(progress * 100)}%)`,
+        );
+      }
+
+      return results;
+    }
+
+    async fetchReadme(repoName) {
+      const cacheKey = `readme_${repoName}`;
+      const cached = this.cache.get(cacheKey);
+      if (cached) return cached;
+
+      // Try all strategies in parallel for speed
+      const strategies = [
+        () => this._fetchReadmeFromCustomAPI(repoName),
+        () => this._fetchReadmeFromGitHubAPI(repoName),
+        () => this._fetchReadmeFromRaw(repoName),
+      ];
+
+      for (const strategy of strategies) {
+        try {
+          const readme = await strategy();
+          if (readme) {
+            this.cache.set(cacheKey, readme, 3600000); // 1 hour
+            return readme;
+          }
+        } catch (e) {
+          // Continue to next strategy
+        }
+      }
+
+      return null;
+    }
+
+    async _fetchReadmeFromCustomAPI(repoName) {
+      const url = `${this.API_BASE}/api/github?action=readme&username=${this.username}&repo=${repoName}`;
+      const response = await this._fetchWithRetry(url, {
+        retries: 1,
+        timeout: 8000,
+      });
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      return data.readme &&
+        typeof data.readme === "string" &&
+        data.readme.length > 10
+        ? data.readme
+        : null;
+    }
+
+    async _fetchReadmeFromGitHubAPI(repoName) {
+      const url = `${this.GITHUB_API}/repos/${this.username}/${repoName}/readme`;
+      const response = await this._fetchWithRetry(url, {
+        headers: { Accept: "application/vnd.github.v3.raw" },
+        timeout: 10000,
+      });
+
+      if (!response.ok) return null;
+      const text = await response.text();
+      return text && text.length > 10 && !text.includes("<!DOCTYPE html>")
+        ? text
+        : null;
+    }
+
+    async _fetchReadmeFromRaw(repoName) {
+      const branches = ["main", "master", "gh-pages"];
+      const filenames = [
+        "README.md",
+        "readme.md",
+        "Readme.md",
+        "README.MD",
+        "README.markdown",
+        "README",
+        "README.txt",
+      ];
+
+      // Try in parallel within each branch
+      for (const branch of branches) {
+        const results = await Promise.allSettled(
+          filenames.map(async (filename) => {
+            const url = `${this.GITHUB_RAW}/${repoName}/${branch}/${filename}`;
+            const response = await fetch(url, {
+              signal: AbortSignal.timeout(5000),
+            });
+
+            if (response.ok) {
+              const text = await response.text();
+              if (
+                text &&
+                text.length > 10 &&
+                !text.includes("<!DOCTYPE html>")
+              ) {
+                return { text, branch, filename };
+              }
+            }
+            return null;
+          }),
+        );
+
+        for (const result of results) {
+          if (result.status === "fulfilled" && result.value) {
+            console.log(
+              `✅ README ${repoName}: ${result.value.branch}/${result.value.filename}`,
+            );
+            return result.value.text;
+          }
+        }
+      }
+
+      return null;
+    }
+
+    // ═══════════════ TOTAL COMMITS CALCULATION ═══════════════
+
     async fetchTotalCommits() {
       const cacheKey = `commits_${this.username}`;
       const cached = this.cache.get(cacheKey);
@@ -614,318 +3137,223 @@
 
       try {
         // Strategy 1: Custom API
-        const url = `${this.API_BASE}/api/commits?username=${this.username}`;
-        const response = await this._fetchWithRetry(url, 1);
-        if (response.ok) {
-          const data = await response.json();
-          const total = data.total_commits || data.total || 0;
-          if (total > 0) {
-            this.totalCommits = total;
-            this.cache.set(cacheKey, total);
-            return total;
-          }
+        const commits = await this._fetchCommitsFromCustomAPI();
+        if (commits) {
+          this.totalCommits = commits;
+          this.cache.set(cacheKey, commits, 7200000); // 2 hours
+          return commits;
         }
       } catch (e) {
         console.warn("Custom API commits failed:", e.message);
       }
 
-      // Strategy 2: Hitung dari kontribusi (estimasi)
-      // Rata-rata commit per repo: 15-25
-      const avgCommitsPerRepo = 15;
-      const estimatedTotal = this.repositories.length * avgCommitsPerRepo;
-
-      // Strategy 3: Fetch dari GitHub contribution graph
       try {
-        const profileUrl = `${CONFIG.GITHUB_API_BASE}/users/${this.username}/events/public`;
-        const eventsResponse = await fetch(profileUrl);
-        if (eventsResponse.ok) {
-          const events = await eventsResponse.json();
-          const pushEvents = events.filter((e) => e.type === "PushEvent");
-          // Estimasi kasar dari event terbaru
-          const recentCommits = pushEvents.reduce(
-            (sum, e) => sum + (e.payload?.commits?.length || 0),
-            0,
-          );
-          // Extrapolate (asumsi events menunjukkan 90 hari terakhir)
-          const yearlyEstimate = Math.round(recentCommits * 4);
-          if (yearlyEstimate > estimatedTotal) {
-            this.totalCommits = yearlyEstimate;
-            this.cache.set(cacheKey, yearlyEstimate);
-            return yearlyEstimate;
-          }
+        // Strategy 2: GitHub Events API
+        const commits = await this._estimateCommitsFromEvents();
+        if (commits) {
+          this.totalCommits = commits;
+          this.cache.set(cacheKey, commits, 3600000);
+          return commits;
         }
       } catch (e) {
-        console.warn("GitHub events failed:", e.message);
+        console.warn("Events API estimation failed:", e.message);
       }
 
-      // Fallback: gunakan estimasi
-      this.totalCommits = estimatedTotal;
-      this.cache.set(cacheKey, estimatedTotal);
-      return estimatedTotal;
+      // Strategy 3: Rough estimation
+      const estimatedCommits = this.repositories.length * 15;
+      this.totalCommits = estimatedCommits;
+      this.cache.set(cacheKey, estimatedCommits, 1800000); // 30 minutes
+      return estimatedCommits;
     }
 
-    // ═══════════════ FETCH ALL REPOS ═══════════════
-    async fetchAllRepos() {
-      const cached = this.cache.get(`repos_${this.username}`);
-      if (cached) {
-        console.log("📦 Menggunakan data dari cache");
-        this.repositories = cached;
-        this.isLoaded = true;
-        this._calculateTotals();
-        return this.repositories;
-      }
-
-      console.log("🔍 Fetching repositories...");
-      try {
-        let repos = await this._fetchReposFromCustomAPI();
-        if (!repos || repos.length === 0)
-          repos = await this._fetchReposFromGitHubAPI();
-        if (!repos || repos.length === 0) throw new Error("No repos found");
-
-        // Fetch README untuk setiap repo
-        console.log(`📄 Fetching README untuk ${repos.length} repos...`);
-        const reposWithReadme = await this._fetchReadmesInBatches(repos);
-
-        this.repositories = reposWithReadme;
-        this.isLoaded = true;
-        this._calculateTotals();
-        this.cache.set(`repos_${this.username}`, reposWithReadme);
-        console.log(
-          `✅ Berhasil: ${reposWithReadme.length} repos dengan README`,
-        );
-        return reposWithReadme;
-      } catch (error) {
-        console.error("❌ Gagal fetch repos:", error.message);
-        const staleCache = localStorage.getItem(
-          this.cache._getKey(`repos_${this.username}`),
-        );
-        if (staleCache) {
-          console.warn("⚠️ Menggunakan cache kadaluarsa");
-          const data = JSON.parse(staleCache).data;
-          this.repositories = data;
-          this.isLoaded = true;
-          this._calculateTotals();
-          return data;
-        }
-        throw error;
-      }
-    }
-
-    // Di GitHubManager class, update method:
-    async _fetchReposFromCustomAPI() {
-      try {
-        // Gunakan URL Vercel yang sudah di-deploy
-        const url = `${this.API_BASE}/api/repos?username=${this.username}&all=true`;
-        console.log(`📡 Custom API: ${url}`);
-
-        const response = await this._fetchWithRetry(url, 1);
-        const data = await response.json();
-
-        // Handle response format baru
-        let repos = [];
-        if (data.success && Array.isArray(data.repos)) {
-          repos = data.repos;
-        } else if (Array.isArray(data)) {
-          repos = data;
-        }
-
-        return repos.length > 0 ? this._normalizeRepos(repos) : null;
-      } catch (e) {
-        console.warn("Custom API failed:", e.message);
-        return null;
-      }
-    }
-    async _fetchReposFromGitHubAPI() {
-      try {
-        const url = `${CONFIG.GITHUB_API_BASE}/users/${this.username}/repos?sort=updated&per_page=100`;
-        console.log(`📡 GitHub API: ${url}`);
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const repos = await response.json();
-        return this._normalizeRepos(repos);
-      } catch (e) {
-        console.warn("GitHub API failed:", e.message);
-        return null;
-      }
-    }
-
-    _normalizeRepos(repos) {
-      return repos.map((repo) => ({
-        ...repo,
-        id: repo.id || repo.name,
-        name: repo.name || repo.repo || "unknown",
-        description: repo.description || null,
-        language: repo.language || null,
-        stargazers_count: repo.stargazers_count || repo.stars || 0,
-        forks_count: repo.forks_count || repo.forks || 0,
-        html_url:
-          repo.html_url ||
-          repo.url ||
-          `https://github.com/${this.username}/${repo.name}`,
-        homepage: repo.homepage || null,
-        has_pages: repo.has_pages || (repo.homepage ? true : false),
-        updated_at:
-          repo.updated_at || repo.updatedAt || new Date().toISOString(),
-        created_at:
-          repo.created_at || repo.createdAt || new Date().toISOString(),
-        topics: repo.topics || [],
-        fork: repo.fork || false,
-      }));
-    }
-
-    // ═══════════════ FETCH README (MULTI-SOURCE) ═══════════════
-    async fetchReadme(repoName) {
-      const cacheKey = `readme_${repoName}`;
-      const cached = this.cache.get(cacheKey);
-      if (cached) return cached;
-
-      // Strategy 1: Custom API
-      try {
-        const readme = await this._fetchReadmeFromCustomAPI(repoName);
-        if (readme) {
-          this.cache.set(cacheKey, readme, 3600000);
-          return readme;
-        }
-      } catch (e) {}
-
-      // Strategy 2: GitHub API
-      try {
-        const readme = await this._fetchReadmeFromGitHubAPI(repoName);
-        if (readme) {
-          this.cache.set(cacheKey, readme, 3600000);
-          return readme;
-        }
-      } catch (e) {}
-
-      // Strategy 3: raw.githubusercontent.com (multiple branches & filenames)
-      const readme = await this._fetchReadmeFromRaw(repoName);
-      if (readme) {
-        this.cache.set(cacheKey, readme, 3600000);
-        return readme;
-      }
-
-      return null;
-    }
-
-    async _fetchReadmeFromCustomAPI(repoName) {
-      const url = `${this.API_BASE}/api/repos/${this.username}/${repoName}`;
-      const response = await this._fetchWithRetry(url, 1);
-      if (!response.ok) return null;
+    async _fetchCommitsFromCustomAPI() {
+      const url = `${this.API_BASE}/api/github?action=commits&username=${this.username}`;
+      const response = await this._fetchWithRetry(url, { retries: 1 });
       const data = await response.json();
-      return data.readme &&
-        typeof data.readme === "string" &&
-        data.readme.length > 10
-        ? data.readme
-        : null;
+
+      const total = data.total_commits || data.total || 0;
+      return total > 0 ? total : null;
     }
 
-    async _fetchReadmeFromGitHubAPI(repoName) {
-      const url = `${CONFIG.GITHUB_API_BASE}/repos/${this.username}/${repoName}/readme`;
-      const response = await fetch(url, {
-        headers: { Accept: "application/vnd.github.v3.raw" },
-      });
-      if (!response.ok) return null;
-      const text = await response.text();
-      return text && text.length > 10 && !text.includes("<!DOCTYPE html>")
-        ? text
-        : null;
-    }
+    async _estimateCommitsFromEvents() {
+      const url = `${this.GITHUB_API}/users/${this.username}/events/public?per_page=100`;
+      const response = await this._fetchWithRetry(url, { retries: 2 });
+      const events = await response.json();
 
-    async _fetchReadmeFromRaw(repoName) {
-      const branches = ["main", "master"];
-      const filenames = [
-        "README.md",
-        "readme.md",
-        "Readme.md",
-        "README.MD",
-        "README.markdown",
-        "README",
-      ];
-
-      for (const branch of branches) {
-        for (const filename of filenames) {
-          try {
-            const url = `${this.GITHUB_RAW}/${repoName}/${branch}/${filename}`;
-            const response = await fetch(url);
-            if (response.ok) {
-              const text = await response.text();
-              if (
-                text &&
-                text.length > 10 &&
-                !text.includes("<!DOCTYPE html>")
-              ) {
-                console.log(`✅ README ${repoName}: ${branch}/${filename}`);
-                return text;
-              }
-            }
-          } catch (e) {
-            continue;
-          }
-        }
-      }
-      return null;
-    }
-
-    async _fetchReadmesInBatches(repos, batchSize = 5) {
-      const results = [];
-      for (let i = 0; i < repos.length; i += batchSize) {
-        const batch = repos.slice(i, i + batchSize);
-        const batchResults = await Promise.allSettled(
-          batch.map(async (repo) => {
-            const readme = await this.fetchReadme(repo.name);
-            return { ...repo, readme };
-          }),
-        );
-        results.push(
-          ...batchResults.map((r, idx) =>
-            r.status === "fulfilled"
-              ? r.value
-              : { ...batch[idx], readme: null },
-          ),
-        );
-        console.log(
-          `  📄 README: ${Math.min(i + batchSize, repos.length)}/${repos.length}`,
-        );
-      }
-      return results;
-    }
-
-    _calculateTotals() {
-      this.totalStars = this.repositories.reduce(
-        (sum, r) => sum + (r.stargazers_count || 0),
+      const pushEvents = events.filter((e) => e.type === "PushEvent");
+      const recentCommits = pushEvents.reduce(
+        (sum, e) => sum + (e.payload?.commits?.length || 0),
         0,
       );
-      this.totalForks = this.repositories.reduce(
-        (sum, r) => sum + (r.forks_count || 0),
-        0,
-      );
+
+      // Extrapolate to yearly estimate
+      const daysCovered = 90; // Events API covers ~90 days
+      const yearlyEstimate = Math.round((recentCommits / daysCovered) * 365);
+
+      return yearlyEstimate > 0 ? yearlyEstimate : null;
     }
 
-    // ═══════════════ OTHER METHODS ═══════════════
-    async fetchTotalCommits() {
-      const cached = this.cache.get(`commits_${this.username}`);
-      if (cached) {
-        this.totalCommits = cached;
-        return cached;
-      }
-      this.totalCommits = this.repositories.length * 15;
-      this.cache.set(`commits_${this.username}`, this.totalCommits);
-      return this.totalCommits;
-    }
+    // ═══════════════ LANGUAGE ANALYTICS ═══════════════
 
     getLanguageStats() {
+      if (this.languageStats) return this.languageStats;
+
       const stats = {};
+      let totalBytes = 0;
+
       this.repositories.forEach((repo) => {
-        if (repo.language)
+        if (repo.language) {
           stats[repo.language] = (stats[repo.language] || 0) + 1;
+          totalBytes += repo.size || 0;
+        }
       });
-      return Object.entries(stats)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .reduce((obj, [k, v]) => {
-          obj[k] = v;
-          return obj;
-        }, {});
+
+      this.languageStats = {
+        byCount: Object.entries(stats)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .reduce((obj, [k, v]) => {
+            obj[k] = v;
+            return obj;
+          }, {}),
+        topLanguage:
+          Object.entries(stats).sort((a, b) => b[1] - a[1])[0]?.[0] || null,
+        totalLanguages: Object.keys(stats).length,
+        totalBytes,
+      };
+
+      return this.languageStats;
+    }
+
+    // ═══════════════ REPO CATEGORIZATION ═══════════════
+
+    categorizeRepo(repo) {
+      if (repo.category) return repo.category;
+
+      const text = [
+        repo.name || "",
+        repo.description || "",
+        repo.language || "",
+        ...(repo.topics || []),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      // Game development
+      if (
+        text.includes("game") ||
+        text.includes("unity") ||
+        text.includes("godot") ||
+        text.includes("unreal") ||
+        text.includes("rpg") ||
+        text.includes("puzzle")
+      ) {
+        return "game";
+      }
+
+      // Design & UI
+      if (
+        text.includes("design") ||
+        text.includes("figma") ||
+        text.includes("ui") ||
+        text.includes("ux") ||
+        text.includes("art") ||
+        text.includes("animation") ||
+        text.includes("css-art") ||
+        text.includes("creative")
+      ) {
+        return "design";
+      }
+
+      // Web development
+      if (
+        repo.homepage ||
+        repo.has_pages ||
+        [
+          "html",
+          "css",
+          "javascript",
+          "typescript",
+          "jsx",
+          "tsx",
+          "vue",
+          "react",
+          "svelte",
+          "angular",
+        ].includes(repo.language?.toLowerCase() || "") ||
+        text.includes("website") ||
+        text.includes("web") ||
+        text.includes("frontend") ||
+        text.includes("spa")
+      ) {
+        return "web";
+      }
+
+      // Tools & CLI
+      if (
+        text.includes("tool") ||
+        text.includes("cli") ||
+        text.includes("utility") ||
+        text.includes("helper") ||
+        text.includes("automation") ||
+        text.includes("bot")
+      ) {
+        return "tools";
+      }
+
+      // Documentation
+      if (
+        text.includes("docs") ||
+        text.includes("documentation") ||
+        text.includes("wiki") ||
+        text.includes("tutorial") ||
+        text.includes("guide") ||
+        text.includes("cheatsheet")
+      ) {
+        return "docs";
+      }
+
+      return "other";
+    }
+
+    // ═══════════════ FILTERING & SORTING ═══════════════
+
+    getFilteredRepos(filter = "all", sortBy = "stars") {
+      let filtered = [...this.repositories];
+
+      // Apply filter
+      if (filter !== "all") {
+        filtered = filtered.filter((r) => this.categorizeRepo(r) === filter);
+      }
+
+      // Apply sorting
+      filtered.sort(this._sortRepos(sortBy));
+
+      return filtered;
+    }
+
+    _sortRepos(sortBy = "stars") {
+      const sortFunctions = {
+        stars: (a, b) => b.stargazers_count - a.stargazers_count,
+        forks: (a, b) => b.forks_count - a.forks_count,
+        updated: (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+        created: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+        name: (a, b) => a.name.localeCompare(b.name),
+        size: (a, b) => (b.size || 0) - (a.size || 0),
+        score: (a, b) => {
+          const scoreA =
+            (a.stargazers_count || 0) * 3 +
+            (a.forks_count || 0) * 2 +
+            (a.watchers_count || 0);
+          const scoreB =
+            (b.stargazers_count || 0) * 3 +
+            (b.forks_count || 0) * 2 +
+            (b.watchers_count || 0);
+          return scoreB - scoreA;
+        },
+      };
+
+      return sortFunctions[sortBy] || sortFunctions.stars;
     }
 
     getFeaturedRepos(count = CONFIG.FEATURED_COUNT) {
@@ -936,60 +3364,262 @@
             (r.stargazers_count || 0) * 2 + (r.forks_count || 0);
           return (
             score(b) - score(a) ||
-            new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
+            new Date(b.updated_at) - new Date(a.updated_at)
           );
         })
         .slice(0, count);
     }
 
-    categorizeRepo(repo) {
-      const text = [
-        repo.name,
-        repo.description,
-        repo.language,
-        ...(repo.topics || []),
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (
-        text.includes("game") ||
-        text.includes("unity") ||
-        text.includes("godot")
-      )
-        return "game";
-      if (
-        text.includes("design") ||
-        text.includes("figma") ||
-        text.includes("ui") ||
-        text.includes("art")
-      )
-        return "design";
-      if (repo.homepage || repo.has_pages) return "web";
-      if (
-        repo.language &&
-        [
-          "html",
-          "css",
-          "javascript",
-          "typescript",
-          "jsx",
-          "tsx",
-          "vue",
-          "react",
-        ].includes(repo.language.toLowerCase())
-      )
-        return "web";
-      return "other";
+    searchRepos(query) {
+      const q = query.toLowerCase();
+      return this.repositories.filter(
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          (r.description && r.description.toLowerCase().includes(q)) ||
+          (r.topics && r.topics.some((t) => t.toLowerCase().includes(q))),
+      );
     }
 
-    getFilteredRepos(filter) {
-      return filter === "all"
-        ? this.repositories
-        : this.repositories.filter((r) => this.categorizeRepo(r) === filter);
+    // ═══════════════ TOTALS CALCULATION ═══════════════
+
+    _calculateTotals() {
+      this.totalStars = this.repositories.reduce(
+        (sum, r) => sum + (r.stargazers_count || 0),
+        0,
+      );
+      this.totalForks = this.repositories.reduce(
+        (sum, r) => sum + (r.forks_count || 0),
+        0,
+      );
+      this.totalWatchers = this.repositories.reduce(
+        (sum, r) => sum + (r.watchers_count || 0),
+        0,
+      );
+
+      // Calculate dates
+      this._oldestRepoDate = this._getOldestRepoDate();
+      this._newestRepoDate = this._getNewestRepoDate();
     }
+
+    _getOldestRepoDate() {
+      if (this.repositories.length === 0) return null;
+      return (
+        [...this.repositories].sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at),
+        )[0]?.created_at || null
+      );
+    }
+
+    _getNewestRepoDate() {
+      if (this.repositories.length === 0) return null;
+      return (
+        [...this.repositories].sort(
+          (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+        )[0]?.updated_at || null
+      );
+    }
+
+    // ═══════════════ BACKGROUND SYNC ═══════════════
+
+    startAutoSync(intervalMs = 300000) {
+      // Default 5 minutes
+      if (this.syncInterval) return;
+
+      console.log(`🔄 Auto-sync started (every ${intervalMs / 1000}s)`);
+      this.autoSyncEnabled = true;
+
+      this.syncInterval = setInterval(async () => {
+        if (document.hidden) return; // Don't sync when tab is hidden
+
+        try {
+          await this.fetchAllRepos({ forceRefresh: true });
+          console.log("🔄 Background sync completed");
+        } catch (e) {
+          console.warn("Background sync failed:", e.message);
+        }
+      }, intervalMs);
+    }
+
+    stopAutoSync() {
+      if (this.syncInterval) {
+        clearInterval(this.syncInterval);
+        this.syncInterval = null;
+      }
+      this.autoSyncEnabled = false;
+      console.log("🔄 Auto-sync stopped");
+    }
+
+    // ═══════════════ UTILITY METHODS ═══════════════
+
+    _updateProgress(percent) {
+      this.loadProgress = percent;
+      if (this.onProgress) {
+        this.onProgress(percent);
+      }
+    }
+
+    _getStaleCache(key) {
+      try {
+        const raw = localStorage.getItem(this.cache._getKey(key));
+        if (!raw) return null;
+        const data = JSON.parse(raw).data;
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    pinRepo(repoName) {
+      this.pinnedRepos.add(repoName);
+      const repo = this.repositories.find((r) => r.name === repoName);
+      if (repo) repo.isPinned = true;
+    }
+
+    unpinRepo(repoName) {
+      this.pinnedRepos.delete(repoName);
+      const repo = this.repositories.find((r) => r.name === repoName);
+      if (repo) repo.isPinned = false;
+    }
+
+    excludeRepo(repoName) {
+      this.excludedRepos.add(repoName);
+      this.repositories = this.repositories.filter((r) => r.name !== repoName);
+    }
+
+    getRepoByName(name) {
+      return this.repositories.find((r) => r.name === name) || null;
+    }
+
+    getStats() {
+      return {
+        totalRepos: this.repositories.length,
+        totalStars: this.totalStars,
+        totalForks: this.totalForks,
+        totalWatchers: this.totalWatchers,
+        totalCommits: this.totalCommits,
+        oldestRepo: this._oldestRepoDate,
+        newestRepo: this._newestRepoDate,
+        languageStats: this.getLanguageStats(),
+        isLoaded: this.isLoaded,
+        isLoading: this.isLoading,
+        lastFetch: this.lastFetchTime,
+        loadProgress: this.loadProgress,
+      };
+    }
+
     clearCache() {
       this.cache.clear();
-      console.log("🗑️ Cache dibersihkan");
+      this.repositories = [];
+      this.profile = null;
+      this.isLoaded = false;
+      this.lastFetchTime = null;
+      console.log("🗑️ Cache cleared");
+    }
+
+    destroy() {
+      this.stopAutoSync();
+      this.requestQueue.clear();
+      this.repositories = [];
+      this.profile = null;
+      console.log("📦 GitHubManager destroyed");
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // SUPPORTING CLASSES
+  // ═══════════════════════════════════════════
+
+  class RateLimiter {
+    constructor({
+      maxRequests = 60,
+      perTimeWindow = 3600000,
+      minDelay = 100,
+    } = {}) {
+      this.maxRequests = maxRequests;
+      this.timeWindow = perTimeWindow;
+      this.minDelay = minDelay;
+      this.requests = [];
+      this.waiting = [];
+    }
+
+    async acquire() {
+      const now = Date.now();
+
+      // Clean old requests
+      this.requests = this.requests.filter(
+        (time) => now - time < this.timeWindow,
+      );
+
+      if (this.requests.length >= this.maxRequests) {
+        // Wait until oldest request expires
+        const oldestRequest = this.requests[0];
+        const waitTime = oldestRequest + this.timeWindow - now + 10;
+
+        await new Promise((resolve) => {
+          const timeout = setTimeout(() => {
+            resolve();
+          }, waitTime);
+        });
+
+        return this.acquire();
+      }
+
+      // Add delay between requests
+      if (this.requests.length > 0) {
+        const lastRequest = this.requests[this.requests.length - 1];
+        const timeSinceLastRequest = now - lastRequest;
+
+        if (timeSinceLastRequest < this.minDelay) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.minDelay - timeSinceLastRequest),
+          );
+        }
+      }
+
+      this.requests.push(Date.now());
+      return true;
+    }
+  }
+
+  class RequestQueue {
+    constructor() {
+      this.queue = [];
+      this.processing = false;
+    }
+
+    async enqueue(fn, priority = 0) {
+      return new Promise((resolve, reject) => {
+        this.queue.push({ fn, priority, resolve, reject });
+        this.queue.sort((a, b) => b.priority - a.priority);
+        this._processQueue();
+      });
+    }
+
+    async _processQueue() {
+      if (this.processing || this.queue.length === 0) return;
+
+      this.processing = true;
+
+      while (this.queue.length > 0) {
+        const { fn, resolve, reject } = this.queue.shift();
+
+        try {
+          const result = await fn();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      }
+
+      this.processing = false;
+    }
+
+    clear() {
+      this.queue = [];
+    }
+
+    get length() {
+      return this.queue.length;
     }
   }
 
@@ -1026,7 +3656,7 @@
       this.currentFullText = "";
       this.currentDialogueIndex = 0;
       this.totalDialogues = 0;
-       this._currentDialogues = null; // ✅ Tambahkan ini
+      this._currentDialogues = null; // ✅ Tambahkan ini
 
       // AI Memory System
       this.userMemory = {
@@ -3653,57 +6283,1030 @@
       }, 400);
     }
   }
-
   // ═══════════════════════════════════════════
-  // 12. PWA HANDLER
+  // PWA HANDLER v2.0 - ENHANCED
   // ═══════════════════════════════════════════
   class PWAHandler {
-    constructor() {
-      this.deferredPrompt = null;
+    constructor(options = {}) {
+      // DOM Elements
       this.installBtn = document.getElementById("installApp");
-      this.bindEvents();
+      this.updateBtn = document.getElementById("updateApp");
+      this.offlineIndicator = document.getElementById("offlineIndicator");
+      this.pwaStatus = document.getElementById("pwaStatus");
+      this.installToast = document.getElementById("installToast");
+
+      // State
+      this.deferredPrompt = null;
+      this.isInstalled = false;
+      this.isOnline = navigator.onLine;
+      this.isUpdateAvailable = false;
+      this.waitingWorker = null;
+      this.registration = null;
+
+      // Configuration
+      this.config = {
+        installPromptDelay: 30000, // 30 detik sebelum prompt
+        installPromptMinVisits: 2, // Minimal 2 kunjungan sebelum prompt
+        updateCheckInterval: 3600000, // Check update setiap 1 jam
+        offlinePage: "/offline.html",
+        cacheName: "maple-portfolio-v2",
+        cacheUrls: [
+          "/",
+          "/index.html",
+          "/public/css/all.bundle.css",
+          "/public/js/script.js",
+          "/public/image/character/bofuri.jpeg",
+          "/offline.html",
+        ],
+        analytics: {
+          trackInstall: true,
+          trackUpdate: true,
+          trackOffline: true,
+        },
+        platform: this._detectPlatform(),
+        ...options,
+      };
+
+      // Analytics
+      this.analytics = options.analytics || null;
+
+      // Bind methods
+      this._onConnectionChange = this._onConnectionChange.bind(this);
+      this._onUpdateFound = this._onUpdateFound.bind(this);
+      this._onUpdateReady = this._onUpdateReady.bind(this);
+
+      // Initialize
+      this._init();
     }
 
-    bindEvents() {
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        this.deferredPrompt = e;
+    // ═══════════════ INITIALIZATION ═══════════════
 
-        if (this.installBtn) {
-          this.installBtn.style.display = "block";
-          this.installBtn.addEventListener("click", () => this.install());
+    _init() {
+      console.log("📱 Initializing PWA Handler...");
+
+      // Check if already installed
+      this._checkInstallStatus();
+
+      // Bind install events
+      this._bindInstallEvents();
+
+      // Register service worker
+      this._registerServiceWorker();
+
+      // Monitor online/offline status
+      this._bindConnectionEvents();
+
+      // Setup update checker
+      this._setupUpdateChecker();
+
+      // Track PWA usage
+      this._trackPWAUsage();
+
+      // Show install prompt after delay
+      this._scheduleInstallPrompt();
+
+      // Add platform-specific optimizations
+      this._applyPlatformOptimizations();
+
+      console.log(`📱 Platform detected: ${this.config.platform.name}`);
+    }
+
+    // ═══════════════ PLATFORM DETECTION ═══════════════
+
+    _detectPlatform() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+      // iOS detection
+      if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+        return {
+          name: "ios",
+          isStandalone: window.navigator.standalone,
+          supportsBeforeInstallPrompt: false,
+          installGuide: "Tap the Share button and select 'Add to Home Screen'",
+          icon: "📲",
+          color: "#007AFF",
+        };
+      }
+
+      // Android detection
+      if (/android/i.test(ua)) {
+        return {
+          name: "android",
+          isStandalone: window.matchMedia("(display-mode: standalone)").matches,
+          supportsBeforeInstallPrompt: true,
+          installGuide: "Tap 'Install' or use the browser menu",
+          icon: "🤖",
+          color: "#3DDC84",
+        };
+      }
+
+      // Desktop detection
+      return {
+        name: "desktop",
+        isStandalone: window.matchMedia("(display-mode: standalone)").matches,
+        supportsBeforeInstallPrompt: true,
+        installGuide: "Click the install icon in the address bar",
+        icon: "💻",
+        color: "#a855f7",
+      };
+    }
+
+    // ═══════════════ INSTALL HANDLING ═══════════════
+
+    _bindInstallEvents() {
+      // Before Install Prompt (Android & Desktop)
+      window.addEventListener("beforeinstallprompt", (event) => {
+        // Prevent automatic prompt
+        event.preventDefault();
+
+        // Store the prompt
+        this.deferredPrompt = event;
+
+        console.log("📲 Install prompt available");
+
+        // Track event
+        this._trackEvent("pwa", "install_prompt_available");
+
+        // Show install button if not already installed
+        if (!this.isInstalled) {
+          this._showInstallUI();
         }
       });
 
+      // App Installed
       window.addEventListener("appinstalled", () => {
-        if (this.installBtn) {
-          this.installBtn.style.display = "none";
-        }
+        this.isInstalled = true;
+        this.deferredPrompt = null;
+
+        console.log("✅ App installed successfully!");
+
+        // Track installation
+        this._trackEvent("pwa", "app_installed", {
+          platform: this.config.platform.name,
+        });
+
+        // Hide install UI
+        this._hideInstallUI();
+
+        // Show celebration toast
+        this._showToast(
+          "🎉 App Terinstall!",
+          "Maple's Portfolio siap digunakan!",
+          "success",
+        );
+
+        // Trigger achievement
+        window.dispatchEvent(new CustomEvent("maple:appInstalled"));
       });
+    }
+
+    async _checkInstallStatus() {
+      // Check if app is running in standalone mode
+      if (window.matchMedia("(display-mode: standalone)").matches) {
+        this.isInstalled = true;
+        console.log("📱 App is running in standalone mode");
+        this._hideInstallUI();
+        return;
+      }
+
+      // Check related apps (Android)
+      if ("getInstalledRelatedApps" in navigator) {
+        try {
+          const relatedApps = await navigator.getInstalledRelatedApps();
+          if (relatedApps.length > 0) {
+            this.isInstalled = true;
+            console.log("📱 App found in related apps");
+            this._hideInstallUI();
+          }
+        } catch (error) {
+          console.warn("getInstalledRelatedApps failed:", error.message);
+        }
+      }
     }
 
     async install() {
-      if (!this.deferredPrompt) return;
-      this.deferredPrompt.prompt();
-      const choiceResult = await this.deferredPrompt.userChoice;
-      if (choiceResult.outcome === "accepted") {
-        console.log("🍁 User accepted the install prompt");
+      if (!this.deferredPrompt) {
+        // Fallback for iOS
+        if (this.config.platform.name === "ios") {
+          this._showIOSInstallGuide();
+          return;
+        }
+
+        // Fallback for browsers without beforeinstallprompt
+        this._showManualInstallGuide();
+        return;
       }
-      this.deferredPrompt = null;
+
+      try {
+        // Show the install prompt
+        await this.deferredPrompt.prompt();
+
+        // Wait for user choice
+        const choiceResult = await this.deferredPrompt.userChoice;
+
+        if (choiceResult.outcome === "accepted") {
+          console.log("🍁 User accepted the install prompt");
+          this._trackEvent("pwa", "install_accepted");
+        } else {
+          console.log("🍂 User dismissed the install prompt");
+          this._trackEvent("pwa", "install_dismissed");
+
+          // Store dismissal time
+          localStorage.setItem(
+            "maple_install_dismissed",
+            Date.now().toString(),
+          );
+        }
+
+        // Clear the prompt
+        this.deferredPrompt = null;
+
+        // Hide install UI
+        this._hideInstallUI();
+      } catch (error) {
+        console.error("Install prompt failed:", error.message);
+        this._trackEvent("pwa", "install_error", { error: error.message });
+      }
+    }
+
+    _scheduleInstallPrompt() {
+      // Check if recently dismissed
+      const dismissed = localStorage.getItem("maple_install_dismissed");
+      if (dismissed) {
+        const dismissedTime = parseInt(dismissed);
+        const daysSinceDismissed =
+          (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceDismissed < 7) {
+          console.log("📲 Install prompt dismissed recently, waiting...");
+          return;
+        }
+      }
+
+      // Check visit count
+      const visits = this._getVisitCount();
+      if (visits < this.config.installPromptMinVisits) {
+        console.log(
+          `📲 Waiting for more visits (${visits}/${this.config.installPromptMinVisits})`,
+        );
+        return;
+      }
+
+      // Schedule delayed prompt
+      setTimeout(() => {
+        if (!this.isInstalled && !this.deferredPrompt) {
+          this._showInstallToast();
+        }
+      }, this.config.installPromptDelay);
+    }
+
+    _getVisitCount() {
+      try {
+        const visits = localStorage.getItem("maple_visit_count") || "0";
+        return parseInt(visits);
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    // ═══════════════ UI METHODS ═══════════════
+
+    _showInstallUI() {
       if (this.installBtn) {
-        this.installBtn.style.display = "none";
+        this.installBtn.style.display = "flex";
+        this.installBtn.classList.add("install-btn--show");
+        this.installBtn.addEventListener("click", () => this.install(), {
+          once: true,
+        });
       }
+    }
+
+    _hideInstallUI() {
+      if (this.installBtn) {
+        this.installBtn.classList.remove("install-btn--show");
+        this.installBtn.classList.add("install-btn--hide");
+
+        setTimeout(() => {
+          this.installBtn.style.display = "none";
+        }, 500);
+      }
+    }
+
+    _showInstallToast() {
+      if (this.installToast) {
+        this.installToast.classList.add("install-toast--show");
+
+        // Add install button inside toast
+        const installAction = this.installToast.querySelector(
+          ".install-toast__action",
+        );
+        if (installAction) {
+          installAction.addEventListener(
+            "click",
+            () => {
+              this.install();
+              this.installToast.classList.remove("install-toast--show");
+            },
+            { once: true },
+          );
+        }
+
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          this.installToast?.classList.remove("install-toast--show");
+        }, 10000);
+      }
+    }
+
+    _showIOSInstallGuide() {
+      this._showToast(
+        "📲 Cara Install di iOS",
+        "Tap ikon Share → 'Add to Home Screen' → 'Add'",
+        "info",
+        8000,
+      );
+    }
+
+    _showManualInstallGuide() {
+      this._showToast(
+        "📲 Cara Install",
+        this.config.platform.installGuide,
+        "info",
+        6000,
+      );
+    }
+
+    _showToast(title, message, type = "info", duration = 5000) {
+      // Create toast element
+      const toast = document.createElement("div");
+      toast.className = `pwa-toast pwa-toast--${type}`;
+      toast.innerHTML = `
+      <div class="pwa-toast__icon">${this.config.platform.icon}</div>
+      <div class="pwa-toast__content">
+        <span class="pwa-toast__title">${title}</span>
+        <span class="pwa-toast__message">${message}</span>
+      </div>
+      <button class="pwa-toast__close" onclick="this.parentElement.remove()">✕</button>
+    `;
+
+      document.body.appendChild(toast);
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.add("pwa-toast--visible");
+      });
+
+      // Auto remove
+      setTimeout(() => {
+        toast.classList.remove("pwa-toast--visible");
+        setTimeout(() => toast.remove(), 500);
+      }, duration);
+    }
+
+    // ═══════════════ SERVICE WORKER ═══════════════
+
+    async _registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) {
+        console.warn("📱 Service Worker not supported");
+        return;
+      }
+
+      try {
+        this.registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+        });
+
+        console.log("📱 Service Worker registered:", this.registration.scope);
+
+        // Listen for updates
+        this.registration.addEventListener("updatefound", this._onUpdateFound);
+
+        // Check if there's already a waiting worker
+        if (this.registration.waiting) {
+          this._onUpdateReady(this.registration.waiting);
+        }
+
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          this._handleSWMessage(event.data);
+        });
+
+        return this.registration;
+      } catch (error) {
+        console.error("📱 Service Worker registration failed:", error.message);
+        return null;
+      }
+    }
+
+    _onUpdateFound() {
+      const newWorker = this.registration?.installing;
+      if (!newWorker) return;
+
+      console.log("📱 New service worker found...");
+
+      newWorker.addEventListener("statechange", () => {
+        if (
+          newWorker.state === "installed" &&
+          navigator.serviceWorker.controller
+        ) {
+          this._onUpdateReady(newWorker);
+        }
+      });
+    }
+
+    _onUpdateReady(worker) {
+      this.waitingWorker = worker;
+      this.isUpdateAvailable = true;
+
+      console.log("📱 Update available!");
+
+      // Show update button
+      this._showUpdateUI();
+
+      // Track update
+      this._trackEvent("pwa", "update_available");
+    }
+
+    async updateApp() {
+      if (!this.waitingWorker) return;
+
+      console.log("📱 Applying update...");
+
+      // Send skip waiting message
+      this.waitingWorker.postMessage({ type: "SKIP_WAITING" });
+
+      // Track update
+      this._trackEvent("pwa", "update_applied");
+
+      // Reload page
+      window.location.reload();
+    }
+
+    _showUpdateUI() {
+      if (this.updateBtn) {
+        this.updateBtn.style.display = "flex";
+        this.updateBtn.classList.add("update-btn--show");
+        this.updateBtn.addEventListener("click", () => this.updateApp(), {
+          once: true,
+        });
+
+        // Also show toast
+        this._showToast(
+          "🔄 Update Tersedia!",
+          "Versi baru Maple's Portfolio siap diinstall",
+          "info",
+          0, // Don't auto-hide
+        );
+      }
+    }
+
+    _setupUpdateChecker() {
+      // Check for updates periodically
+      setInterval(() => {
+        if (this.registration) {
+          this.registration.update().catch((err) => {
+            console.warn("Update check failed:", err.message);
+          });
+        }
+      }, this.config.updateCheckInterval);
+
+      // Also check when page becomes visible
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && this.registration) {
+          this.registration.update().catch(() => {});
+        }
+      });
+    }
+
+    _handleSWMessage(data) {
+      switch (data.type) {
+        case "CACHE_UPDATED":
+          console.log("📱 Cache updated:", data.urls);
+          break;
+
+        case "OFFLINE_READY":
+          console.log("📱 App is ready for offline use");
+          this._trackEvent("pwa", "offline_ready");
+          break;
+
+        case "BACKGROUND_SYNC":
+          console.log("📱 Background sync completed");
+          break;
+
+        default:
+          console.log("📱 SW message:", data);
+      }
+    }
+
+    // ═══════════════ OFFLINE HANDLING ═══════════════
+
+    _bindConnectionEvents() {
+      window.addEventListener("online", () => {
+        this.isOnline = true;
+        this._onConnectionChange();
+      });
+
+      window.addEventListener("offline", () => {
+        this.isOnline = false;
+        this._onConnectionChange();
+      });
+
+      // Initial check
+      this._onConnectionChange();
+    }
+
+    _onConnectionChange() {
+      if (this.isOnline) {
+        console.log("📡 Back online!");
+        this._hideOfflineIndicator();
+
+        // Trigger sync
+        this._syncData();
+
+        // Reload if we were showing offline page
+        if (window.location.pathname === this.config.offlinePage) {
+          window.location.href = "/";
+        }
+      } else {
+        console.log("📡 Offline mode");
+        this._showOfflineIndicator();
+
+        // Track offline event
+        this._trackEvent("pwa", "offline_mode");
+      }
+    }
+
+    _showOfflineIndicator() {
+      if (this.offlineIndicator) {
+        this.offlineIndicator.classList.add("offline-indicator--visible");
+      }
+
+      // Also show toast
+      this._showToast(
+        "📡 Offline Mode",
+        "Kamu sedang offline. Beberapa fitur mungkin terbatas.",
+        "warning",
+        4000,
+      );
+    }
+
+    _hideOfflineIndicator() {
+      if (this.offlineIndicator) {
+        this.offlineIndicator.classList.remove("offline-indicator--visible");
+      }
+    }
+
+    async _syncData() {
+      if (!("serviceWorker" in navigator) || !("SyncManager" in window)) {
+        return;
+      }
+
+      try {
+        const registration =
+          this.registration || (await navigator.serviceWorker.ready);
+
+        // Request background sync
+        if ("sync" in registration) {
+          await registration.sync.register("sync-github-data");
+          console.log("📱 Background sync registered");
+        }
+      } catch (error) {
+        console.warn("Background sync failed:", error.message);
+      }
+    }
+
+    // ═══════════════ PLATFORM OPTIMIZATIONS ═══════════════
+
+    _applyPlatformOptimizations() {
+      const platform = this.config.platform;
+
+      // iOS specific
+      if (platform.name === "ios") {
+        // Add iOS meta tags
+        this._addMetaTag("apple-mobile-web-app-capable", "yes");
+        this._addMetaTag(
+          "apple-mobile-web-app-status-bar-style",
+          "black-translucent",
+        );
+        this._addMetaTag("apple-mobile-web-app-title", "hayaxxdev");
+
+        // Disable iOS zoom
+        this._addMetaTag(
+          "viewport",
+          "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover",
+        );
+
+        // Add touch icon
+        this._addLinkTag(
+          "apple-touch-icon",
+          "/public/image/apple-touch-icon.png",
+        );
+      }
+
+      // Android specific
+      if (platform.name === "android") {
+        // Add Android meta tags
+        this._addMetaTag("theme-color", "#050308");
+        this._addMetaTag("mobile-web-app-capable", "yes");
+      }
+
+      // Add platform class to body
+      document.body.classList.add(`platform--${platform.name}`);
+      document.body.classList.add(
+        this.isInstalled ? "pwa--installed" : "pwa--browser",
+      );
+    }
+
+    _addMetaTag(name, content) {
+      if (document.querySelector(`meta[name="${name}"]`)) return;
+
+      const meta = document.createElement("meta");
+      meta.name = name;
+      meta.content = content;
+      document.head.appendChild(meta);
+    }
+
+    _addLinkTag(rel, href) {
+      if (document.querySelector(`link[rel="${rel}"]`)) return;
+
+      const link = document.createElement("link");
+      link.rel = rel;
+      link.href = href;
+      document.head.appendChild(link);
+    }
+
+    // ═══════════════ ANALYTICS ═══════════════
+
+    _trackEvent(category, action, data = {}) {
+      if (!this.config.analytics?.trackInstall) return;
+
+      // Use Google Analytics if available
+      if (window.gtag) {
+        window.gtag("event", action, {
+          event_category: category,
+          event_label: JSON.stringify(data),
+          ...data,
+        });
+      }
+
+      // Console log in development
+      if (window.__MAPLE_CONFIG?.env?.isDevelopment) {
+        console.log(`📊 [PWA] ${category}/${action}:`, data);
+      }
+    }
+
+    _trackPWAUsage() {
+      // Track display mode
+      const displayMode = window.matchMedia("(display-mode: standalone)")
+        .matches
+        ? "standalone"
+        : "browser";
+
+      this._trackEvent("pwa", "display_mode", { mode: displayMode });
+
+      // Track platform
+      this._trackEvent("pwa", "platform", {
+        platform: this.config.platform.name,
+        isInstalled: this.isInstalled,
+      });
+
+      // Increment visit count
+      try {
+        const visits = this._getVisitCount();
+        localStorage.setItem("maple_visit_count", (visits + 1).toString());
+      } catch (e) {}
+    }
+
+    // ═══════════════ PUBLIC API ═══════════════
+
+    getPWAStatus() {
+      return {
+        isInstalled: this.isInstalled,
+        isOnline: this.isOnline,
+        isUpdateAvailable: this.isUpdateAvailable,
+        platform: this.config.platform,
+        registration: this.registration,
+        displayMode: window.matchMedia("(display-mode: standalone)").matches
+          ? "standalone"
+          : "browser",
+      };
+    }
+
+    async clearCache() {
+      if (!this.registration) return;
+
+      try {
+        // Send clear cache message to service worker
+        const messageChannel = new MessageChannel();
+
+        messageChannel.port1.onmessage = (event) => {
+          console.log("📱 Cache cleared:", event.data);
+        };
+
+        this.registration.active?.postMessage({ type: "CLEAR_CACHE" }, [
+          messageChannel.port2,
+        ]);
+      } catch (error) {
+        console.error("Clear cache failed:", error.message);
+      }
+    }
+
+    async unregister() {
+      if (!this.registration) return;
+
+      try {
+        await this.registration.unregister();
+        console.log("📱 Service Worker unregistered");
+
+        // Clear caches
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+
+        this.registration = null;
+      } catch (error) {
+        console.error("Unregister failed:", error.message);
+      }
+    }
+
+    // ═══════════════ DESTROY ═══════════════
+
+    destroy() {
+      window.removeEventListener("online", this._onConnectionChange);
+      window.removeEventListener("offline", this._onConnectionChange);
+
+      if (this.registration) {
+        this.registration.removeEventListener(
+          "updatefound",
+          this._onUpdateFound,
+        );
+      }
+
+      this._hideInstallUI();
+      this._hideOfflineIndicator();
+
+      console.log("📱 PWA Handler destroyed");
+    }
+  }
+  // ═══════════════════════════════════════════
+  // FINAL INITIALIZATION SECTION (OPTIMIZED)
+  // ═══════════════════════════════════════════
+
+  // ═══════════════════════════════════════════
+  // GUARD: Prevent double initialization
+  // ═══════════════════════════════════════════
+  let _appInitialized = false;
+  let _appInstance = null;
+
+  // ═══════════════════════════════════════════
+  // SVG PLACEHOLDER UTILITIES (CONSOLIDATED)
+  // ═══════════════════════════════════════════
+  const SVGUtils = {
+    /**
+     * Adjust hex color brightness
+     */
+    adjustColor(hex, percent) {
+      const num = parseInt(hex.replace("#", ""), 16);
+      const clamp = (val) => Math.min(255, Math.max(0, val));
+      const r = clamp((num >> 16) + percent);
+      const g = clamp(((num >> 8) & 0x00ff) + percent);
+      const b = clamp((num & 0x0000ff) + percent);
+      return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+    },
+
+    /**
+     * Escape XML special characters
+     */
+    escapeXml(str) {
+      const entities = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&apos;",
+      };
+      return String(str).replace(/[&<>"']/g, (char) => entities[char]);
+    },
+
+    /**
+     * Encode SVG string to data URI
+     */
+    svgToDataUri(svgString) {
+      const cleaned = svgString.replace(/\s+/g, " ").trim();
+      return `data:image/svg+xml,${encodeURIComponent(cleaned)}`;
+    },
+
+    /**
+     * Generate card art placeholder
+     */
+    generateCardArtPlaceholder(icon, bgColor, width, height) {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="${bgColor}"/>
+              <stop offset="55%" stop-color="${this.adjustColor(bgColor, -10)}"/>
+              <stop offset="100%" stop-color="${this.adjustColor(bgColor, -20)}"/>
+            </linearGradient>
+          </defs>
+          <rect width="${width}" height="${height}" fill="url(#bg)"/>
+          <text x="50%" y="52%" text-anchor="middle" font-size="${Math.min(width, height) * 0.35}" opacity="0.6">${icon}</text>
+        </svg>
+      `;
+      return this.svgToDataUri(svg);
+    },
+
+    /**
+     * Generate profile picture placeholder
+     */
+    generatePfpPlaceholder(icon, bgColor, width, height, textColor) {
+      const color = textColor || "#a78bfa";
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+          <rect fill="${bgColor}" width="${width}" height="${height}" rx="${width / 2}"/>
+          <text fill="${color}" x="50%" y="55%" text-anchor="middle" font-size="${width * 0.43}">${icon}</text>
+        </svg>
+      `;
+      return this.svgToDataUri(svg);
+    },
+
+    /**
+     * Generate initial avatar placeholder
+     */
+    generateInitialAvatar(initial, bgColor, width, height, textColor) {
+      const color = textColor || "#c9a84c";
+      const fontSize = Math.floor(Math.min(width, height) * 0.4);
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+          <rect fill="${bgColor}" width="${width}" height="${height}" rx="${width / 2}"/>
+          <text fill="${color}" x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="${fontSize}px" font-family="sans-serif" font-weight="bold">
+            ${this.escapeXml(initial)}
+          </text>
+        </svg>
+      `;
+      return this.svgToDataUri(svg);
+    },
+  };
+
+  // ═══════════════════════════════════════════
+  // IMAGE FALLBACK HANDLER (CONSOLIDATED)
+  // ═══════════════════════════════════════════
+  class ImageFallbackHandler {
+    constructor() {
+      this.handledImages = new WeakSet();
+    }
+
+    /**
+     * Setup fallback for all image types
+     */
+    setupAll() {
+      this.setupCharacterCardFallbacks();
+      this.setupAboutContactFallbacks();
+      this.setupGenericImageFallbacks();
+    }
+
+    /**
+     * Handle image error with appropriate fallback
+     */
+    _handleImageError(img, fallbackType, options = {}) {
+      // Prevent infinite loops
+      if (this.handledImages.has(img)) return;
+      this.handledImages.add(img);
+
+      const { icon, bg, width, height, initial, textColor } = options;
+
+      let src;
+      switch (fallbackType) {
+        case "card-art":
+          src = SVGUtils.generateCardArtPlaceholder(
+            icon || "🛡️",
+            bg || "#120a16",
+            width || 320,
+            height || 448,
+          );
+          break;
+
+        case "pfp":
+          src = SVGUtils.generatePfpPlaceholder(
+            icon || "🍁",
+            bg || "#120a16",
+            width || 58,
+            height || 58,
+            textColor,
+          );
+          break;
+
+        case "initial-avatar":
+          src = SVGUtils.generateInitialAvatar(
+            initial || "NK",
+            bg || "#141414",
+            width || 160,
+            height || 160,
+            textColor || "#c9a84c",
+          );
+          break;
+
+        default:
+          src = SVGUtils.generateInitialAvatar("?", "#333", 100, 100);
+      }
+
+      img.src = src;
+      img.onerror = null;
+    }
+
+    /**
+     * Setup character card image fallbacks
+     */
+    setupCharacterCardFallbacks() {
+      document
+        .querySelectorAll(".char-card img[data-fallback-icon]")
+        .forEach((img) => {
+          img.addEventListener(
+            "error",
+            () => {
+              const icon = img.dataset.fallbackIcon || "🛡️";
+              const bg = img.dataset.fallbackBg || "#120a16";
+              const isPfp = img.closest(".card-pfp");
+
+              this._handleImageError(img, isPfp ? "pfp" : "card-art", {
+                icon,
+                bg,
+                width: img.width || 320,
+                height: img.height || 448,
+              });
+            },
+            { once: true },
+          );
+        });
+    }
+
+    /**
+     * Setup about & contact image fallbacks
+     */
+    setupAboutContactFallbacks() {
+      // About avatar
+      const aboutImg = document.querySelector(".about__img");
+      if (aboutImg) {
+        aboutImg.addEventListener(
+          "error",
+          () => {
+            this._handleImageError(aboutImg, "initial-avatar", {
+              initial: aboutImg.dataset.fallbackInitial || "NK",
+              bg: aboutImg.dataset.fallbackBg || "#141414",
+              width: aboutImg.width || 160,
+              height: aboutImg.height || 160,
+            });
+          },
+          { once: true },
+        );
+      }
+
+      // Contact avatar
+      const contactAvatar = document.querySelector(".contact-card__avatar");
+      if (contactAvatar) {
+        contactAvatar.addEventListener(
+          "error",
+          () => {
+            this._handleImageError(contactAvatar, "initial-avatar", {
+              initial: contactAvatar.dataset.fallbackInitial || "NK",
+              bg: contactAvatar.dataset.fallbackBg || "#141414",
+              width: contactAvatar.width || 56,
+              height: contactAvatar.height || 56,
+              textColor: contactAvatar.dataset.fallbackColor || "#c9a84c",
+            });
+          },
+          { once: true },
+        );
+      }
+    }
+
+    /**
+     * Setup generic image fallbacks
+     */
+    setupGenericImageFallbacks() {
+      document
+        .querySelectorAll(
+          "img:not([data-fallback-icon]):not(.about__img):not(.contact-card__avatar)",
+        )
+        .forEach((img) => {
+          img.addEventListener(
+            "error",
+            () => {
+              this._handleImageError(img, "initial-avatar", {
+                initial: "?",
+                bg: "#333",
+                width: img.width || 100,
+                height: img.height || 100,
+              });
+            },
+            { once: true },
+          );
+        });
     }
   }
 
   // ═══════════════════════════════════════════
   // CHARACTER CARD HANDLERS
   // ═══════════════════════════════════════════
-
-  /**
-   * Setup character card click handlers
-   * Replace inline onclick with proper event listeners
-   */
   function setupCharacterCards() {
     document.querySelectorAll(".char-card[data-target]").forEach((card) => {
       const target = card.dataset.target;
@@ -3711,7 +7314,6 @@
 
       // Click handler
       card.addEventListener("click", (e) => {
-        // Jangan navigate jika user mengklik link di dalam card
         if (e.target.closest("a")) return;
         window.location.href = target;
       });
@@ -3726,160 +7328,13 @@
     });
   }
 
-  /**
-   * Setup image error handlers for character cards
-   * Replace inline onerror with proper event listeners
-   */
-  function setupCharacterImageFallbacks() {
-    document
-      .querySelectorAll(".char-card img[data-fallback-icon]")
-      .forEach((img) => {
-        img.addEventListener("error", function () {
-          const icon = this.dataset.fallbackIcon || "🛡️";
-          const bg = this.dataset.fallbackBg || "#120a16";
-
-          // Generate SVG placeholder
-          const width = this.width || 320;
-          const height = this.height || 448;
-          const isPfp = this.closest(".card-pfp");
-
-          if (isPfp) {
-            this.src = generatePfpPlaceholder(icon, bg, 60, 60);
-          } else {
-            this.src = generateCardArtPlaceholder(icon, bg, width, height);
-          }
-
-          // Prevent infinite loop
-          this.onerror = null;
-        });
-      });
-  }
-
-  /**
-   * Generate SVG placeholder for card art
-   */
-  function generateCardArtPlaceholder(icon, bgColor, width, height) {
-    const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${bgColor}"/>
-          <stop offset="55%" stop-color="${adjustColor(bgColor, -10)}"/>
-          <stop offset="100%" stop-color="${adjustColor(bgColor, -20)}"/>
-        </linearGradient>
-      </defs>
-      <rect width="${width}" height="${height}" fill="url(#bg)"/>
-      <text x="50%" y="52%" text-anchor="middle" font-size="${Math.min(width, height) * 0.35}" 
-            opacity="0.6">${icon}</text>
-    </svg>
-  `;
-    return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
-  }
-
-  /**
-   * Generate SVG placeholder for profile picture
-   */
-  function generatePfpPlaceholder(icon, bgColor, width, height) {
-    const textColor =
-      icon === "🍁" ? "#d4af37" : icon === "💨" ? "#44aaff" : "#a78bfa";
-    const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <rect fill="${bgColor}" width="${width}" height="${height}" rx="${width / 2}"/>
-      <text fill="${textColor}" x="50%" y="55%" text-anchor="middle" font-size="${width * 0.43}">${icon}</text>
-    </svg>
-  `;
-    return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
-  }
-
-  /**
-   * Helper: Adjust hex color brightness
-   */
-  function adjustColor(hex, percent) {
-    const num = parseInt(hex.replace("#", ""), 16);
-    const r = Math.min(255, Math.max(0, (num >> 16) + percent));
-    const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + percent));
-    const b = Math.min(255, Math.max(0, (num & 0x0000ff) + percent));
-    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
-  }
-
   // ═══════════════════════════════════════════
-  // ABOUT & CONTACT IMAGE FALLBACKS
+  // SKILL BAR ANIMATION
   // ═══════════════════════════════════════════
-
-  /**
-   * Setup image error handlers untuk about dan contact sections
-   */
-  function setupAboutContactImageFallbacks() {
-    // About avatar
-    const aboutImg = document.querySelector(".about__img");
-    if (aboutImg) {
-      aboutImg.addEventListener("error", function () {
-        const initial = this.dataset.fallbackInitial || "NK";
-        const bg = this.dataset.fallbackBg || "#141414";
-        this.src = generateInitialAvatar(initial, bg, 160, 160);
-        this.onerror = null;
-      });
-    }
-
-    // Contact avatar
-    const contactAvatar = document.querySelector(".contact-card__avatar");
-    if (contactAvatar) {
-      contactAvatar.addEventListener("error", function () {
-        const initial = this.dataset.fallbackInitial || "NK";
-        const bg = this.dataset.fallbackBg || "#141414";
-        const color = this.dataset.fallbackColor || "#c9a84c";
-        this.src = generateInitialAvatar(initial, bg, 56, 56, color);
-        this.onerror = null;
-      });
-    }
-  }
-
-  /**
-   * Generate SVG avatar dengan initial
-   */
-  function generateInitialAvatar(initial, bgColor, width, height, textColor) {
-    const color = textColor || "#c9a84c";
-    const fontSize = Math.floor(Math.min(width, height) * 0.4);
-
-    const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <rect fill="${bgColor}" width="${width}" height="${height}" rx="${width / 2}"/>
-      <text fill="${color}" 
-            x="50%" y="50%" 
-            text-anchor="middle" 
-            dy=".3em" 
-            font-size="${fontSize}px" 
-            font-family="sans-serif" 
-            font-weight="bold">
-        ${escapeXml(initial)}
-      </text>
-    </svg>
-  `;
-
-    return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
-  }
-
-  /**
-   * Escape XML special characters
-   */
-  function escapeXml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
-  }
-
-  /**
-   * Animate skill bars when about section becomes visible
-   */
   function setupSkillBarAnimation() {
     const skillBars = document.querySelectorAll(".skill-bar__fill[data-width]");
-
     if (!skillBars.length) return;
 
-    // Gunakan IntersectionObserver untuk animasi saat visible
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -3887,49 +7342,49 @@
             const bar = entry.target;
             const width = bar.dataset.width || 0;
 
-            // Animate width
-            setTimeout(() => {
+            // Animate width dengan transition CSS
+            requestAnimationFrame(() => {
               bar.style.width = `${width}%`;
-            }, 200);
+              bar.setAttribute("aria-valuenow", width);
+            });
 
-            // Update ARIA
-            bar.setAttribute("aria-valuenow", width);
-
-            // Unobserve setelah animasi
             observer.unobserve(bar);
           }
         });
       },
-      {
-        threshold: 0.3,
-      },
+      { threshold: 0.3 },
     );
 
     skillBars.forEach((bar) => observer.observe(bar));
   }
+
+  // ═══════════════════════════════════════════
+  // LAZY LOADING (FIXED)
+  // ═══════════════════════════════════════════
   function initLazyLoading() {
-    // ✅ HANYA pilih gambar, jangan elemen lain
-    // ✅ KECUALIKAN gambar di dalam VN dialogue
+    // HANYA pilih elemen IMG, bukan elemen lain
     const lazyImages = document.querySelectorAll(
-      [
-        'img[loading="lazy"]:not(.vn-avatar-img):not(.vn-avatar-emotion)',
-        "img[data-src]:not(.vn-avatar-img):not(.vn-avatar-emotion)",
-        '.slide__screenshot[loading="lazy"]',
-        '.card-art[loading="lazy"]',
+      'img[loading="lazy"]:not(.vn-avatar-img):not(.vn-avatar-emotion), ' +
+        "img[data-src]:not(.vn-avatar-img):not(.vn-avatar-emotion), " +
+        'img.card-art[loading="lazy"], ' +
         '.char-card img[loading="lazy"]',
-      ].join(","),
     );
 
-    if (!lazyImages.length) {
+    // Filter hanya IMG elements
+    const validImages = Array.from(lazyImages).filter(
+      (el) => el.tagName === "IMG",
+    );
+
+    if (!validImages.length) {
       console.log("📸 No lazy images found");
       return;
     }
 
-    console.log(`📸 Found ${lazyImages.length} lazy images`);
+    console.log(`📸 Found ${validImages.length} lazy images`);
 
     if (!("IntersectionObserver" in window)) {
       // Fallback: load all images immediately
-      lazyImages.forEach((img) => {
+      validImages.forEach((img) => {
         if (img.dataset.src) {
           img.src = img.dataset.src;
           img.removeAttribute("data-src");
@@ -3944,9 +7399,6 @@
           if (entry.isIntersecting) {
             const img = entry.target;
 
-            // ✅ Hanya proses gambar, jangan sentuh elemen lain
-            if (img.tagName !== "IMG") return;
-
             // Handle data-src
             if (img.dataset.src) {
               img.src = img.dataset.src;
@@ -3959,15 +7411,6 @@
               img.removeAttribute("data-srcset");
             }
 
-            // Handle fallback icon
-            if (
-              img.dataset.fallbackIcon &&
-              img.complete &&
-              img.naturalWidth === 0
-            ) {
-              // Gambar gagal load
-            }
-
             imageObserver.unobserve(img);
           }
         });
@@ -3978,38 +7421,34 @@
       },
     );
 
-    lazyImages.forEach((img) => {
-      // ✅ Pastikan hanya gambar yang diobservasi
-      if (img.tagName === "IMG") {
-        imageObserver.observe(img);
-      }
-    });
+    validImages.forEach((img) => imageObserver.observe(img));
   }
 
   // ═══════════════════════════════════════════
-  // 13. INITIALIZATION (DIPERBAIKI)
+  // MAIN INITIALIZATION (SINGLE ENTRY POINT)
   // ═══════════════════════════════════════════
-  const initializeApp = () => {
+  function initializeApp() {
     console.log("🍁 Maple's Portfolio v4.0 initializing...");
 
-    // ── Step 1: DOM-dependent initializations ──
+    // ── Step 1: DOM-dependent initializations (synchronous) ──
     setupCharacterCards();
-    setupCharacterImageFallbacks();
-    setupAboutContactImageFallbacks();
     setupSkillBarAnimation();
 
-    // ── Step 2: Lazy loading (after DOM elements exist) ──
+    // Setup image fallbacks (consolidated)
+    const imageFallback = new ImageFallbackHandler();
+    imageFallback.setupAll();
+
+    // ── Step 2: Lazy loading ──
     initLazyLoading();
 
     // ── Step 3: Footer year ──
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    // ── Step 4: Initialize page loader ──
+    // ── Step 4: Initialize core systems ──
     const pageLoader = new PageLoader();
     pageLoader.init();
 
-    // ── Step 5: Initialize core systems ──
     const audioManager = new AudioManager();
     const achievementSystem = new AchievementSystem();
     const vnSystem = new AIVNDialogueSystem();
@@ -4019,7 +7458,7 @@
     const navigation = new NavigationSystem();
     const pwaHandler = new PWAHandler();
 
-    // ── Step 6: Wire up dependencies ──
+    // ── Step 5: Wire up dependencies ──
     achievementSystem.setAudioManager(audioManager);
     vnSystem.setAudioManager(audioManager);
     vnSystem.setAchievementSystem(achievementSystem);
@@ -4033,7 +7472,7 @@
     navigation.setGitHubManager(githubManager);
     navigation.setUIRenderer(uiRenderer);
 
-    // ── Step 7: Define public API ──
+    // ── Step 6: Build public API ──
     const publicAPI = {
       audioManager,
       achievementSystem,
@@ -4042,16 +7481,17 @@
       githubManager,
       uiRenderer,
       navigation,
-      playSFX: (type) => audioManager.playSFX(type),
+      pwaHandler,
+      playSFX: (type) => audioManager?.playSFX(type),
       triggerVNDialogue: (route, customText) =>
-        vnSystem.open(route, customText),
-      closeVNDialogue: () => vnSystem.close(),
-      nextVNDialogue: () => vnSystem.next(),
+        vnSystem?.open(route, customText),
+      closeVNDialogue: () => vnSystem?.close(),
+      nextVNDialogue: () => vnSystem?.next(),
       navigateTo: (route, skipDialogue) =>
-        navigation.navigate(route, skipDialogue),
-      startGuide: () => guideSystem.start(),
-      stopGuide: () => guideSystem.stop(),
-      loadProjects: () => navigation.loadProjects(),
+        navigation?.navigate(route, skipDialogue),
+      startGuide: () => guideSystem?.start(),
+      stopGuide: () => guideSystem?.stop(),
+      loadProjects: () => navigation?.loadProjects(),
       refreshStats: async () => {
         try {
           await githubManager.fetchAllRepos();
@@ -4062,7 +7502,7 @@
             githubManager.totalCommits,
             userData,
           );
-          audioManager.playSFX("questClear");
+          audioManager?.playSFX("questClear");
           console.log("📊 Stats refreshed!");
           return true;
         } catch (error) {
@@ -4070,26 +7510,25 @@
           return false;
         }
       },
-      clearCache: () => githubManager.clearCache(),
-      getMemory: () => vnSystem.userMemory,
-      getAchievements: () => achievementSystem.achievements,
+      clearCache: () => githubManager?.clearCache(),
+      getMemory: () => vnSystem?.userMemory || {},
+      getAchievements: () => achievementSystem?.achievements || new Map(),
     };
 
-    // ── Step 8: Expose to window ──
+    // ── Step 7: Expose to window ──
     Object.assign(window, publicAPI);
     window.MaplePortfolio = {
+      publicAPI,
+      SVGUtils,
+      ImageFallbackHandler,
       AudioManager,
       AchievementSystem,
       GitHubManager,
       UIRenderer,
       CONFIG,
-      ICONS,
-      getLanguageColor,
-      timeAgo,
-      publicAPI, // ← Referensi ke publicAPI
     };
 
-    // ── Step 9: Load portfolio data (SINGLE DOMContentLoaded-like flow) ──
+    // ── Step 8: Load portfolio data ──
     loadPortfolioData(
       audioManager,
       achievementSystem,
@@ -4097,10 +7536,10 @@
       uiRenderer,
     );
 
-    // ── Step 10: Event listeners ──
+    // ── Step 9: Setup event listeners ──
     setupEventListeners(audioManager, guideSystem, githubManager, publicAPI);
 
-    // ── Step 11: Log initialization ──
+    // ── Step 10: Log ready ──
     console.log("🍁 Maple's Portfolio v4.0 initialized!");
     console.log("🤖 AI Dialogue System active");
     console.log("📄 Multi-source README fetching enabled");
@@ -4110,10 +7549,10 @@
     console.log(
       "⌨️ Shortcuts: Alt+G (Guide), Alt+M (Music), Alt+C (Clear Cache), Alt+R (Refresh Stats)",
     );
-  };
+  }
 
   // ═══════════════════════════════════════════
-  // 13a. LOAD PORTFOLIO DATA
+  // LOAD PORTFOLIO DATA
   // ═══════════════════════════════════════════
   async function loadPortfolioData(
     audioManager,
@@ -4121,41 +7560,30 @@
     githubManager,
     uiRenderer,
   ) {
-    // Setup filter tabs
     uiRenderer.setupFilterTabs();
-
-    // Render skeleton loading
     uiRenderer.renderSkeleton(3);
     uiRenderer.showLoader(true);
 
     // Unlock first visit achievement
     if (!localStorage.getItem("maple_first_visit")) {
       localStorage.setItem("maple_first_visit", "1");
-      setTimeout(() => achievementSystem.unlock("first_visit"), 1500);
+      setTimeout(() => achievementSystem?.unlock("first_visit"), 1500);
     }
 
     try {
       console.log("🚀 Loading portfolio data...");
 
-      // Fetch repos
       const repos = await githubManager.fetchAllRepos();
       console.log(`📦 Got ${repos.length} repositories`);
 
-      // Fetch total commits
       const totalCommits = await githubManager.fetchTotalCommits();
       console.log(`📊 Total commits: ${totalCommits}+`);
 
-      // Fetch user profile
       const userData = await githubManager.fetchUserProfile();
       console.log(`👤 User: ${userData?.name || userData?.login || "Unknown"}`);
 
-      // Update stats
       uiRenderer.updateStats(repos, totalCommits, userData);
-
-      // Animate stats
       await uiRenderer.animateStats(githubManager);
-
-      // Render carousel & projects
       uiRenderer.renderCarousel();
       uiRenderer.renderProjects("all");
 
@@ -4180,10 +7608,11 @@
 
       uiRenderer.renderError(
         "Gagal menghubungkan ke server. Coba lagi nanti.",
-        () => window.location.reload(),
+        () => {
+          window.location.reload();
+        },
       );
 
-      // Fallback: tampilkan "—" untuk semua stats
       ["repoCount", "starCount", "commitCount"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.textContent = "—";
@@ -4194,7 +7623,7 @@
   }
 
   // ═══════════════════════════════════════════
-  // 13b. SETUP EVENT LISTENERS
+  // SETUP EVENT LISTENERS
   // ═══════════════════════════════════════════
   function setupEventListeners(
     audioManager,
@@ -4202,20 +7631,20 @@
     githubManager,
     publicAPI,
   ) {
-    // ── Navbar hover SFX ──
+    // Navbar hover SFX
     document
       .querySelectorAll(".nav-link:not(.nav-link--cta)")
       .forEach((link) => {
         link.addEventListener("mouseenter", () => {
           if (!link.classList.contains("active")) {
-            audioManager.playSFX("menuSelect");
+            audioManager?.playSFX("menuSelect");
           }
         });
       });
 
-    // ── BGM Volume Control via scroll ──
+    // BGM Volume Control via scroll
     const bgmPlayer = document.querySelector(".bgm-player");
-    if (bgmPlayer) {
+    if (bgmPlayer && audioManager) {
       bgmPlayer.addEventListener(
         "wheel",
         (e) => {
@@ -4223,63 +7652,53 @@
           const delta = e.deltaY > 0 ? -0.05 : 0.05;
           const newVolume = Math.max(
             0,
-            Math.min(1, audioManager.volume + delta),
+            Math.min(1, (audioManager.volume || 0.5) + delta),
           );
           audioManager.setVolume(newVolume);
         },
         { passive: false },
       );
 
-      // Double-click to reset volume
       bgmPlayer.addEventListener("dblclick", () => {
         audioManager.setVolume(0.5);
         audioManager.playSFX("menuSelect");
       });
     }
 
-    // ── Keyboard Shortcuts ──
-      window.addEventListener("keydown", (e) => {
-      // Jangan trigger jika user sedang mengetik di input/textarea
+    // Keyboard Shortcuts
+    window.addEventListener("keydown", (e) => {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
-      // Alt+G: Toggle guide
-      if (e.altKey && e.key === "g") {
-        e.preventDefault();
-        guideSystem.toggle();
-      }
+      switch (true) {
+        case e.altKey && e.key === "g":
+          e.preventDefault();
+          guideSystem?.toggle();
+          break;
 
-      // Alt+M: Toggle music
-      if (e.altKey && e.key === "m") {
-        e.preventDefault();
-        audioManager.toggle();
-      }
+        case e.altKey && e.key === "m":
+          e.preventDefault();
+          audioManager?.toggle();
+          break;
 
-      // Alt+C: Clear cache
-      if (e.altKey && e.key === "c") {
-        e.preventDefault();
-        githubManager.clearCache();
-        console.log("🗑️ Cache cleared!");
-        audioManager.playSFX("questClear");
-      }
+        case e.altKey && e.key === "c":
+          e.preventDefault();
+          githubManager?.clearCache();
+          audioManager?.playSFX("questClear");
+          break;
 
-      // Alt+R: Refresh stats
-      if (e.altKey && e.key === "r") {
-        e.preventDefault();
-        publicAPI.refreshStats().then((success) => {
-          if (!success) {
-            console.warn("⚠️ Stats refresh failed");
-          }
-        });
-      }
+        case e.altKey && e.key === "r":
+          e.preventDefault();
+          publicAPI?.refreshStats();
+          break;
 
-      // Escape: Close VN dialogue
-      if (e.key === "Escape") {
-        publicAPI.closeVNDialogue();
+        case e.key === "Escape":
+          publicAPI?.closeVNDialogue();
+          break;
       }
     });
 
-    // ── Service Worker Registration ──
+    // Service Worker Registration
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
@@ -4288,17 +7707,15 @@
             console.log("📦 Service Worker registered:", reg.scope);
           })
           .catch((err) => {
-            console.warn("⚠️ Service Worker registration failed:", err);
+            console.warn("⚠️ Service Worker registration failed:", err.message);
           });
       });
     }
 
-    // ── Handle online/offline events ──
+    // Online/Offline events
     window.addEventListener("online", () => {
       console.log("🌐 Back online!");
-      audioManager.playSFX("questClear");
-      // Optional: refresh data
-      // publicAPI.refreshStats();
+      audioManager?.playSFX("questClear");
     });
 
     window.addEventListener("offline", () => {
@@ -4307,47 +7724,32 @@
   }
 
   // ═══════════════════════════════════════════
-  // 14. START APPLICATION
+  // START APPLICATION (GUARDED)
   // ═══════════════════════════════════════════
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeApp);
-  } else {
-    // DOM already ready
-    initializeApp();
+  function startApp() {
+    if (_appInitialized) {
+      console.warn("⚠️ App already initialized, skipping duplicate call");
+      return;
+    }
+    _appInitialized = true;
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initializeApp);
+    } else {
+      initializeApp();
+    }
   }
+
+  // HANYA PANGGIL SEKALI
+  startApp();
 
   // ═══════════════════════════════════════════
-// 14. START APPLICATION (DIPERBAIKI)
-// ═══════════════════════════════════════════
-
-// ✅ GUARD: Cegah double initialization
-let _appInitialized = false;
-
-function startApp() {
-  if (_appInitialized) {
-    console.warn('⚠️ App already initialized, skipping duplicate call');
-    return;
-  }
-  _appInitialized = true;
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-  } else {
-    initializeApp();
-  }
-}
-
-// ✅ HANYA PANGGIL SEKALI
-startApp();
-
-// ═══════════════════════════════════════════
-// 15. HANDLE BFCACHE
-// ═══════════════════════════════════════════
-window.addEventListener('pageshow', (event) => {
-  if (event.persisted) {
-    console.log('🍁 Page restored from bfcache');
-    initLazyLoading();
-  }
-});
-
-})(); // ← END IIFE
+  // HANDLE BFCACHE
+  // ═══════════════════════════════════════════
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      console.log("🍁 Page restored from bfcache");
+      initLazyLoading();
+    }
+  });
+})();

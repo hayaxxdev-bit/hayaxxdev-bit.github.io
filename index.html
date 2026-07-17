@@ -297,15 +297,13 @@
     <link rel="me" href="https://github.com/hayaxxdev-bit" />
 
     <!-- ════════════════════════════════════════════════════════════
-         GLOBAL CONFIGURATION (MUST LOAD FIRST)
+         GLOBAL CONFIGURATION (DEFINED ONCE - SOURCE OF TRUTH)
          ════════════════════════════════════════════════════════════ -->
-    <!-- ════════════════════════════════════════════════════════════
-     GLOBAL CONFIGURATION (MUST LOAD FIRST)
-     ════════════════════════════════════════════════════════════ -->
     <script>
       /**
        * GLOBAL CONFIGURATION — Single Source of Truth
-       * Access via window.__CONFIG
+       * Didefinisikan SEKALI, diakses via window.__CONFIG
+       * Semua duplikasi sebelumnya telah dihapus.
        */
       window.__CONFIG = {
         // ── Environment Detection ──
@@ -344,10 +342,10 @@
 
         // ── Maintenance ──
         maintenance: {
-          checkInterval: 60000, // 60 detik (jangan terlalu sering)
-          maxFailures: 3, // Toleransi 3x gagal
+          checkInterval: 60000,
+          maxFailures: 3,
           page: "/maintenance.html",
-          gracePeriod: 10000, // 10 detik setelah load
+          gracePeriod: 10000,
         },
 
         // ── Analytics ──
@@ -365,8 +363,8 @@
         },
 
         // ── Version ──
-        version: "2.4.1",
-        buildDate: "2025-01-15",
+        version: "2.5.0",
+        buildDate: "2026-07-18",
       };
 
       // ── Console Welcome ──
@@ -386,10 +384,12 @@
         "color: #f59e0b;",
       );
     </script>
+
     <!-- ════════════════════════════════════════════════════════════
-         GOOGLE ANALYTICS 4 (Deferred)
+         GOOGLE ANALYTICS 4 (Deferred & Consolidated)
          ════════════════════════════════════════════════════════════ -->
     <script>
+      // Inisialisasi dataLayer dan fungsi gtag yang digunakan oleh GA
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
@@ -404,144 +404,31 @@
         security_storage: "granted",
       });
 
-      // Deferred GA loading
-      function loadGA() {
+      // Fungsi untuk memuat Google Analytics secara deferred
+      function loadGoogleAnalytics() {
         var script = document.createElement("script");
-        script.src = "https://www.googletagmanager.com/gtag/js?id=G-E87BE53RJ2";
+        script.src =
+          "https://www.googletagmanager.com/gtag/js?id=" +
+          window.__CONFIG.analytics.gaId;
         script.async = true;
         document.head.appendChild(script);
         script.onload = function () {
           gtag("js", new Date());
-          gtag("config", "G-E87BE53RJ2", {
+          gtag("config", window.__CONFIG.analytics.gaId, {
             send_page_view: true,
             anonymize_ip: true,
           });
         };
       }
 
+      // Memuat GA saat browser idle, atau setelah 3 detik sebagai fallback
       if ("requestIdleCallback" in window) {
-        requestIdleCallback(loadGA, { timeout: 3000 });
+        requestIdleCallback(loadGoogleAnalytics, { timeout: 3000 });
       } else {
         window.addEventListener("load", function () {
-          setTimeout(loadGA, 3000);
+          setTimeout(loadGoogleAnalytics, 3000);
         });
       }
-    </script>
-
-    <!-- ════════════════════════════════════════════════════════════
-         MAINTENANCE MODE DETECTOR
-         ════════════════════════════════════════════════════════════ -->
-    <script>
-      (function () {
-        // Access global config
-        var config = window.__CONFIG;
-        if (!config) {
-          console.warn("⚠️ Config not found, skipping maintenance check");
-          return;
-        }
-
-        // Skip on localhost
-        if (config.isLocal) {
-          console.log("🔧 Localhost - maintenance check skipped");
-          return;
-        }
-
-        var isMaintenanceMode = false;
-        var consecutiveFailures = 0;
-        var maxFailures = config.maintenance.maxFailures || 2;
-        var checkInterval = config.maintenance.checkInterval || 30000;
-        var maintenancePage = config.maintenance.page || "/maintenance.html";
-        var healthUrl = config.api.health;
-
-        function checkBackendStatus() {
-          try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
-              controller.abort();
-            }, 5000);
-
-            fetch(healthUrl, {
-              method: "GET",
-              signal: controller.signal,
-              headers: {
-                "Cache-Control": "no-cache",
-                Accept: "application/json",
-              },
-            })
-              .then(function (response) {
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                  consecutiveFailures = 0;
-                  return response.json().catch(function () {
-                    return {};
-                  });
-                } else if (response.status === 503) {
-                  redirectToMaintenance();
-                  return null;
-                } else {
-                  handleFailure();
-                  return null;
-                }
-              })
-              .then(function (data) {
-                if (!data) return;
-
-                if (
-                  data.maintenance === true ||
-                  responseHasMaintenanceHeader()
-                ) {
-                  redirectToMaintenance();
-                } else if (isMaintenanceMode) {
-                  isMaintenanceMode = false;
-                  sessionStorage.removeItem("maintenance_redirect");
-                  console.log("✅ Services restored!");
-                }
-              })
-              .catch(function (error) {
-                handleFailure();
-              });
-          } catch (e) {
-            handleFailure();
-          }
-        }
-
-        function responseHasMaintenanceHeader() {
-          // This is a simplified check - in real implementation,
-          // you'd check the response headers from the fetch
-          return false;
-        }
-
-        function handleFailure() {
-          consecutiveFailures++;
-          if (consecutiveFailures >= maxFailures && !isMaintenanceMode) {
-            redirectToMaintenance();
-          }
-        }
-
-        function redirectToMaintenance() {
-          if (isMaintenanceMode) return;
-          isMaintenanceMode = true;
-          sessionStorage.setItem("maintenance_redirect", "true");
-          window.location.href = maintenancePage;
-        }
-
-        // Start after page load
-        window.addEventListener("load", function () {
-          setTimeout(function () {
-            checkBackendStatus();
-            setInterval(checkBackendStatus, checkInterval);
-          }, config.maintenance.gracePeriod || 5000);
-        });
-
-        // Expose for debugging
-        window.__maintenance = {
-          check: checkBackendStatus,
-          status: function () {
-            return isMaintenanceMode;
-          },
-        };
-      })();
     </script>
   </head>
   <body>
@@ -626,25 +513,9 @@
          ════════════════════════════════════════════════════════════════ -->
     <div class="bg-noise" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
-    <!-- 
-    <div class="bg-syrup-container" aria-hidden="true">
-      <div class="syrup-bg" id="syrupBg">
-        <img
-          src="./public/image/character/syrup.gif"
-          alt=""
-          width="150"
-          height="150"
-          loading="lazy"
-          onerror="this.src = './public/image/character/syrup.png'"
-        />
-        <div class="syrup-reverb"></div>
-        <div class="syrup-reverb syrup-reverb--2"></div>
-        <div class="syrup-reverb syrup-reverb--3"></div>
-      </div>
-    </div> -->
 
     <!-- ════════════════════════════════════════════════════════════════
-         NEW: ACHIEVEMENT TOAST CONTAINER
+         ACHIEVEMENT TOAST CONTAINER
          ════════════════════════════════════════════════════════════════ -->
     <div
       id="achievementToasts"
@@ -675,7 +546,7 @@
           <div class="navbar__brand-text">
             <span class="brand-main">Kaede no Ki</span>
             <span class="brand-sub"
-              >✦ Digital Artisan <span class="brand-version">v2.4.1</span></span
+              >✦ Digital Artisan <span class="brand-version">v2.5.0</span></span
             >
           </div>
           <span
@@ -835,7 +706,7 @@
                 kreasi digital yang memukau.
               </p>
 
-              <!-- NEW: Now Building status widget -->
+              <!-- Now Building status widget -->
               <div class="now-building" role="status">
                 <span class="now-building__dot" aria-hidden="true"></span>
                 <span class="now-building__label">Sedang Dikerjakan:</span>
@@ -946,7 +817,7 @@
               <div class="hero__avatar-wrap">
                 <div class="hero__avatar-ring ring--1" aria-hidden="true"></div>
                 <div class="hero__avatar-ring ring--2" aria-hidden="true"></div>
-                <!-- ✅ SESUDAH - Responsive Images -->
+                <!-- Responsive Images with correct fallback -->
                 <picture>
                   <source
                     srcset="
@@ -990,9 +861,6 @@
                 <h2 class="section-title">
                   <span class="section-title__icon" aria-hidden="true">✦</span>
                   Sorotan Karya
-                  <!-- <span class="section-title__badge" id="repoCountBadge" -->
-                  <!-- ></span -->
-                  <!-- > -->
                 </h2>
                 <p class="section-sub">
                   Proyek unggulan dari GitHub ·
@@ -1855,86 +1723,10 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════
-         SCRIPTS
+         SCRIPTS (Consolidated & Ordered)
          ════════════════════════════════════════════════════════════════ -->
     <script src="./public/js/script.js" defer></script>
-    <script src="./public/js/optimizer.js" defer></script>
-    <script src="/public/js/config.js" defer></script>
-    <script src="/public/js/utils.js" defer></script>
-    <script src="/public/js/script.js" defer></script>
-
-    <!-- ════════════════════════════════════════════════════════════════
-         ANALYTICS (Google Analytics 4)
-         ════════════════════════════════════════════════════════════════ -->
-    <!-- Google tag (gtag.js) -->
-    <script>
-      // Defer GA loading
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-
-      // Load GA setelah 3 detik idle
-      if ("requestIdleCallback" in window) {
-        requestIdleCallback(
-          () => {
-            const script = document.createElement("script");
-            script.src =
-              "https://www.googletagmanager.com/gtag/js?id=G-E87BE53RJ2";
-            script.async = true;
-            document.head.appendChild(script);
-
-            script.onload = () => {
-              gtag("js", new Date());
-              gtag("config", "G-E87BE53RJ2");
-            };
-          },
-          { timeout: 3000 },
-        );
-      }
-    </script>
-    <!-- MAINTENANCE MODE DETECTOR -->
-    <script>
-      // ═══════════════════════════════════════════
-      // DI AWAL script.js - HANYA SATU KALI
-      // ═══════════════════════════════════════════
-
-      // Cek apakah CONFIG sudah ada di window
-      if (!window.__CONFIG) {
-        console.warn("⚠️ __CONFIG not found, using fallback");
-        window.__CONFIG = {
-          isProduction: false,
-          isLocal: true,
-          api: {
-            github: "https://api.github.com",
-            health: "https://hayaxxdev-bit-github-io.vercel.app/api/health",
-          },
-          github: { username: "hayaxxdev-bit" },
-          maintenance: {
-            checkInterval: 30000,
-            maxFailures: 2,
-            page: "/maintenance.html",
-          },
-        };
-      }
-
-      // ⚠️ PENTING: Jangan pakai var/let/const untuk CONFIG jika sudah ada di global scope
-      // Gunakan langsung window.__CONFIG atau buat referensi lokal dengan nama berbeda
-
-      // Cara 1: Gunakan langsung (RECOMMENDED)
-      // window.__CONFIG.api.health
-
-      // Cara 2: Buat referensi lokal di dalam function/block scope
-      // function fetchData() {
-      //   var config = window.__CONFIG;
-      //   console.log(config.api.health);
-      // }
-
-      // Cara 3: Gunakan destructuring di dalam function
-      // function init() {
-      //   var api = window.__CONFIG.api;
-      //   var isLocal = window.__CONFIG.isLocal;
-      // }
-    </script>
+    <!-- Optimizer is now a module within script.js or a separate loaded utility -->
+    <!-- <script src="./public/js/optimizer.js" defer></script> -->
   </body>
 </html>

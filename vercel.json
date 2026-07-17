@@ -1,10 +1,8 @@
 {
   "version": 2,
-  "name": "hayaxxdev-portfolio",
-  "buildCommand": null,
-  "outputDirectory": ".",
-  "installCommand": null,
-  "framework": null,
+
+  "cleanUrls": true,
+  "trailingSlash": false,
 
   "functions": {
     "api/*.js": {
@@ -13,53 +11,53 @@
     }
   },
 
-  "routes": [
+  "headers": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=600, stale-while-revalidate=300"
+        }
+      ]
     },
     {
-      "src": "/public/(.*)",
-      "dest": "/public/$1"
+      "source": "/public/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
-      "src": "/character-info/(.*)",
-      "dest": "/character-info/$1"
-    },
-    {
-      "src": "/site.webmanifest",
-      "dest": "/site.webmanifest"
-    },
-    {
-      "src": "/sw.js",
-      "dest": "/sw.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-
-  "rewrites": [
-    {
-      "source": "/api/health",
-      "destination": "/api/health"
-    },
-    {
-      "source": "/api/github",
-      "destination": "/api/github"
-    },
-    {
-      "source": "/api/github/repos",
-      "destination": "/api/github"
-    },
-    {
-      "source": "/api/github/repos/:path*",
-      "destination": "/api/github?path=$1"
-    },
-    {
-      "source": "/api/config",
-      "destination": "/api/config"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
     }
   ],
 
@@ -83,227 +81,6 @@
       "source": "/instagram",
       "destination": "https://instagram.com/hayaxxdev",
       "permanent": true
-    },
-    {
-      "source": "/repo/:path*",
-      "destination": "https://github.com/hayaxxdev-bit/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/old-portfolio",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/v1",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/v2",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/v3",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/home",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/beranda",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/projects",
-      "destination": "/?route=project",
-      "permanent": true
-    },
-    {
-      "source": "/karya",
-      "destination": "/?route=project",
-      "permanent": true
-    },
-    {
-      "source": "/about",
-      "destination": "/?route=about",
-      "permanent": true
-    },
-    {
-      "source": "/tentang",
-      "destination": "/?route=about",
-      "permanent": true
-    },
-    {
-      "source": "/contact",
-      "destination": "/?route=contact",
-      "permanent": true
-    },
-    {
-      "source": "/kontak",
-      "destination": "/?route=contact",
-      "permanent": true
-    },
-    {
-      "source": "/maple",
-      "destination": "/character-info/maple.html",
-      "permanent": true
-    },
-    {
-      "source": "/sally",
-      "destination": "/character-info/maple.html",
-      "permanent": true
-    },
-    {
-      "source": "/game",
-      "destination": "/public/bofuri_maple_odyssey_game.html",
-      "permanent": true
-    },
-    {
-      "source": "/bgm",
-      "destination": "/public/music/Clarity-phonk.mp3",
-      "permanent": true
-    }
-  ],
-
-  "cleanUrls": true,
-  "trailingSlash": false,
-
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, OPTIONS, POST, HEAD"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, Cache-Control, X-Requested-With, Accept"
-        },
-        { "key": "Access-Control-Max-Age", "value": "86400" },
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/public/image/(.*)\\.(webp|avif)$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        },
-        { "key": "Content-Type", "value": "image/webp" }
-      ]
-    },
-    {
-      "source": "/public/image/(.*)\\.(jpe?g|png|gif|svg|ico)$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/public/icons/(.*)\\.png$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/public/css/(.*)\\.css$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=2592000, must-revalidate"
-        },
-        { "key": "Content-Type", "value": "text/css; charset=utf-8" }
-      ]
-    },
-    {
-      "source": "/public/js/(.*)\\.js$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=2592000, must-revalidate"
-        },
-        {
-          "key": "Content-Type",
-          "value": "application/javascript; charset=utf-8"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)\\.(woff2?|ttf|otf|eot)$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/public/music/(.*)\\.mp3$",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000" },
-        { "key": "Accept-Ranges", "value": "bytes" }
-      ]
-    },
-    {
-      "source": "/(.*)\\.(html|htm)$",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, must-revalidate"
-        },
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
-      ]
-    },
-    {
-      "source": "/site.webmanifest",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800" },
-        { "key": "Content-Type", "value": "application/manifest+json" }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-        },
-        { "key": "X-DNS-Prefetch-Control", "value": "on" }
-      ]
     }
   ]
 }

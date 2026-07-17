@@ -1,91 +1,161 @@
-// api/repos.js
-// Backend API untuk mengambil data GitHub dengan autentikasi
-// Menggunakan Vercel Serverless Functions
+// api/github.js
+
+const GITHUB_API = "https://api.github.com";
 
 export default async function handler(req, res) {
-  // Set CORS headers - Izinkan akses dari domain GitHub Pages
   const allowedOrigins = [
-    'https://hayaxxdev-bit.github.io',
-    'https://hayaxxdev-bit.my.id',
-    'http://localhost:3000',
-    'http://localhost:5500'
+    "https://hayaxxdev-bit.github.io",
+    "https://hayaxxdev-bit.my.id",
+    "http://localhost:5500",
+    "http://localhost:3000",
   ];
-  
+
   const origin = req.headers.origin;
+
   if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle preflight request
-  if (req.method === 'OPTIONS') {
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // Hanya izinkan GET request
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
+    });
   }
 
-  // Cache headers
-  res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=300');
+  const username = req.query.username || "hayaxxdev-bit";
+  const action = req.query.action || "repos";
+  const repo = req.query.repo;
 
   try {
-    const { username, all } = req.query;
-    const githubUsername = username || 'hayaxxdev-bit';
-    
-    console.log(`Fetching repos for: ${githubUsername}`);
-    
-    // Fetch repos dari GitHub API
-    const url = `https://api.github.com/users/${githubUsername}/repos?sort=updated&per_page=100`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `token ${process.env.GITHUB_TOKEN}`,
-        'User-Agent': 'hayaxxdev-portfolio',
-        'Accept': 'application/vnd.github.v3+json'
-      }
+    let githubURL;
+    let headers = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "hayaxxdev-portfolio",
+    };
+
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
+
+    switch (action) {
+      case "repos":
+        githubURL =
+          `${GITHUB_API}/users/${username}/repos` +
+          "?sort=updated&per_page=100";
+        break;
+
+      case "user":
+        githubURL =
+          `${GITHUB_API}/users/${username}`;
+        break;
+
+      case "readme":
+        if (!repo) {
+          return res.status(400).json({
+            success: false,
+            error: "repo parameter required",
+          });
+        }
+
+        githubURL =
+          `${GITHUB_API}/repos/${username}/${repo}/readme`;
+
+        headers.Accept =
+          "application/vnd.github.raw";
+        break;
+
+      case "commits":
+        githubURL =
+          `${GITHUB_API}/users/${username}/events/public`;
+        break;
+
+      default:
+        return res.status(400).json({
+          success: false,
+          error: "Unknown action",
+        });
+    }
+
+    const response = await fetch(githubURL, {
+      headers,
     });
 
     if (!response.ok) {
-      console.error(`GitHub API error: ${response.status}`);
-      throw new Error(`GitHub API returned ${response.status}`);
+      return res.status(response.status).json({
+        success: false,
+        error: await response.text(),
+      });
     }
 
-    const repos = await response.json();
-    
-    // Transform data
-    const transformedRepos = repos.map(repo => ({
-      id: repo.id,
-      name: repo.name,
-      description: repo.description,
-      language: repo.language,
-      stargazers_count: repo.stargazers_count,
-      forks_count: repo.forks_count,
-      html_url: repo.html_url,
-      homepage: repo.homepage,
-      has_pages: repo.has_pages,
-      updated_at: repo.updated_at,
-      created_at: repo.created_at,
-      topics: repo.topics || [],
-      fork: repo.fork,
-      size: repo.size
-    }));
+    if (action === "readme") {
+      const text = await response.text();
 
-    return res.status(200).json({
-      success: true,
-      username: githubUsername,
-      total: transformedRepos.length,
-      repos: transformedRepos
-    });
+      return res.status(200).send(text);
+    }
 
-  } catch (error) {
-    console.error('Error fetching repos:', error);
-    return res.status(500).json({ 
+    const data = await response.json();
+
+    if (action === "repos") {
+      return res.status(200).json({
+        success: true,
+        repos: data.map((repo) => ({
+          id: repo.id,
+          name: repo.name,
+          description: repo.description,
+          language: repo.language,
+          homepage: repo.homepage,
+          html_url: repo.html_url,
+          stargazers_count: repo.stargazers_count,
+          forks_count: repo.forks_count,
+          has_pages: repo.has_pages,
+          topics: repo.topics,
+          created_at: repo.created_at,
+          updated_at: repo.updated_at,
+          fork: repo.fork,
+          size: repo.size,
+        })),
+      });
+    }
+
+    if (action === "user") {
+      return res.status(200).json({
+        success: true,
+        user: data,
+      });
+    }
+
+    if (action === "commits") {
+      const total = data
+        .filter((e) => e.type === "PushEvent")
+        .reduce(
+          (sum, e) =>
+            sum + (e.payload?.commits?.length || 0),
+          0
+        );
+
+      return res.status(200).json({
+        success: true,
+        total_commits: total,
+        events: data,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
       success: false,
-      error: error.message 
+      error: err.message,
     });
   }
 }
