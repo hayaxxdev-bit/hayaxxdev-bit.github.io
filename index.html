@@ -304,21 +304,20 @@
      ════════════════════════════════════════════════════════════ -->
     <script>
       /**
-       * Global Configuration Object
-       * Access via window.__CONFIG only
-       * DO NOT create alias CONFIG here - let script.js handle it
+       * GLOBAL CONFIGURATION — Single Source of Truth
+       * Access via window.__CONFIG
        */
       window.__CONFIG = {
         // ── Environment Detection ──
         isProduction: window.location.hostname === "hayaxxdev-bit.my.id",
         isVercel: window.location.hostname.includes("vercel.app"),
+        isGitHubPages: window.location.hostname.includes("github.io"),
         isLocal:
           ["localhost", "127.0.0.1", "0.0.0.0"].includes(
             window.location.hostname,
           ) ||
           window.location.port === "5500" ||
           window.location.protocol === "file:",
-        isGitHubPages: window.location.hostname.includes("github.io"),
 
         // ── Domain ──
         domain: "hayaxxdev-bit.my.id",
@@ -345,10 +344,10 @@
 
         // ── Maintenance ──
         maintenance: {
-          checkInterval: 30000,
-          maxFailures: 2,
+          checkInterval: 60000, // 60 detik (jangan terlalu sering)
+          maxFailures: 3, // Toleransi 3x gagal
           page: "/maintenance.html",
-          gracePeriod: 5000,
+          gracePeriod: 10000, // 10 detik setelah load
         },
 
         // ── Analytics ──

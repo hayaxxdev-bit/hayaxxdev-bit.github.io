@@ -5,14 +5,14 @@
   "outputDirectory": ".",
   "installCommand": null,
   "framework": null,
-  
+
   "functions": {
     "api/*.js": {
       "memory": 256,
       "maxDuration": 10
     }
   },
-  
+
   "routes": [
     {
       "src": "/api/(.*)",
@@ -39,7 +39,7 @@
       "dest": "/$1"
     }
   ],
-  
+
   "rewrites": [
     {
       "source": "/api/health",
@@ -62,7 +62,7 @@
       "destination": "/api/config"
     }
   ],
-  
+
   "redirects": [
     {
       "source": "/github",
@@ -170,58 +170,88 @@
       "permanent": true
     }
   ],
-  
+
   "cleanUrls": true,
   "trailingSlash": false,
-  
+
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS, POST" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With" },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS, POST, HEAD"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, Cache-Control, X-Requested-With, Accept"
+        },
         { "key": "Access-Control-Max-Age", "value": "86400" },
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/public/image/(.*)\\.(webp|avif)$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
         { "key": "Content-Type", "value": "image/webp" }
       ]
     },
     {
       "source": "/public/image/(.*)\\.(jpe?g|png|gif|svg|ico)$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/public/icons/(.*)\\.png$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/public/css/(.*)\\.css$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=2592000, must-revalidate" },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, must-revalidate"
+        },
         { "key": "Content-Type", "value": "text/css; charset=utf-8" }
       ]
     },
     {
       "source": "/public/js/(.*)\\.js$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=2592000, must-revalidate" },
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
       ]
     },
     {
       "source": "/(.*)\\.(woff2?|ttf|otf|eot)$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
@@ -234,7 +264,10 @@
     {
       "source": "/(.*)\\.(html|htm)$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        },
         { "key": "Content-Type", "value": "text/html; charset=utf-8" }
       ]
     },
@@ -248,7 +281,10 @@
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
         { "key": "Service-Worker-Allowed", "value": "/" }
       ]
     },
@@ -258,8 +294,14 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+        },
         { "key": "X-DNS-Prefetch-Control", "value": "on" }
       ]
     }

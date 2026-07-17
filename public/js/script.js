@@ -1026,6 +1026,7 @@
       this.currentFullText = "";
       this.currentDialogueIndex = 0;
       this.totalDialogues = 0;
+       this._currentDialogues = null; // ✅ Tambahkan ini
 
       // AI Memory System
       this.userMemory = {
@@ -1707,14 +1708,21 @@
       const templates = this.dialogueTemplates.get(route);
       if (!templates) return this._generateWelcomeDialogue();
 
-      // Random pilih generator
-      const generator =
-        templates.generators[
-          Math.floor(Math.random() * templates.generators.length)
-        ];
-      const generated = generator();
+      // ✅ Pilih generator & panggil SEKALI
+      const randomIndex = Math.floor(
+        Math.random() * templates.generators.length,
+      );
+      const generator = templates.generators[randomIndex];
 
-      return generated || this._generateWelcomeDialogue();
+      // ✅ Simpan hasilnya, jangan panggil berulang
+      const generated = generator.call(this);
+
+      if (generated && generated.length > 0) {
+        // ✅ Deep clone untuk mencegah reference issue
+        return JSON.parse(JSON.stringify(generated));
+      }
+
+      return this._generateWelcomeDialogue();
     }
 
     _getRouteConfig(route) {
@@ -1842,7 +1850,10 @@
       if (this.progressBar && this.totalDialogues > 0) {
         const progress =
           ((this.currentDialogueIndex + 1) / this.totalDialogues) * 100;
-        this.progressBar.style.width = `${progress}%`;
+        this.progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+
+        // ✅ Tambahkan aria-label untuk aksesibilitas
+        this.progressBar.setAttribute("aria-valuenow", Math.round(progress));
       }
     }
 
@@ -1920,15 +1931,18 @@
     }
 
     open(route, customText = null) {
+      // ── Reset jika route berbeda ──
       if (this.isOpen && this.currentRoute !== route) {
-        this.close();
+        this._currentDialogues = null;
+        this.currentDialogueIndex = 0;
       }
 
+      // ── Set state ──
       this.currentRoute = route;
       this.isOpen = true;
       this.currentDialogueIndex = 0;
 
-      // Update memory
+      // ── Update memory ──
       if (route === "home" && this.userMemory.visitCount === 0) {
         this.userMemory.visitCount = 1;
         this.achievementSystem?.unlock("first_visit");
@@ -1938,33 +1952,63 @@
       this.userMemory.lastVisitTime = new Date().toISOString();
       this._saveMemory();
 
-      // Get dialogues
-      const dialogues = customText
-        ? [{ speaker: "🍁 Maple", text: customText, emotion: "😊" }]
-        : this._getDialogues(route);
+      // ── Generate dialogues (SEKALI SAJA) ──
+      if (customText) {
+        this._currentDialogues = [
+          { speaker: "🍁 Maple", text: customText, emotion: "😊" },
+        ];
+      } else {
+        // ✅ PENTING: Simpan hasil generate, jangan regenerate setiap next()
+        this._currentDialogues = this._getDialogues(route);
+      }
 
-      this.totalDialogues = dialogues.length;
+      // ── Validasi ──
+      if (!this._currentDialogues || !this._currentDialogues.length) {
+        console.warn("⚠️ No dialogues generated for route:", route);
+        this._currentDialogues = [
+          {
+            speaker: "🍁 Maple",
+            text: "Ehehe... sepertinya aku kehabisan kata-kata nih~ Coba lagi nanti ya! ✨",
+            emotion: "😅",
+          },
+        ];
+      }
 
-      // Show container
-      this.container?.classList.add("vn-container--active");
-      this.container?.removeAttribute("hidden");
-      this.container?.setAttribute("data-current-route", route);
+      this.totalDialogues = this._currentDialogues.length;
 
-      // Update UI
+      // ── Show container ──
+      if (this.container) {
+        this.container.classList.add("vn-container--active");
+        this.container.removeAttribute("hidden");
+        this.container.setAttribute("data-current-route", route);
+        this.container.setAttribute("aria-hidden", "false");
+      }
+
+      // ── Update UI ──
       this._updateRouteBadge(route);
       this._updateContext(route);
       this._updateProgress();
 
-      // Play sound
+      // ── Play sound ──
       this.audioManager?.playSFX("dialogue");
 
-      // Track achievement
+      // ── Track achievement ──
       if (this.userMemory.totalInteractions >= 5) {
         this.achievementSystem?.unlock("dialog_master");
       }
 
-      // Type first dialogue
-      this._typeText(dialogues[0]);
+      // ── Type first dialogue ──
+      if (this._currentDialogues.length > 0) {
+        const firstDialogue = this._currentDialogues[0];
+
+        // ✅ Debug: Log text sebelum typing
+        console.log(
+          `📝 [${route}] Dialogue 1/${this.totalDialogues}:`,
+          firstDialogue.text.substring(0, 50) + "...",
+        );
+
+        this._typeText(firstDialogue);
+      }
     }
 
     _typeText(dialogue) {
@@ -1983,13 +2027,18 @@
 
       if (!this.messageEl) return;
 
+      // Clear previous content
       this.messageEl.innerHTML = "";
       this.messageEl.classList.add("vn-message--new");
       setTimeout(() => this.messageEl.classList.remove("vn-message--new"), 300);
 
+      // Clear quick replies
       this.quickRepliesEl?.classList.remove("vn-quick-replies--active");
 
       const text = dialogue.text;
+      const hasHTML = /<[^>]+>/.test(text);
+
+      // ✅ DEKLARASI VARIABEL DI SINI
       let charIndex = 0;
       const speed =
         CONFIG.TYPING_SPEED_MIN +
@@ -1997,20 +2046,32 @@
 
       const type = () => {
         if (charIndex < text.length) {
+          // Handle HTML tags
           if (text[charIndex] === "<") {
             const endTag = text.indexOf(">", charIndex);
             if (endTag !== -1) {
-              this.messageEl.innerHTML += text.substring(charIndex, endTag + 1);
+              // ✅ Gunakan insertAdjacentHTML agar tidak overwrite
+              const tagContent = text.substring(charIndex, endTag + 1);
+              this.messageEl.insertAdjacentHTML("beforeend", tagContent);
               charIndex = endTag + 1;
+              this.typeTimer = setTimeout(type, speed);
+              return;
             }
           }
 
-          this.messageEl.innerHTML += text.charAt(charIndex);
+          // ✅ Untuk teks biasa, gunakan insertAdjacentText
+          // Ini lebih aman karena tidak meng-overwrite innerHTML
+          this.messageEl.insertAdjacentText(
+            "beforeend",
+            text.charAt(charIndex),
+          );
           charIndex++;
           this.typeTimer = setTimeout(type, speed);
         } else {
+          // ✅ Selesai mengetik
           this.isTyping = false;
 
+          // Tambahkan cursor
           this.messageEl.insertAdjacentHTML(
             "beforeend",
             '<span class="typing-cursor"></span>',
@@ -2020,6 +2081,7 @@
             cursor?.remove();
           }, 800);
 
+          // Tampilkan quick replies setelah selesai
           if (dialogue.quickReplies) {
             setTimeout(() => {
               this._showQuickReplies(dialogue.quickReplies);
@@ -2041,30 +2103,54 @@
       this.isTyping = false;
     }
 
+    // ═══════════════ PERBAIKAN _skipTyping ═══════════════
+    _skipTyping() {
+      if (this.typeTimer) {
+        clearTimeout(this.typeTimer);
+        this.typeTimer = null;
+      }
+      this.isTyping = false;
+      if (this.messageEl) {
+        // ✅ Tampilkan full text dengan HTML tags yang utuh
+        this.messageEl.innerHTML = this.currentFullText;
+      }
+      this.audioManager?.playSFX("menuSelect");
+    }
+
     next() {
+      // ── Skip typing jika sedang mengetik ──
       if (this.isTyping) {
         this._skipTyping();
         return;
       }
 
-      const dialogues = this._getDialogues(this.currentRoute);
-      if (!dialogues?.length) {
+      // ── Gunakan dialogues yang sudah disimpan ──
+      if (!this._currentDialogues || !this._currentDialogues.length) {
+        console.warn("⚠️ No dialogues available");
         this.close();
         return;
       }
 
+      // ── Increment index ──
       this.currentDialogueIndex++;
 
-      if (this.currentDialogueIndex >= dialogues.length) {
+      // ── Cek apakah sudah habis ──
+      if (this.currentDialogueIndex >= this._currentDialogues.length) {
         this.close();
         return;
       }
 
-      const nextDialogue = dialogues[this.currentDialogueIndex];
+      // ── Type next dialogue ──
+      const nextDialogue = this._currentDialogues[this.currentDialogueIndex];
+
+      console.log(
+        `📝 [${this.currentRoute}] Dialogue ${this.currentDialogueIndex + 1}/${this.totalDialogues}:`,
+        nextDialogue.text.substring(0, 50) + "...",
+      );
+
       this.audioManager?.playSFX("dialogue");
       this._typeText(nextDialogue);
     }
-
     skipAll() {
       this.stopTyping();
       this.close();
@@ -2085,12 +2171,21 @@
     close() {
       this.stopTyping();
       this.isOpen = false;
+
+      // ✅ Reset dialogues saat close
+      this._currentDialogues = null;
+      this.currentDialogueIndex = 0;
+
       this.quickRepliesEl?.classList.remove("vn-quick-replies--active");
-      this.container?.classList.remove("vn-container--active");
-      this.container?.setAttribute("hidden", "");
+
+      if (this.container) {
+        this.container.classList.remove("vn-container--active");
+        this.container.setAttribute("hidden", "");
+        this.container.setAttribute("aria-hidden", "true");
+      }
+
       this.audioManager?.playSFX("close");
     }
-
     isActive() {
       return this.isOpen;
     }
@@ -3812,75 +3907,84 @@
 
     skillBars.forEach((bar) => observer.observe(bar));
   }
-function initLazyLoading() {
-  // ✅ HANYA pilih gambar, jangan elemen lain
-  // ✅ KECUALIKAN gambar di dalam VN dialogue
-  const lazyImages = document.querySelectorAll([
-    'img[loading="lazy"]:not(.vn-avatar-img):not(.vn-avatar-emotion)',
-    'img[data-src]:not(.vn-avatar-img):not(.vn-avatar-emotion)',
-    '.slide__screenshot[loading="lazy"]',
-    '.card-art[loading="lazy"]',
-    '.char-card img[loading="lazy"]',
-  ].join(','));
-  
-  if (!lazyImages.length) {
-    console.log('📸 No lazy images found');
-    return;
-  }
-  
-  console.log(`📸 Found ${lazyImages.length} lazy images`);
+  function initLazyLoading() {
+    // ✅ HANYA pilih gambar, jangan elemen lain
+    // ✅ KECUALIKAN gambar di dalam VN dialogue
+    const lazyImages = document.querySelectorAll(
+      [
+        'img[loading="lazy"]:not(.vn-avatar-img):not(.vn-avatar-emotion)',
+        "img[data-src]:not(.vn-avatar-img):not(.vn-avatar-emotion)",
+        '.slide__screenshot[loading="lazy"]',
+        '.card-art[loading="lazy"]',
+        '.char-card img[loading="lazy"]',
+      ].join(","),
+    );
 
-  if (!('IntersectionObserver' in window)) {
-    // Fallback: load all images immediately
-    lazyImages.forEach(img => {
-      if (img.dataset.src) {
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-      }
-    });
-    return;
-  }
+    if (!lazyImages.length) {
+      console.log("📸 No lazy images found");
+      return;
+    }
 
-  const imageObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const img = entry.target;
-        
-        // ✅ Hanya proses gambar, jangan sentuh elemen lain
-        if (img.tagName !== 'IMG') return;
-        
-        // Handle data-src
+    console.log(`📸 Found ${lazyImages.length} lazy images`);
+
+    if (!("IntersectionObserver" in window)) {
+      // Fallback: load all images immediately
+      lazyImages.forEach((img) => {
         if (img.dataset.src) {
           img.src = img.dataset.src;
-          img.removeAttribute('data-src');
+          img.removeAttribute("data-src");
         }
-        
-        // Handle srcset
-        if (img.dataset.srcset) {
-          img.srcset = img.dataset.srcset;
-          img.removeAttribute('data-srcset');
-        }
-        
-        // Handle fallback icon
-        if (img.dataset.fallbackIcon && img.complete && img.naturalWidth === 0) {
-          // Gambar gagal load
-        }
-        
-        imageObserver.unobserve(img);
+      });
+      return;
+    }
+
+    const imageObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+
+            // ✅ Hanya proses gambar, jangan sentuh elemen lain
+            if (img.tagName !== "IMG") return;
+
+            // Handle data-src
+            if (img.dataset.src) {
+              img.src = img.dataset.src;
+              img.removeAttribute("data-src");
+            }
+
+            // Handle srcset
+            if (img.dataset.srcset) {
+              img.srcset = img.dataset.srcset;
+              img.removeAttribute("data-srcset");
+            }
+
+            // Handle fallback icon
+            if (
+              img.dataset.fallbackIcon &&
+              img.complete &&
+              img.naturalWidth === 0
+            ) {
+              // Gambar gagal load
+            }
+
+            imageObserver.unobserve(img);
+          }
+        });
+      },
+      {
+        rootMargin: "200px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    lazyImages.forEach((img) => {
+      // ✅ Pastikan hanya gambar yang diobservasi
+      if (img.tagName === "IMG") {
+        imageObserver.observe(img);
       }
     });
-  }, {
-    rootMargin: '200px 0px',
-    threshold: 0.01,
-  });
-
-  lazyImages.forEach(img => {
-    // ✅ Pastikan hanya gambar yang diobservasi
-    if (img.tagName === 'IMG') {
-      imageObserver.observe(img);
-    }
-  });
-}
+  }
 
   // ═══════════════════════════════════════════
   // 13. INITIALIZATION (DIPERBAIKI)
@@ -4134,7 +4238,7 @@ function initLazyLoading() {
     }
 
     // ── Keyboard Shortcuts ──
-    document.addEventListener("keydown", (e) => {
+      window.addEventListener("keydown", (e) => {
       // Jangan trigger jika user sedang mengetik di input/textarea
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
@@ -4213,13 +4317,37 @@ function initLazyLoading() {
   }
 
   // ═══════════════════════════════════════════
-  // 15. HANDLE BFCACHE
-  // ═══════════════════════════════════════════
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
-      console.log("🍁 Page restored from bfcache");
-      // Re-initialize lazy loading for any new content
-      initLazyLoading();
-    }
-  });
+// 14. START APPLICATION (DIPERBAIKI)
+// ═══════════════════════════════════════════
+
+// ✅ GUARD: Cegah double initialization
+let _appInitialized = false;
+
+function startApp() {
+  if (_appInitialized) {
+    console.warn('⚠️ App already initialized, skipping duplicate call');
+    return;
+  }
+  _appInitialized = true;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  } else {
+    initializeApp();
+  }
+}
+
+// ✅ HANYA PANGGIL SEKALI
+startApp();
+
+// ═══════════════════════════════════════════
+// 15. HANDLE BFCACHE
+// ═══════════════════════════════════════════
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    console.log('🍁 Page restored from bfcache');
+    initLazyLoading();
+  }
+});
+
 })(); // ← END IIFE
