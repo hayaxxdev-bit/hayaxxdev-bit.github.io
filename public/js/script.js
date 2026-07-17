@@ -2802,6 +2802,9 @@
       return allRepos.length > 0 ? this._normalizeRepos(allRepos) : null;
     }
 
+    // ═══════════════════════════════════════════
+    // PERBAIKAN 1: Normalize Repos (Tambahkan pushed_at)
+    // ═══════════════════════════════════════════
     _normalizeRepos(repos) {
       return repos.map((repo) => ({
         // Core fields
@@ -2825,7 +2828,6 @@
           `https://github.com/${this.username}/${repo.name}`,
         homepage: repo.homepage || null,
         clone_url: repo.clone_url || null,
-        demo_url: repo.demo_url || null, // Custom field for demo links
 
         // Flags
         fork: repo.fork || false,
@@ -2833,16 +2835,15 @@
         has_issues: repo.has_issues !== false,
         has_projects: repo.has_projects !== false,
         has_wiki: repo.has_wiki !== false,
-        has_discussions: repo.has_discussions || false,
         archived: repo.archived || false,
         disabled: repo.disabled || false,
 
-        // Dates
+        // ⚠️ DATES - TAMBAHKAN pushed_at!
         created_at:
           repo.created_at || repo.createdAt || new Date().toISOString(),
         updated_at:
           repo.updated_at || repo.updatedAt || new Date().toISOString(),
-        pushed_at: repo.pushed_at || repo.pushedAt || null,
+        pushed_at: repo.pushed_at || repo.pushedAt || repo.updated_at || null, // ← TAMBAHKAN!
 
         // Metadata
         topics: repo.topics || [],
@@ -2852,9 +2853,9 @@
 
         // Custom
         isPinned: this.pinnedRepos.has(repo.name),
-        readme: null, // Will be populated later
-        category: null, // Will be categorized later
-        score: 0, // Will be calculated for sorting
+        readme: null,
+        category: null,
+        score: 0,
       }));
     }
 
@@ -3076,53 +3077,147 @@
     }
 
     async _fetchReadmeFromRaw(repoName) {
-      const branches = ["main", "master", "gh-pages"];
-      const filenames = [
-        "README.md",
-        "readme.md",
-        "Readme.md",
-        "README.MD",
-        "README.markdown",
-        "README",
-        "README.txt",
+      // ⛔ HANYA 2 PERCOBAAN! Jangan coba semua kombinasi!
+      const attempts = [
+        `https://raw.githubusercontent.com/${this.username}/${repoName}/main/README.md`,
+        `https://raw.githubusercontent.com/${this.username}/${repoName}/master/README.md`,
       ];
 
-      // Try in parallel within each branch
-      for (const branch of branches) {
-        const results = await Promise.allSettled(
-          filenames.map(async (filename) => {
-            const url = `${this.GITHUB_RAW}/${repoName}/${branch}/${filename}`;
-            const response = await fetch(url, {
-              signal: AbortSignal.timeout(5000),
-            });
+      for (const url of attempts) {
+        try {
+          // ⏱️ Timeout 3 detik
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3000);
 
-            if (response.ok) {
-              const text = await response.text();
-              if (
-                text &&
-                text.length > 10 &&
-                !text.includes("<!DOCTYPE html>")
-              ) {
-                return { text, branch, filename };
-              }
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeout);
+
+          if (response.ok) {
+            const text = await response.text();
+            if (text && text.length > 10 && !text.includes("<!DOCTYPE html>")) {
+              console.log(`✅ README found: ${repoName}`);
+              return text;
             }
-            return null;
-          }),
-        );
-
-        for (const result of results) {
-          if (result.status === "fulfilled" && result.value) {
-            console.log(
-              `✅ README ${repoName}: ${result.value.branch}/${result.value.filename}`,
-            );
-            return result.value.text;
           }
+        } catch (e) {
+          // Skip error, coba next attempt
+          continue;
         }
       }
 
+      // Jika tidak ditemukan, return null (JANGAN coba branch/filename lain!)
+      console.log(`📭 No README for: ${repoName}`);
       return null;
     }
 
+    // ═══════════════════════════════════════════
+    // TAMBAHKAN: Cache untuk repo tanpa README
+    // ═══════════════════════════════════════════
+
+    async fetchReadme(repoName) {
+      const cacheKey = `readme_${repoName}`;
+
+      // Cek cache
+      const cached = this.cache.get(cacheKey);
+      if (cached !== undefined) {
+        return cached; // Bisa null (jika sebelumnya tidak ditemukan)
+      }
+
+      let readme = null;
+
+      // Strategy 1: Custom API
+      try {
+        readme = await this._fetchReadmeFromCustomAPI(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {}
+
+      // Strategy 2: GitHub API
+      try {
+        readme = await this._fetchReadmeFromGitHubAPI(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {}
+
+      // Strategy 3: Raw (HANYA 2 attempts!)
+      try {
+        readme = await this._fetchReadmeFromRaw(repoName);
+        if (readme) {
+          this.cache.set(cacheKey, readme, 3600000);
+          return readme;
+        }
+      } catch (e) {}
+
+      // ⚠️ PENTING: Cache null result juga!
+      // Ini mencegah 404 storm di masa depan
+      this.cache.set(cacheKey, null, 1800000); // 30 menit
+      return null;
+    }
+
+    // ═══════════════════════════════════════════
+    // TAMBAHKAN: Batasi jumlah README fetch paralel
+    // ═══════════════════════════════════════════
+
+    async _fetchReadmesInBatches(repos, batchSize = 2) {
+      // Kurangi batch size!
+      const results = [];
+
+      // ⚠️ HANYA fetch untuk repo yang punya konten
+      const reposToFetch = repos.filter((repo) => {
+        if (!repo.size || repo.size < 50) {
+          console.log(`⏭️ Skipping ${repo.name} (size: ${repo.size || 0})`);
+          return false;
+        }
+        return true;
+      });
+
+      // ⚠️ BATASI maksimal 6 repo
+      const limitedRepos = reposToFetch.slice(0, 6);
+
+      console.log(
+        `📄 Fetching README for ${limitedRepos.length} repos (limited to 6)`,
+      );
+
+      for (let i = 0; i < limitedRepos.length; i += batchSize) {
+        const batch = limitedRepos.slice(i, i + batchSize);
+
+        const batchResults = await Promise.allSettled(
+          batch.map(async (repo) => {
+            try {
+              const readme = await this.fetchReadme(repo.name);
+              return { ...repo, readme };
+            } catch (e) {
+              return { ...repo, readme: null };
+            }
+          }),
+        );
+
+        results.push(
+          ...batchResults.map((r, idx) =>
+            r.status === "fulfilled"
+              ? r.value
+              : { ...batch[idx], readme: null },
+          ),
+        );
+
+        console.log(
+          `  📄 README: ${Math.min(i + batchSize, limitedRepos.length)}/${limitedRepos.length}`,
+        );
+
+        // ⚠️ Delay antar batch untuk menghindari rate limit
+        if (i + batchSize < limitedRepos.length) {
+          await this._sleep(500);
+        }
+      }
+
+      // Tambahkan repos yang tidak di-fetch
+      const skippedRepos = repos.filter((r) => !limitedRepos.includes(r));
+      return [...results, ...skippedRepos.map((r) => ({ ...r, readme: null }))];
+    }
     // ═══════════════ TOTAL COMMITS CALCULATION ═══════════════
 
     async fetchTotalCommits() {
@@ -3381,7 +3476,9 @@
     }
 
     // ═══════════════ TOTALS CALCULATION ═══════════════
-
+    // ═══════════════════════════════════════════
+    // PERBAIKAN 2: Calculate Totals (Tambahkan lastActiveDate)
+    // ═══════════════════════════════════════════
     _calculateTotals() {
       this.totalStars = this.repositories.reduce(
         (sum, r) => sum + (r.stargazers_count || 0),
@@ -3396,29 +3493,46 @@
         0,
       );
 
-      // Calculate dates
+      // ⚠️ TAMBAHKAN: Calculate last active date dari pushed_at
+      this.lastActiveDate = this._getLastActiveDate();
       this._oldestRepoDate = this._getOldestRepoDate();
       this._newestRepoDate = this._getNewestRepoDate();
+
+      console.log(
+        `🕐 Last active (calculated): ${this.lastActiveDate ? timeAgo(this.lastActiveDate) : "N/A"}`,
+      );
+    }
+
+    // ⚠️ TAMBAHKAN: Method untuk mendapatkan last active date
+    _getLastActiveDate() {
+      if (this.repositories.length === 0) return null;
+
+      // Cari pushed_at terbaru dari semua repo
+      const dates = this.repositories
+        .map((repo) => repo.pushed_at || repo.updated_at)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b) - new Date(a));
+
+      return dates.length > 0 ? dates[0] : null;
     }
 
     _getOldestRepoDate() {
       if (this.repositories.length === 0) return null;
-      return (
-        [...this.repositories].sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at),
-        )[0]?.created_at || null
-      );
+      const dates = this.repositories
+        .map((repo) => repo.created_at)
+        .filter(Boolean)
+        .sort((a, b) => new Date(a) - new Date(b));
+      return dates.length > 0 ? dates[0] : null;
     }
 
     _getNewestRepoDate() {
       if (this.repositories.length === 0) return null;
-      return (
-        [...this.repositories].sort(
-          (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
-        )[0]?.updated_at || null
-      );
+      const dates = this.repositories
+        .map((repo) => repo.updated_at)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b) - new Date(a));
+      return dates.length > 0 ? dates[0] : null;
     }
-
     // ═══════════════ BACKGROUND SYNC ═══════════════
 
     startAutoSync(intervalMs = 300000) {
@@ -3522,6 +3636,82 @@
       this.repositories = [];
       this.profile = null;
       console.log("📦 GitHubManager destroyed");
+    }
+    // ═══════════════════════════════════════════
+    // PERBAIKAN 3: Fetch Last Activity dari Events API
+    // ═══════════════════════════════════════════
+    async fetchLastActivity() {
+      const cacheKey = `last_activity_${this.username}`;
+
+      // Cek cache (hanya 5 menit untuk data aktivitas)
+      const cached = this.cache.get(cacheKey);
+      if (cached && Date.now() - cached._cacheTime < 300000) {
+        console.log("📦 Using cached last activity");
+        return cached;
+      }
+
+      console.log("🔍 Fetching last activity from GitHub Events...");
+
+      try {
+        // Strategy 1: GitHub Events API
+        const url = `https://api.github.com/users/${this.username}/events/public?per_page=5`;
+        const response = await this._fetchWithRetry(url, {
+          retries: 1,
+          timeout: 5000,
+        });
+
+        if (response.ok) {
+          const events = await response.json();
+
+          if (events.length > 0) {
+            // Cari event yang menunjukkan aktivitas real
+            const activityEvents = events.filter((e) =>
+              [
+                "PushEvent",
+                "CreateEvent",
+                "IssuesEvent",
+                "PullRequestEvent",
+                "ReleaseEvent",
+              ].includes(e.type),
+            );
+
+            const lastEvent =
+              activityEvents.length > 0 ? activityEvents[0] : events[0];
+            const lastActiveDate = lastEvent.created_at;
+
+            // Cache dengan timestamp
+            const cachedData = lastActiveDate;
+            cachedData._cacheTime = Date.now();
+            this.cache.set(cacheKey, cachedData, 300000); // 5 menit
+
+            console.log(
+              `✅ Last activity from Events: ${timeAgo(lastActiveDate)} (${lastEvent.type})`,
+            );
+            return lastActiveDate;
+          }
+        }
+      } catch (e) {
+        console.warn("Events API failed:", e.message);
+      }
+
+      // Strategy 2: Fallback ke pushed_at dari repositori
+      const lastActiveFromRepos = this._getLastActiveDate();
+      if (lastActiveFromRepos) {
+        console.log(
+          `📦 Using last active from repos: ${timeAgo(lastActiveFromRepos)}`,
+        );
+        return lastActiveFromRepos;
+      }
+
+      // Strategy 3: Fallback ke profile updated_at
+      if (this.profile?.updated_at) {
+        console.log(
+          `📦 Using profile updated_at: ${timeAgo(this.profile.updated_at)}`,
+        );
+        return this.profile.updated_at;
+      }
+
+      return null;
     }
   }
 
@@ -5968,43 +6158,46 @@
       });
     }
 
-    updateStats(repos, totalCommits = 0, userData = null) {
-      const repoCount = document.getElementById("repoCount");
-      if (repoCount) repoCount.textContent = repos.length;
+    // ═══════════════════════════════════════════
+    // PERBAIKAN 5: Update UIRenderer.updateStats
+    // ═══════════════════════════════════════════
+    // Di UIRenderer class, update method updateStats:
+    updateStats(repos, totalCommits, userData, lastActiveDate = null) {
+      // Update repo count
+      const repoCountEl = document.getElementById("repoCount");
+      if (repoCountEl) repoCountEl.textContent = repos.length;
 
-      const starCount = document.getElementById("starCount");
-      if (starCount) {
-        starCount.textContent = repos.reduce(
-          (s, r) => s + (r.stargazers_count || 0),
+      // Update star count
+      const starCountEl = document.getElementById("starCount");
+      if (starCountEl) {
+        const totalStars = repos.reduce(
+          (sum, r) => sum + (r.stargazers_count || 0),
           0,
         );
+        starCountEl.textContent = totalStars;
       }
 
-      const commitCount = document.getElementById("commitCount");
-      if (commitCount) commitCount.textContent = totalCommits + "+";
+      // Update commit count
+      const commitCountEl = document.getElementById("commitCount");
+      if (commitCountEl) commitCountEl.textContent = totalCommits + "+";
 
-      const activeSince = document.getElementById("activeSince");
-      if (activeSince && userData?.created_at) {
-        activeSince.textContent = new Date(userData.created_at).getFullYear();
-      } else if (activeSince) {
-        const oldestRepo = [...repos].sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at),
-        )[0];
-        if (oldestRepo?.created_at)
-          activeSince.textContent = new Date(
-            oldestRepo.created_at,
-          ).getFullYear();
+      // Update active since
+      const activeSinceEl = document.getElementById("activeSince");
+      if (activeSinceEl && userData?.created_at) {
+        activeSinceEl.textContent = new Date(userData.created_at).getFullYear();
       }
 
-      const lastActive = document.getElementById("lastActive");
-      if (lastActive && userData?.updated_at) {
-        lastActive.textContent = timeAgo(userData.updated_at);
-      } else if (lastActive) {
-        const newestRepo = [...repos].sort(
-          (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
-        )[0];
-        if (newestRepo?.updated_at)
-          lastActive.textContent = timeAgo(newestRepo.updated_at);
+      // ⚠️ UPDATE LAST ACTIVE - Gunakan lastActiveDate!
+      const lastActiveEl = document.getElementById("lastActive");
+      if (lastActiveEl) {
+        if (lastActiveDate) {
+          lastActiveEl.textContent = timeAgo(lastActiveDate);
+        } else if (userData?.updated_at) {
+          // Fallback ke profile updated_at
+          lastActiveEl.textContent = timeAgo(userData.updated_at);
+        } else {
+          lastActiveEl.textContent = "—";
+        }
       }
     }
 
@@ -7494,14 +7687,21 @@
       loadProjects: () => navigation?.loadProjects(),
       refreshStats: async () => {
         try {
-          await githubManager.fetchAllRepos();
+          console.log("🔄 Manual refresh requested...");
+
+          // ✅ Force refresh semua data
+          await githubManager.fetchAllRepos({ forceRefresh: true });
           await githubManager.fetchTotalCommits();
           const userData = await githubManager.fetchUserProfile();
+
           uiRenderer.updateStats(
             githubManager.repositories,
             githubManager.totalCommits,
             userData,
           );
+          uiRenderer.renderCarousel();
+          uiRenderer.renderProjects("all");
+
           audioManager?.playSFX("questClear");
           console.log("📊 Stats refreshed!");
           return true;
@@ -7554,6 +7754,9 @@
   // ═══════════════════════════════════════════
   // LOAD PORTFOLIO DATA
   // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // PERBAIKAN 4: Update loadPortfolioData
+  // ═══════════════════════════════════════════
   async function loadPortfolioData(
     audioManager,
     achievementSystem,
@@ -7564,7 +7767,6 @@
     uiRenderer.renderSkeleton(3);
     uiRenderer.showLoader(true);
 
-    // Unlock first visit achievement
     if (!localStorage.getItem("maple_first_visit")) {
       localStorage.setItem("maple_first_visit", "1");
       setTimeout(() => achievementSystem?.unlock("first_visit"), 1500);
@@ -7573,17 +7775,52 @@
     try {
       console.log("🚀 Loading portfolio data...");
 
-      const repos = await githubManager.fetchAllRepos();
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceRefresh =
+        urlParams.has("refresh") ||
+        urlParams.has("clear") ||
+        urlParams.has("force");
+
+      if (forceRefresh) {
+        console.log("🔄 Force refresh requested - clearing cache...");
+        githubManager.clearCache();
+        if (window.history?.replaceState) {
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+        }
+      }
+
+      // Fetch repos
+      const repos = await githubManager.fetchAllRepos({ forceRefresh });
       console.log(`📦 Got ${repos.length} repositories`);
 
+      // Fetch total commits
+      if (forceRefresh) {
+        githubManager.cache.remove(`commits_${githubManager.username}`);
+      }
       const totalCommits = await githubManager.fetchTotalCommits();
       console.log(`📊 Total commits: ${totalCommits}+`);
 
+      // Fetch user profile
+      if (forceRefresh) {
+        githubManager.cache.remove(`profile_${githubManager.username}`);
+      }
       const userData = await githubManager.fetchUserProfile();
       console.log(`👤 User: ${userData?.name || userData?.login || "Unknown"}`);
 
-      uiRenderer.updateStats(repos, totalCommits, userData);
+      // ⚠️ TAMBAHKAN: Fetch last activity
+      const lastActiveDate = await githubManager.fetchLastActivity();
+      console.log(
+        `🕐 Last active: ${lastActiveDate ? timeAgo(lastActiveDate) : "N/A"}`,
+      );
+
+      // Update stats
+      uiRenderer.updateStats(repos, totalCommits, userData, lastActiveDate);
+
+      // Animate stats
       await uiRenderer.animateStats(githubManager);
+
+      // Render carousel & projects
       uiRenderer.renderCarousel();
       uiRenderer.renderProjects("all");
 
@@ -7595,7 +7832,7 @@
         `📅 Active since: ${userData?.created_at ? new Date(userData.created_at).getFullYear() : "N/A"}`,
       );
       console.log(
-        `🕐 Last active: ${userData?.updated_at ? timeAgo(userData.updated_at) : "N/A"}`,
+        `🕐 Last active: ${lastActiveDate ? timeAgo(lastActiveDate) : "N/A"}`,
       );
       console.log(
         `📄 Repos with README: ${repos.filter((r) => r.readme).length}`,
@@ -7605,12 +7842,9 @@
       );
     } catch (error) {
       console.error("❌ Failed to load portfolio:", error);
-
       uiRenderer.renderError(
         "Gagal menghubungkan ke server. Coba lagi nanti.",
-        () => {
-          window.location.reload();
-        },
+        () => window.location.reload(),
       );
 
       ["repoCount", "starCount", "commitCount"].forEach((id) => {
@@ -7621,7 +7855,6 @@
       uiRenderer.showLoader(false);
     }
   }
-
   // ═══════════════════════════════════════════
   // SETUP EVENT LISTENERS
   // ═══════════════════════════════════════════
@@ -7698,19 +7931,19 @@
       }
     });
 
-    // Service Worker Registration
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((reg) => {
-            console.log("📦 Service Worker registered:", reg.scope);
-          })
-          .catch((err) => {
-            console.warn("⚠️ Service Worker registration failed:", err.message);
-          });
-      });
-    }
+    // // Service Worker Registration
+    // if ("serviceWorker" in navigator) {
+    //   window.addEventListener("load", () => {
+    //     navigator.serviceWorker
+    //       .register("/sw.js")
+    //       .then((reg) => {
+    //         console.log("📦 Service Worker registered:", reg.scope);
+    //       })
+    //       .catch((err) => {
+    //         console.warn("⚠️ Service Worker registration failed:", err.message);
+    //       });
+    //   });
+    // }
 
     // Online/Offline events
     window.addEventListener("online", () => {

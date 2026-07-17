@@ -1874,6 +1874,7 @@ body {
   width: 200px;
   height: 200px;
   border-radius: 50%;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border: 4px solid var(--bg-card);
   position: relative;
@@ -6443,12 +6444,24 @@ body {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 .loader-container {
-  text-align: center;
-  position: relative;
-  z-index: 2;
+  position: fixed;
+  inset: 0;                /* ✅ Menutupi seluruh layar */
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-body, #0a0a0a); 
+  transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+}
+
+.loader-container.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ─── Shield & SVG ─── */

@@ -1,9 +1,8 @@
-// ════════════════════════════════════════════════════════════════
-// API CONFIG - VERCEL SERVERLESS FUNCTION (FIXED)
-// Path: /api/config.js
-// ════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════
+// API CONFIG - FIXED CORS
+// ═══════════════════════════════════════════
 
-// ── CORS Configuration ──
+// Daftar origin yang DIIZINKAN
 const ALLOWED_ORIGINS = [
   "https://hayaxxdev-bit.my.id",
   "https://hayaxxdev-bit.github.io",
@@ -12,141 +11,67 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:5500",
   "http://127.0.0.1:3000",
-  "null", // Untuk file:// protocol
 ];
 
-// ── Response Helper with CORS ──
-function createResponse(data, status = 200, extraHeaders = {}) {
-  const origin = getRequestOrigin();
-  
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-      "Access-Control-Allow-Methods": "GET, OPTIONS, POST",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
-      "Access-Control-Max-Age": "86400",
-      "Access-Control-Allow-Credentials": "true",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
-      "Vary": "Origin",
-      "X-Content-Type-Options": "nosniff",
-      ...extraHeaders,
-    },
-  });
-}
-
-function getRequestOrigin() {
-  // This will be set by the request context
-  return globalThis._currentOrigin || "*";
-}
-
-// ── CORS Preflight Handler ──
-function handleCORS(request) {
-  const origin = request.headers.get("origin") || "";
-  globalThis._currentOrigin = origin;
-  
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-        "Access-Control-Allow-Methods": "GET, OPTIONS, POST",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
-        "Access-Control-Max-Age": "86400",
-        "Access-Control-Allow-Credentials": "true",
-        "Vary": "Origin",
-      },
-    });
-  }
-  return null;
-}
-
-// ── Main Handler ──
 export default async function handler(request) {
-  // Set origin untuk digunakan di response
   const origin = request.headers.get("origin") || "";
-  globalThis._currentOrigin = origin;
+  
+  // ⚠️ Tentukan apakah origin diizinkan
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
+    : ALLOWED_ORIGINS[0]; // Fallback ke production origin
+  
+  // ⚠️ CORS Headers untuk SEMUA response
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+    "Access-Control-Max-Age": "86400",
+    "Access-Control-Allow-Credentials": "true",
+    "Vary": "Origin",
+  };
   
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
-    return handleCORS(request);
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
   
-  // Parse URL
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "");
   const params = url.searchParams;
   
-  // ── Health Check ──
+  // Health check
   if (path === "/api/health" || path === "/api/ping") {
-    return createResponse({
+    return new Response(JSON.stringify({
       success: true,
       status: "healthy",
-      timestamp: new Date().toISOString(),
       version: "2.5.0",
-      cors: true,
-    });
+      allowedOrigin,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
   
-  // ── GitHub Proxy ──
+  // GitHub proxy
   if (path === "/api/github") {
     const action = params.get("action");
     const username = params.get("username") || "hayaxxdev-bit";
     const repo = params.get("repo");
     
     if (!action) {
-      return createResponse({ success: false, error: "Missing 'action' parameter" }, 400);
+      return new Response(JSON.stringify({ success: false, error: "Missing action" }), 
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     
     try {
       switch (action) {
-        case "user":
-        case "profile": {
-          const response = await fetch(`https://api.github.com/users/${username}`, {
-            headers: {
-              "Accept": "application/vnd.github.v3+json",
-              "User-Agent": "hayaxxdev-portfolio/2.5.0",
-            },
-          });
-          
-          if (!response.ok) {
-            return createResponse({ success: false, error: `GitHub API: ${response.status}` }, response.status);
-          }
-          
-          const data = await response.json();
-          return createResponse({
-            success: true,
-            user: {
-              login: data.login,
-              name: data.name,
-              avatar_url: data.avatar_url,
-              bio: data.bio,
-              public_repos: data.public_repos,
-              followers: data.followers,
-              following: data.following,
-              created_at: data.created_at,
-              updated_at: data.updated_at,
-              html_url: data.html_url,
-            },
-          });
-        }
-        
         case "repos":
         case "repositories": {
           const allRepos = [];
           let page = 1;
           let hasMore = true;
           
-          while (hasMore && page <= 3) { // Batasi max 3 halaman
+          while (hasMore && page <= 3) {
             const response = await fetch(
-              `https://api.github.com/users/${username}/repos?per_page=100&page=${page}&sort=updated`,
-              {
-                headers: {
-                  "Accept": "application/vnd.github.v3+json",
-                  "User-Agent": "hayaxxdev-portfolio/2.5.0",
-                },
-              }
+              `https://api.github.com/users/${username}/repos?per_page=100&page=${page}&sort=updated`
             );
             
             if (!response.ok) break;
@@ -164,7 +89,6 @@ export default async function handler(request) {
           const normalized = allRepos.map(repo => ({
             id: repo.id,
             name: repo.name,
-            full_name: repo.full_name,
             description: repo.description,
             language: repo.language,
             stargazers_count: repo.stargazers_count,
@@ -176,80 +100,97 @@ export default async function handler(request) {
             created_at: repo.created_at,
             updated_at: repo.updated_at,
             topics: repo.topics || [],
+            size: repo.size || 0,
           }));
           
-          return createResponse({
+          return new Response(JSON.stringify({
             success: true,
             repos: normalized,
             count: normalized.length,
-          });
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        
+        case "user":
+        case "profile": {
+          const response = await fetch(`https://api.github.com/users/${username}`);
+          const user = await response.json();
+          
+          return new Response(JSON.stringify({
+            success: true,
+            user: {
+              login: user.login,
+              name: user.name,
+              avatar_url: user.avatar_url,
+              bio: user.bio,
+              public_repos: user.public_repos,
+              created_at: user.created_at,
+              updated_at: user.updated_at,
+              html_url: user.html_url,
+            },
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         
         case "readme": {
           if (!repo) {
-            return createResponse({ success: false, error: "Missing 'repo' parameter" }, 400);
+            return new Response(JSON.stringify({ success: false, error: "Missing repo" }), 
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
           }
           
-          // Coba ambil README dari GitHub API
-          const readmeResponse = await fetch(
+          // Coba GitHub API dulu
+          const apiResponse = await fetch(
             `https://api.github.com/repos/${username}/${repo}/readme`,
-            {
-              headers: {
-                "Accept": "application/vnd.github.v3.raw",
-                "User-Agent": "hayaxxdev-portfolio/2.5.0",
-              },
-            }
+            { headers: { Accept: "application/vnd.github.v3.raw" } }
           );
           
-          if (readmeResponse.ok) {
-            const readme = await readmeResponse.text();
-            return createResponse({ success: true, readme });
+          if (apiResponse.ok) {
+            const readme = await apiResponse.text();
+            return new Response(JSON.stringify({ success: true, readme }), 
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } });
           }
           
-          // Fallback: coba raw.githubusercontent.com
-          const branches = ["main", "master"];
-          for (const branch of branches) {
+          // Fallback: coba raw (hanya main/master)
+          for (const branch of ["main", "master"]) {
             const rawResponse = await fetch(
               `https://raw.githubusercontent.com/${username}/${repo}/${branch}/README.md`
             );
             if (rawResponse.ok) {
               const readme = await rawResponse.text();
-              return createResponse({ success: true, readme });
+              return new Response(JSON.stringify({ success: true, readme }), 
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } });
             }
           }
           
-          return createResponse({ success: false, error: "README not found" }, 404);
+          return new Response(JSON.stringify({ success: false, error: "README not found" }), 
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         
         case "commits": {
-          // Estimasi dari events
-          const eventsResponse = await fetch(
-            `https://api.github.com/users/${username}/events/public?per_page=100`,
-            {
-              headers: {
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "hayaxxdev-portfolio/2.5.0",
-              },
-            }
+          const response = await fetch(
+            `https://api.github.com/users/${username}/events/public?per_page=100`
           );
           
           let totalCommits = 0;
-          if (eventsResponse.ok) {
-            const events = await eventsResponse.json();
+          if (response.ok) {
+            const events = await response.json();
             const pushEvents = events.filter(e => e.type === "PushEvent");
             totalCommits = pushEvents.reduce((sum, e) => sum + (e.payload?.commits?.length || 0), 0);
           }
           
-          return createResponse({ success: true, total_commits: totalCommits });
+          return new Response(JSON.stringify({ success: true, total_commits: totalCommits }), 
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         
         default:
-          return createResponse({ success: false, error: `Unknown action: ${action}` }, 400);
+          return new Response(JSON.stringify({ success: false, error: `Unknown action: ${action}` }), 
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     } catch (error) {
-      return createResponse({ success: false, error: error.message }, 500);
+      return new Response(JSON.stringify({ success: false, error: error.message }), 
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
   }
   
-  return createResponse({ success: false, error: "Not Found" }, 404);
+  // 404
+  return new Response(JSON.stringify({ success: false, error: "Not Found" }), 
+    { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
