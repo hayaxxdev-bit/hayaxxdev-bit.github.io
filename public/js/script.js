@@ -2397,6 +2397,24 @@
   // ═══════════════════════════════════════════
   // 6. GITHUB MANAGER v2.0 - ENHANCED
   // ═══════════════════════════════════════════
+  /**
+   * GitHubManager
+   * ─────────────────────────────────────────────────────────────
+   * REWORK (2026-07-18) — dibersihkan dari kode duplikat/mati:
+   *   - fetchReadme() sebelumnya didefinisikan 3x di class yang sama.
+   *     Di JS, definisi terakhir yang menang; 2 versi sebelumnya
+   *     tidak pernah berjalan sama sekali (dead code). Disatukan
+   *     jadi 1 versi final (null-result caching + 3 strategi fallback).
+   *   - _fetchReadmesInBatches() sebelumnya didefinisikan 2x. Disatukan
+   *     jadi versi final (batch=2, limit 6 repo, filter repo kosong).
+   *   - _fetchReadmesPrioritized() dihapus: dulu fetch README 1-per-1
+   *     pakai `await sleep(200)` di dalam loop (serial, +1.2 detik
+   *     sia-sia untuk 6 repo). fetchAllRepos() sekarang langsung
+   *     memanggil _fetchReadmesInBatches() yang sudah paralel per-batch.
+   *   - _fetchReadmeFromRawOptimized() dihapus: hanya dipakai oleh
+   *     versi fetchReadme() yang sudah dihapus, jadi ikut jadi dead code.
+   * ─────────────────────────────────────────────────────────────
+   */
   class GitHubManager {
     constructor(username) {
       this.username = username;
@@ -2642,7 +2660,6 @@
         forceRefresh = false,
         includeForks = true,
         sortBy = "updated",
-        onProgress = null,
       } = options;
 
       // Check cache first
@@ -2689,14 +2706,11 @@
 
         this._updateProgress(60);
 
-        // Fetch README untuk featured repos terlebih dahulu
-        console.log(`📄 Fetching README for ${repos.length} repos...`);
-        const reposWithReadme = await this._fetchReadmesPrioritized(
-          repos,
-          (progress) => {
-            this._updateProgress(60 + Math.floor(progress * 0.35));
-          },
-        );
+        // README di-fetch paralel per-batch (bukan serial 1-per-1 +
+        // sleep manual) — lihat _fetchReadmesInBatches di bawah.
+        console.log(`📄 Fetching README for up to 6 featured repos...`);
+        const reposWithReadme = await this._fetchReadmesInBatches(repos, 2);
+        this._updateProgress(95);
 
         this.repositories = reposWithReadme;
         this.isLoaded = true;
@@ -2802,9 +2816,6 @@
       return allRepos.length > 0 ? this._normalizeRepos(allRepos) : null;
     }
 
-    // ═══════════════════════════════════════════
-    // PERBAIKAN 1: Normalize Repos (Tambahkan pushed_at)
-    // ═══════════════════════════════════════════
     _normalizeRepos(repos) {
       return repos.map((repo) => ({
         // Core fields
@@ -2838,12 +2849,12 @@
         archived: repo.archived || false,
         disabled: repo.disabled || false,
 
-        // ⚠️ DATES - TAMBAHKAN pushed_at!
+        // Dates
         created_at:
           repo.created_at || repo.createdAt || new Date().toISOString(),
         updated_at:
           repo.updated_at || repo.updatedAt || new Date().toISOString(),
-        pushed_at: repo.pushed_at || repo.pushedAt || repo.updated_at || null, // ← TAMBAHKAN!
+        pushed_at: repo.pushed_at || repo.pushedAt || repo.updated_at || null,
 
         // Metadata
         topics: repo.topics || [],
@@ -2859,190 +2870,54 @@
       }));
     }
 
-    // ═══════════════ README FETCHING (PRIORITIZED) ═══════════════
+    // ═══════════════ README FETCHING ═══════════════
 
-    // Di dalam GitHubManager class, tambahkan/modifikasi method ini:
-
-    async _fetchReadmesPrioritized(repos, progressCallback = null) {
-      // Phase 1: HANYA fetch README untuk featured repos (top 6)
-      const featured = [...repos]
-        .filter((r) => !r.fork || r.stargazers_count > 0)
-        .sort((a, b) => b.stargazers_count - a.stargazers_count)
-        .slice(0, 6);
-
-      console.log(
-        `📄 Fetching README for ${featured.length} featured repos...`,
-      );
-
-      // Fetch README dengan rate limiting yang lebih ketat
-      const featuredResults = [];
-      for (const repo of featured) {
-        try {
-          const readme = await this.fetchReadme(repo.name);
-          featuredResults.push({ ...repo, readme });
-        } catch (e) {
-          featuredResults.push({ ...repo, readme: null });
-        }
-        // Tambahkan delay antar request
-        await this._sleep(200);
-      }
-
-      if (progressCallback) progressCallback(0.5);
-
-      // Phase 2: Skip README untuk repos lainnya jika tidak diperlukan
-      const others = repos.filter((r) => !featured.includes(r));
-      const othersWithReadme = others.map((repo) => ({
-        ...repo,
-        readme: null,
-      }));
-
-      if (progressCallback) progressCallback(1.0);
-
-      return [...featuredResults, ...othersWithReadme];
-    }
-
+    /**
+     * Ambil README satu repo, dengan cache (termasuk cache untuk
+     * hasil "tidak ada README" supaya tidak retry berulang / 404 storm).
+     * Urutan strategi: Custom API → GitHub REST API → raw.githubusercontent
+     * (raw dibatasi 2 percobaan: branch main lalu master).
+     */
     async fetchReadme(repoName) {
       const cacheKey = `readme_${repoName}`;
 
-      // Cek cache terlebih dahulu
       const cached = this.cache.get(cacheKey);
-      if (cached) {
-        return cached;
+      if (cached !== undefined) {
+        return cached; // Bisa null (jika sebelumnya tidak ditemukan)
       }
 
-      // Cek apakah repo ini punya README (dari data repo)
+      // Repo kosong (size 0) tidak mungkin punya README bermakna, skip.
       const repo = this.repositories.find((r) => r.name === repoName);
       if (repo?.size === 0) {
-        // Repo kosong, skip
         return null;
       }
 
       try {
-        // Strategy 1: Custom API (paling cepat jika berhasil)
         const readme = await this._fetchReadmeFromCustomAPI(repoName);
         if (readme) {
           this.cache.set(cacheKey, readme, 3600000); // 1 jam
           return readme;
         }
-      } catch (e) {
-        // Custom API failed, try next
-      }
+      } catch (e) {}
 
       try {
-        // Strategy 2: GitHub API
         const readme = await this._fetchReadmeFromGitHubAPI(repoName);
         if (readme) {
           this.cache.set(cacheKey, readme, 3600000);
           return readme;
         }
-      } catch (e) {
-        // GitHub API failed
-      }
+      } catch (e) {}
 
-      // Strategy 3: Raw hanya untuk branch main/master (jangan coba semua)
       try {
-        const readme = await this._fetchReadmeFromRawOptimized(repoName);
+        const readme = await this._fetchReadmeFromRaw(repoName);
         if (readme) {
           this.cache.set(cacheKey, readme, 3600000);
           return readme;
         }
-      } catch (e) {
-        // Raw failed
-      }
+      } catch (e) {}
 
-      // Cache null result untuk menghindari repeat attempts
+      // Cache hasil null juga — mencegah repeat attempts / 404 storm.
       this.cache.set(cacheKey, null, 1800000); // 30 menit
-      return null;
-    }
-
-    async _fetchReadmeFromRawOptimized(repoName) {
-      // HANYA coba branch main dan master, HANYA README.md
-      const branches = ["main", "master"];
-
-      for (const branch of branches) {
-        try {
-          const url = `${this.GITHUB_RAW}/${repoName}/${branch}/README.md`;
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 3000); // 3 detik timeout
-
-          const response = await fetch(url, { signal: controller.signal });
-          clearTimeout(timeout);
-
-          if (response.ok) {
-            const text = await response.text();
-            if (text && text.length > 10 && !text.includes("<!DOCTYPE html>")) {
-              return text;
-            }
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      return null;
-    }
-    async _fetchReadmesInBatches(
-      repos,
-      batchSize = 5,
-      progressCallback = null,
-    ) {
-      const results = [];
-      const totalBatches = Math.ceil(repos.length / batchSize);
-
-      for (let i = 0; i < repos.length; i += batchSize) {
-        const batch = repos.slice(i, i + batchSize);
-        const batchNumber = Math.floor(i / batchSize) + 1;
-
-        const batchResults = await Promise.allSettled(
-          batch.map(async (repo) => {
-            const readme = await this.fetchReadme(repo.name);
-            return { ...repo, readme };
-          }),
-        );
-
-        results.push(
-          ...batchResults.map((r, idx) =>
-            r.status === "fulfilled"
-              ? r.value
-              : { ...batch[idx], readme: null },
-          ),
-        );
-
-        const progress = batchNumber / totalBatches;
-        if (progressCallback) progressCallback(progress);
-
-        console.log(
-          `  📄 README: ${Math.min(i + batchSize, repos.length)}/${repos.length} (${Math.floor(progress * 100)}%)`,
-        );
-      }
-
-      return results;
-    }
-
-    async fetchReadme(repoName) {
-      const cacheKey = `readme_${repoName}`;
-      const cached = this.cache.get(cacheKey);
-      if (cached) return cached;
-
-      // Try all strategies in parallel for speed
-      const strategies = [
-        () => this._fetchReadmeFromCustomAPI(repoName),
-        () => this._fetchReadmeFromGitHubAPI(repoName),
-        () => this._fetchReadmeFromRaw(repoName),
-      ];
-
-      for (const strategy of strategies) {
-        try {
-          const readme = await strategy();
-          if (readme) {
-            this.cache.set(cacheKey, readme, 3600000); // 1 hour
-            return readme;
-          }
-        } catch (e) {
-          // Continue to next strategy
-        }
-      }
-
       return null;
     }
 
@@ -3077,7 +2952,7 @@
     }
 
     async _fetchReadmeFromRaw(repoName) {
-      // ⛔ HANYA 2 PERCOBAAN! Jangan coba semua kombinasi!
+      // Hanya 2 percobaan (main, master) — jangan coba semua kombinasi.
       const attempts = [
         `https://raw.githubusercontent.com/${this.username}/${repoName}/main/README.md`,
         `https://raw.githubusercontent.com/${this.username}/${repoName}/master/README.md`,
@@ -3085,7 +2960,6 @@
 
       for (const url of attempts) {
         try {
-          // ⏱️ Timeout 3 detik
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 3000);
 
@@ -3100,73 +2974,23 @@
             }
           }
         } catch (e) {
-          // Skip error, coba next attempt
           continue;
         }
       }
 
-      // Jika tidak ditemukan, return null (JANGAN coba branch/filename lain!)
       console.log(`📭 No README for: ${repoName}`);
       return null;
     }
 
-    // ═══════════════════════════════════════════
-    // TAMBAHKAN: Cache untuk repo tanpa README
-    // ═══════════════════════════════════════════
-
-    async fetchReadme(repoName) {
-      const cacheKey = `readme_${repoName}`;
-
-      // Cek cache
-      const cached = this.cache.get(cacheKey);
-      if (cached !== undefined) {
-        return cached; // Bisa null (jika sebelumnya tidak ditemukan)
-      }
-
-      let readme = null;
-
-      // Strategy 1: Custom API
-      try {
-        readme = await this._fetchReadmeFromCustomAPI(repoName);
-        if (readme) {
-          this.cache.set(cacheKey, readme, 3600000);
-          return readme;
-        }
-      } catch (e) {}
-
-      // Strategy 2: GitHub API
-      try {
-        readme = await this._fetchReadmeFromGitHubAPI(repoName);
-        if (readme) {
-          this.cache.set(cacheKey, readme, 3600000);
-          return readme;
-        }
-      } catch (e) {}
-
-      // Strategy 3: Raw (HANYA 2 attempts!)
-      try {
-        readme = await this._fetchReadmeFromRaw(repoName);
-        if (readme) {
-          this.cache.set(cacheKey, readme, 3600000);
-          return readme;
-        }
-      } catch (e) {}
-
-      // ⚠️ PENTING: Cache null result juga!
-      // Ini mencegah 404 storm di masa depan
-      this.cache.set(cacheKey, null, 1800000); // 30 menit
-      return null;
-    }
-
-    // ═══════════════════════════════════════════
-    // TAMBAHKAN: Batasi jumlah README fetch paralel
-    // ═══════════════════════════════════════════
-
+    /**
+     * Fetch README untuk maksimal 6 repo (yang punya konten, size >= 50),
+     * dalam batch kecil (default 2 paralel) dengan jeda antar-batch
+     * supaya tidak kena rate limit. Repo yang di-skip/di-luar limit
+     * tetap dikembalikan dengan readme: null.
+     */
     async _fetchReadmesInBatches(repos, batchSize = 2) {
-      // Kurangi batch size!
       const results = [];
 
-      // ⚠️ HANYA fetch untuk repo yang punya konten
       const reposToFetch = repos.filter((repo) => {
         if (!repo.size || repo.size < 50) {
           console.log(`⏭️ Skipping ${repo.name} (size: ${repo.size || 0})`);
@@ -3175,7 +2999,6 @@
         return true;
       });
 
-      // ⚠️ BATASI maksimal 6 repo
       const limitedRepos = reposToFetch.slice(0, 6);
 
       console.log(
@@ -3208,16 +3031,15 @@
           `  📄 README: ${Math.min(i + batchSize, limitedRepos.length)}/${limitedRepos.length}`,
         );
 
-        // ⚠️ Delay antar batch untuk menghindari rate limit
         if (i + batchSize < limitedRepos.length) {
           await this._sleep(500);
         }
       }
 
-      // Tambahkan repos yang tidak di-fetch
       const skippedRepos = repos.filter((r) => !limitedRepos.includes(r));
       return [...results, ...skippedRepos.map((r) => ({ ...r, readme: null }))];
     }
+
     // ═══════════════ TOTAL COMMITS CALCULATION ═══════════════
 
     async fetchTotalCommits() {
@@ -3231,7 +3053,6 @@
       console.log("📊 Calculating total commits...");
 
       try {
-        // Strategy 1: Custom API
         const commits = await this._fetchCommitsFromCustomAPI();
         if (commits) {
           this.totalCommits = commits;
@@ -3243,7 +3064,6 @@
       }
 
       try {
-        // Strategy 2: GitHub Events API
         const commits = await this._estimateCommitsFromEvents();
         if (commits) {
           this.totalCommits = commits;
@@ -3254,7 +3074,7 @@
         console.warn("Events API estimation failed:", e.message);
       }
 
-      // Strategy 3: Rough estimation
+      // Rough estimation fallback
       const estimatedCommits = this.repositories.length * 15;
       this.totalCommits = estimatedCommits;
       this.cache.set(cacheKey, estimatedCommits, 1800000); // 30 minutes
@@ -3334,7 +3154,6 @@
         .join(" ")
         .toLowerCase();
 
-      // Game development
       if (
         text.includes("game") ||
         text.includes("unity") ||
@@ -3346,7 +3165,6 @@
         return "game";
       }
 
-      // Design & UI
       if (
         text.includes("design") ||
         text.includes("figma") ||
@@ -3360,7 +3178,6 @@
         return "design";
       }
 
-      // Web development
       if (
         repo.homepage ||
         repo.has_pages ||
@@ -3384,7 +3201,6 @@
         return "web";
       }
 
-      // Tools & CLI
       if (
         text.includes("tool") ||
         text.includes("cli") ||
@@ -3396,7 +3212,6 @@
         return "tools";
       }
 
-      // Documentation
       if (
         text.includes("docs") ||
         text.includes("documentation") ||
@@ -3416,12 +3231,10 @@
     getFilteredRepos(filter = "all", sortBy = "stars") {
       let filtered = [...this.repositories];
 
-      // Apply filter
       if (filter !== "all") {
         filtered = filtered.filter((r) => this.categorizeRepo(r) === filter);
       }
 
-      // Apply sorting
       filtered.sort(this._sortRepos(sortBy));
 
       return filtered;
@@ -3476,9 +3289,7 @@
     }
 
     // ═══════════════ TOTALS CALCULATION ═══════════════
-    // ═══════════════════════════════════════════
-    // PERBAIKAN 2: Calculate Totals (Tambahkan lastActiveDate)
-    // ═══════════════════════════════════════════
+
     _calculateTotals() {
       this.totalStars = this.repositories.reduce(
         (sum, r) => sum + (r.stargazers_count || 0),
@@ -3493,7 +3304,6 @@
         0,
       );
 
-      // ⚠️ TAMBAHKAN: Calculate last active date dari pushed_at
       this.lastActiveDate = this._getLastActiveDate();
       this._oldestRepoDate = this._getOldestRepoDate();
       this._newestRepoDate = this._getNewestRepoDate();
@@ -3503,11 +3313,9 @@
       );
     }
 
-    // ⚠️ TAMBAHKAN: Method untuk mendapatkan last active date
     _getLastActiveDate() {
       if (this.repositories.length === 0) return null;
 
-      // Cari pushed_at terbaru dari semua repo
       const dates = this.repositories
         .map((repo) => repo.pushed_at || repo.updated_at)
         .filter(Boolean)
@@ -3533,6 +3341,7 @@
         .sort((a, b) => new Date(b) - new Date(a));
       return dates.length > 0 ? dates[0] : null;
     }
+
     // ═══════════════ BACKGROUND SYNC ═══════════════
 
     startAutoSync(intervalMs = 300000) {
@@ -3637,9 +3446,7 @@
       this.profile = null;
       console.log("📦 GitHubManager destroyed");
     }
-    // ═══════════════════════════════════════════
-    // PERBAIKAN 3: Fetch Last Activity dari Events API
-    // ═══════════════════════════════════════════
+
     async fetchLastActivity() {
       const cacheKey = `last_activity_${this.username}`;
 
@@ -3653,7 +3460,6 @@
       console.log("🔍 Fetching last activity from GitHub Events...");
 
       try {
-        // Strategy 1: GitHub Events API
         const url = `https://api.github.com/users/${this.username}/events/public?per_page=5`;
         const response = await this._fetchWithRetry(url, {
           retries: 1,
@@ -3664,7 +3470,6 @@
           const events = await response.json();
 
           if (events.length > 0) {
-            // Cari event yang menunjukkan aktivitas real
             const activityEvents = events.filter((e) =>
               [
                 "PushEvent",
@@ -3679,7 +3484,6 @@
               activityEvents.length > 0 ? activityEvents[0] : events[0];
             const lastActiveDate = lastEvent.created_at;
 
-            // Cache dengan timestamp
             const cachedData = lastActiveDate;
             cachedData._cacheTime = Date.now();
             this.cache.set(cacheKey, cachedData, 300000); // 5 menit
@@ -3694,7 +3498,7 @@
         console.warn("Events API failed:", e.message);
       }
 
-      // Strategy 2: Fallback ke pushed_at dari repositori
+      // Fallback ke pushed_at dari repositori
       const lastActiveFromRepos = this._getLastActiveDate();
       if (lastActiveFromRepos) {
         console.log(
@@ -3703,7 +3507,7 @@
         return lastActiveFromRepos;
       }
 
-      // Strategy 3: Fallback ke profile updated_at
+      // Fallback ke profile updated_at
       if (this.profile?.updated_at) {
         console.log(
           `📦 Using profile updated_at: ${timeAgo(this.profile.updated_at)}`,

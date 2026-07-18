@@ -1,6 +1,7 @@
-/* ══════════════════════════════
-   RESET & BASE STYLES
-   ══════════════════════════════ */
+/* @import url('fonts-config.css'); */
+/* FontSource CDN - Lebih stabil */
+/* @import url('https://cdn.jsdelivr.net/npm/@fontsource/cinzel-decorative/400.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/cinzel-decorative/700.css'); */
 * {
   margin: 0;
   padding: 0;
@@ -374,7 +375,7 @@ body {
   /* Typography */
   --font-display: 'Cinzel Decorative', serif;
   --font-head: 'Cinzel', serif;
-  --font-body: 'EB Garamond', serif;
+  /* --font-body: 'EB Garamond', serif; */
   --font-stat: 'Spectral SC', serif;
 
   /* UI Elements */
