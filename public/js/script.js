@@ -1822,15 +1822,31 @@
 
       // Scroll tracking
       this._totalScrollDistance = 0;
-      let lastScrollY = window.scrollY;
-      window.addEventListener("scroll", () => {
-        this._totalScrollDistance += Math.abs(window.scrollY - lastScrollY);
-        lastScrollY = window.scrollY;
-        this._updateTracker(
-          "scroll_master",
-          Math.floor(this._totalScrollDistance / 100),
-        );
-      });
+      let lastScrollY = 0;
+
+      // Inisialisasi dengan scroll awal (baca sekali)
+      lastScrollY = window.scrollY;
+
+      window.addEventListener(
+        "scroll",
+        () => {
+          const currentScrollY = window.scrollY; // BACA SEKALI
+          const delta = Math.abs(currentScrollY - lastScrollY);
+
+          // Update akumulasi
+          this._totalScrollDistance += delta;
+          lastScrollY = currentScrollY; // SIMPAN, jangan baca lagi
+
+          // Throttle update tracker (jangan terlalu sering)
+          if (delta > 0) {
+            this._updateTracker(
+              "scroll_master",
+              Math.floor(this._totalScrollDistance / 100),
+            );
+          }
+        },
+        { passive: true },
+      ); // Passive biar performa lebih baik
 
       // Konami Code detection
       this._konamiBuffer = [];
