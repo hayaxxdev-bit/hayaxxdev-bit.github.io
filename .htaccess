@@ -1,18 +1,20 @@
 # ═══════════════════════════════════════════
 # .htaccess - hayaxxdev-bit Portfolio
 # Apache Configuration for hayaxxdev-bit.my.id
+# Updated: 2026-07-18
 # ═══════════════════════════════════════════
 
 # ═══════════════ ENABLE REWRITE ENGINE ═══════════════
 RewriteEngine On
 RewriteBase /
 
-# ═══════════════ CACHING ═══════════════
+# ═══════════════ CACHING (KONSISTEN 1 TAHUN) ═══════════════
 <IfModule mod_expires.c>
   ExpiresActive On
   
   # Images - 1 year
   ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/avif "access plus 1 year"
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/jpg "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
@@ -21,10 +23,10 @@ RewriteBase /
   ExpiresByType image/x-icon "access plus 1 year"
   ExpiresByType image/ico "access plus 1 year"
   
-  # CSS, JS - 1 month
-  ExpiresByType text/css "access plus 1 month"
-  ExpiresByType application/javascript "access plus 1 month"
-  ExpiresByType text/javascript "access plus 1 month"
+  # CSS, JS - 1 year (KONSISTEN DENGAN CACHE-CONTROL)
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
   
   # Fonts - 1 year
   ExpiresByType font/woff2 "access plus 1 year"
@@ -32,38 +34,40 @@ RewriteBase /
   ExpiresByType application/font-woff "access plus 1 year"
   ExpiresByType application/font-woff2 "access plus 1 year"
   
-  # HTML - 1 hour
-  ExpiresByType text/html "access plus 1 hour"
+  # HTML - 1 day (biar selalu fresh)
+  ExpiresByType text/html "access plus 1 day"
   
-  # JSON - 1 hour
-  ExpiresByType application/json "access plus 1 hour"
+  # JSON - 1 week
+  ExpiresByType application/json "access plus 1 week"
   
-  # Web Manifest
+  # Web Manifest - 1 month
   ExpiresByType application/manifest+json "access plus 1 month"
   
-  # Audio
+  # Audio - 1 year
   ExpiresByType audio/mpeg "access plus 1 year"
   ExpiresByType audio/mp3 "access plus 1 year"
+  ExpiresByType audio/ogg "access plus 1 year"
+  ExpiresByType audio/wav "access plus 1 year"
 </IfModule>
 
 # ═══════════════ CACHE CONTROL HEADERS ═══════════════
 <IfModule mod_headers.c>
-  # Images - 1 YEAR (immutable)
+  # Images - 1 YEAR (immutable karena jarang berubah)
   <FilesMatch "\.(webp|avif|jpe?g|png|gif|svg|ico|svgz)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   
-  # CSS & JS - 1 YEAR (dengan versioning)
+  # CSS & JS - 1 YEAR (tanpa immutable, biar bisa force refresh dengan query string ?v=)
   <FilesMatch "\.(css|js)$">
-    Header set Cache-Control "public, max-age=31536000, immutable"
+    Header set Cache-Control "public, max-age=31536000"
   </FilesMatch>
   
-  # Fonts - 1 YEAR (immutable)
+  # Fonts - 1 YEAR (immutable, font hampir gak pernah berubah)
   <FilesMatch "\.(woff2?|ttf|otf|eot)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   
-  # HTML - 1 DAY
+  # HTML - 1 DAY (dengan revalidate)
   <FilesMatch "\.(html|htm)$">
     Header set Cache-Control "public, max-age=86400, must-revalidate"
   </FilesMatch>
@@ -76,6 +80,11 @@ RewriteBase /
   # Audio - 1 YEAR
   <FilesMatch "\.(mp3|ogg|wav)$">
     Header set Cache-Control "public, max-age=31536000"
+  </FilesMatch>
+
+  # Cloudflare email-decode - 1 day only
+  <FilesMatch "email-decode\.min\.js$">
+    Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
 
   # ═══════════════ SECURITY HEADERS ═══════════════
@@ -91,7 +100,7 @@ RewriteBase /
 
 # ═══════════════ GZIP COMPRESSION ═══════════════
 <IfModule mod_deflate.c>
-  # Compress HTML, CSS, JavaScript, Text, XML, fonts
+  # Compress HTML, CSS, JavaScript, Text, XML, SVG
   AddOutputFilterByType DEFLATE text/html
   AddOutputFilterByType DEFLATE text/css
   AddOutputFilterByType DEFLATE text/javascript
@@ -102,9 +111,9 @@ RewriteBase /
   AddOutputFilterByType DEFLATE text/plain
   AddOutputFilterByType DEFLATE image/svg+xml
   AddOutputFilterByType DEFLATE application/manifest+json
-  AddOutputFilterByType DEFLATE application/x-font-ttf
-  AddOutputFilterByType DEFLATE font/opentype
-  AddOutputFilterByType DEFLATE font/woff2
+  
+  # ⚠️ JANGAN KOMPRES WebP, WOFF2, AVIF (sudah terkompresi maksimal)
+  # Hapus: font/woff2, font/opentype, application/x-font-ttf
   
   # Remove browser bugs for legacy browsers
   BrowserMatch ^Mozilla/4 gzip-only-text/html
@@ -114,7 +123,6 @@ RewriteBase /
 </IfModule>
 
 # ═══════════════ ERROR PAGES ═══════════════
-# Custom error pages dengan path yang benar
 ErrorDocument 400 /error.html?code=400
 ErrorDocument 401 /error.html?code=401
 ErrorDocument 403 /error.html?code=403
@@ -132,13 +140,13 @@ ErrorDocument 504 /500.html?code=504
 Options -Indexes
 
 # Protect sensitive files
-<FilesMatch "\.(env|git|htpasswd|ini|phps|fla|psd|log|sh|md|yml|yaml|lock|json)$">
+<FilesMatch "\.(env|git|htpasswd|ini|phps|fla|psd|log|sh|md|yml|yaml|lock)$">
     Order Allow,Deny
     Deny from all
 </FilesMatch>
 
-# Allow important JSON files
-<FilesMatch "^(package\.json|site\.webmanifest|manifest\.json)$">
+# Allow specific JSON files
+<FilesMatch "^(package\.json|site\.webmanifest|manifest\.json|analytics\.json)$">
     Order Deny,Allow
     Allow from all
 </FilesMatch>
@@ -165,12 +173,7 @@ RewriteCond %{HTTP_HOST} !^192\.168\. [NC]
 RewriteCond %{HTTP_HOST} !^10\. [NC]
 RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 
-# Force non-WWW ke WWW? (pilih salah satu)
-# Opsi 1: Force WWW
-# RewriteCond %{HTTP_HOST} !^www\. [NC]
-# RewriteRule ^(.*)$ https://www.%{HTTP_HOST}/$1 [R=301,L]
-
-# Opsi 2: Force non-WWW (RECOMMENDED)
+# Force non-WWW (RECOMMENDED)
 RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
 RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
@@ -179,7 +182,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} (.+)/$
 RewriteRule ^ %1 [L,R=301]
 
-# ═══════════════ CUSTOM RULES ═══════════════
+# ═══════════════ CUSTOM REDIRECTS ═══════════════
 
 # Redirect old paths
 RewriteRule ^home/?$ / [L,R=301]
@@ -195,7 +198,7 @@ RewriteRule ^kontak/?$ /?route=contact [L,R=301]
 RewriteRule ^maple/?$ /character-info/maple.html [L,R=301]
 RewriteRule ^sally/?$ /character-info/maple.html [L,R=301]
 
-# Game redirect
+# Game redirect (FIXED: tanpa /public prefix untuk R=301)
 RewriteRule ^game/?$ /public/bofuri_maple_odyssey_game.html [L,R=301]
 
 # ═══════════════ BLOCK EXPLOITS ═══════════════
@@ -219,9 +222,9 @@ RewriteCond %{QUERY_STRING} UNION.*SELECT [NC,OR]
 RewriteCond %{QUERY_STRING} INSERT.*INTO [NC]
 RewriteRule ^(.*)$ /404.html [L,R=404]
 
-# Block bad user agents
+# Block bad user agents (OPTIMIZED: hanya block exploit tools, bukan semua bot)
 RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
-RewriteCond %{HTTP_USER_AGENT} (bot|crawl|spider|scan|checker|sqlmap|nikto|acunetix|wpscan) [NC]
+RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|acunetix|wpscan|nessus|openvas) [NC]
 RewriteRule ^(.*)$ /404.html [L,R=404]
 
 # Block hotlinking (kecuali dari domain sendiri)
@@ -251,6 +254,7 @@ RewriteRule \.(webp|jpe?g|png|gif|svg|mp3)$ - [F,NC,L]
   
   # Images
   AddType image/webp .webp
+  AddType image/avif .avif
   AddType image/svg+xml .svg .svgz
 </IfModule>
 
