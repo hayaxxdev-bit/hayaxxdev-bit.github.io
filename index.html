@@ -229,15 +229,19 @@
       }
     </style>
 
-    <!--
-      CATATAN PERFORMA (2026-07-18): file ini sempat dimuat async lewat
-      trik media="print", tapi itu menyebabkan CLS 0.379 (lihat laporan
-      Lighthouse) karena hero/navbar/loader dirender dulu tanpa styling
-      lalu reflow besar saat CSS penuh datang. FCP & LCP situs ini masih
-      punya ruang (0.8s / 0.9s), jadi trade-off render-blocking di sini
-      lebih murah daripada trade-off CLS. Dibuat blocking lagi.
-    -->
-    <link rel="stylesheet" href="/public/css/all.bundle.css" />
+    <!-- Non-critical CSS: loaded async via the print-media swap trick -->
+    <link
+      rel="stylesheet"
+      href="/public/css/all.bundle.css"
+      media="print"
+      onload="
+        this.media = 'all';
+        this.onload = null;
+      "
+    />
+    <noscript
+      ><link rel="stylesheet" href="/public/css/all.bundle.css"
+    /></noscript>
 
     <!-- Preload the resources the first paint actually needs -->
     <link rel="preload" href="/public/js/script.js" as="script" />
@@ -257,16 +261,9 @@
     <!-- ════════════════════════════════════════════════════════════
          FONTS (Async Loading)
          ════════════════════════════════════════════════════════════ -->
-    <!--
-      display=optional (bukan swap): kalau font custom belum siap saat
-      render pertama, browser TIDAK menukarnya belakangan — jadi tidak
-      ada reflow teks. Ini bagian dari perbaikan CLS 0.379 di atas.
-      Trade-off: pada koneksi lambat, teks mungkin tetap pakai font
-      sistem selama sesi itu (tidak swap), tapi zero layout shift.
-    -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Orbitron:wght@400..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Kanit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&display=swap"
       media="print"
       onload="
         this.media = 'all';
@@ -276,7 +273,7 @@
     <noscript>
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=optional"
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap"
       />
     </noscript>
 
@@ -573,7 +570,7 @@
 
               <h1 class="hero__name">
                 Hai, Saya<br />
-                <span class="hero__name-highlight">hayaxxdev-bit</span>
+                <span class="hero__name-highlight">hayaxxdev</span>
               </h1>
 
               <p class="hero__desc">
@@ -1221,7 +1218,12 @@
                 <div class="skill-bar">
                   <div class="skill-bar__head">
                     <span>UI/UX Design</span>
-                    <span class="skill-bar__pct">80%</span>
+                    <span class="skill-bar__pct">80%</span>═══════
+         SCRIPTS (Modular, deferred, executed in this exact order)
+         1. config.js     → window.__CONFIG (dibutuhkan oleh 2 & 3)
+         2. analytics.js  → GA4, idle-loaded, dibutuhkan __CONFIG.analytics
+         3. script.js     → logika utama aplikasi (routing, carousel, dll)
+         ════════════════════════════════════════════════════════════════ -->
                   </div>
                   <div class="skill-bar__track">
                     <div
@@ -1598,12 +1600,6 @@
       </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════
-         SCRIPTS (Modular, deferred, executed in this exact order)
-         1. config.js     → window.__CONFIG (dibutuhkan oleh 2 & 3)
-         2. analytics.js  → GA4, idle-loaded, dibutuhkan __CONFIG.analytics
-         3. script.js     → logika utama aplikasi (routing, carousel, dll)
-         ════════════════════════════════════════════════════════════════ -->
     <script src="./public/js/config.js" defer></script>
     <script src="./public/js/analytics.js" defer></script>
     <script src="./public/js/script.js" defer></script>
