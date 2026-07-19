@@ -3882,47 +3882,134 @@
    *   const queue = new RequestQueue({ concurrency: 3 });
    *   const result = await queue.enqueue(() => fetch(url), { priority: 2, timeout: 5000 });
    */
+  // ═══════════════════════════════════════════
+  // REQUEST QUEUE v2.7.0
+  // ═══════════════════════════════════════════
+
+  /**
+   * Priority-based request queue with:
+   *   - Configurable concurrency
+   *   - Per-task timeout & retry
+   *   - AbortController support
+   *   - Progress/event callbacks
+   *   - Task deduplication
+   *   - Pause/Resume capability
+   *
+   * @example
+   *   const queue = new RequestQueue({ concurrency: 3 });
+   *   const result = await queue.enqueue(() => fetch(url), {
+   *     priority: 2,
+   *     timeout: 5000,
+   *     retries: 2
+   *   });
+   */
   class RequestQueue {
-    /** @type {Array<{ fn: Function, priority: number, resolve: Function, reject: Function, timeout: number, signal: AbortSignal|null }>} */
+    /** @type {Array<{ id: string, fn: Function, priority: number, resolve: Function, reject: Function, timeout: number, retries: number, signal: AbortSignal|null, addedAt: number }>} */
     #queue = [];
+    /** @type {Map<string, Promise>} Deduplication map */
+    #inFlight = new Map();
     /** @type {number} How many tasks can run concurrently */
     #concurrency;
     /** @type {number} Currently running tasks count */
     #running = 0;
+    /** @type {boolean} Whether the queue is paused */
+    #paused = false;
     /** @type {boolean} Whether the queue is destroyed */
     #destroyed = false;
+    /** @type {number} Total tasks processed */
+    #completedCount = 0;
+    /** @type {number} Total tasks failed */
+    #failedCount = 0;
 
     // ── Callbacks ────────────────────────────
     onTaskStart = null; // (task) => void
     onTaskComplete = null; // (task, result) => void
     onTaskError = null; // (task, error) => void
+    onTaskRetry = null; // (task, error, attempt) => void
     onDrain = null; // () => void — called when queue becomes empty
+    onProgress = null; // ({ completed, failed, pending, running }) => void
 
     /**
      * @param {object} [options]
-     * @param {number} [options.concurrency=1] - Max concurrent tasks
+     * @param {number} [options.concurrency=2] - Max concurrent tasks
+     * @param {number} [options.defaultTimeout=30000] - Default timeout in ms
+     * @param {number} [options.defaultRetries=0] - Default retry count
+     * @param {boolean} [options.dedupe=false] - Enable task deduplication
      */
-    constructor({ concurrency = 1 } = {}) {
+    constructor({
+      concurrency = 2,
+      defaultTimeout = 30_000,
+      defaultRetries = 0,
+      dedupe = false,
+    } = {}) {
       this.#concurrency = Math.max(1, concurrency);
+      this.defaultTimeout = defaultTimeout;
+      this.defaultRetries = defaultRetries;
+      this.dedupe = dedupe;
     }
 
     /**
      * Add a task to the queue.
      *
-     * @param {Function} fn - Async function to execute
+     * @param {Function} fn - Async function to execute. Can accept (signal) parameter
      * @param {object} [options]
      * @param {number} [options.priority=0] - Higher = executed sooner
-     * @param {number} [options.timeout=30000] - Max ms before task is rejected
+     * @param {number} [options.timeout] - Max ms before task is rejected
+     * @param {number} [options.retries] - Number of retry attempts on failure
+     * @param {string} [options.id] - Unique task ID for deduplication
      * @param {AbortSignal} [options.signal] - External abort signal
      * @returns {Promise<*>} Result of fn()
      */
-    enqueue(fn, { priority = 0, timeout = 30_000, signal = null } = {}) {
+    enqueue(
+      fn,
+      {
+        priority = 0,
+        timeout = this.defaultTimeout,
+        retries = this.defaultRetries,
+        id,
+        signal = null,
+      } = {},
+    ) {
       if (this.#destroyed) {
         return Promise.reject(new Error("Queue has been destroyed"));
       }
 
+      // Deduplication check
+      if (this.dedupe && id) {
+        const existing = this.#inFlight.get(id);
+        if (existing) return existing;
+
+        // Check if already in queue
+        const queued = this.#queue.find((t) => t.id === id);
+        if (queued) {
+          return new Promise((resolve, reject) => {
+            // Replace existing promise handlers
+            const origResolve = queued.resolve;
+            const origReject = queued.reject;
+            queued.resolve = (val) => {
+              origResolve(val);
+              resolve(val);
+            };
+            queued.reject = (err) => {
+              origReject(err);
+              reject(err);
+            };
+          });
+        }
+      }
+
       return new Promise((resolve, reject) => {
-        const task = { fn, priority, resolve, reject, timeout, signal };
+        const task = {
+          id,
+          fn,
+          priority,
+          resolve,
+          reject,
+          timeout,
+          retries,
+          signal,
+          addedAt: Date.now(),
+        };
 
         // Check if already aborted
         if (signal?.aborted) {
@@ -3941,20 +4028,43 @@
               if (idx !== -1) {
                 this.#queue.splice(idx, 1);
               }
+              if (id) this.#inFlight.delete(id);
               reject(
                 signal.reason || new DOMException("Aborted", "AbortError"),
               );
+              this.#emitProgress();
             },
             { once: true },
           );
         }
 
-        // Insert sorted by priority (descending)
-        const insertAt = this.#queue.findIndex((t) => t.priority < priority);
+        // Insert sorted by priority (descending), then by addedAt (ascending)
+        const insertAt = this.#queue.findIndex(
+          (t) =>
+            t.priority < priority ||
+            (t.priority === priority && t.addedAt > task.addedAt),
+        );
+
         if (insertAt === -1) {
           this.#queue.push(task);
         } else {
           this.#queue.splice(insertAt, 0, task);
+        }
+
+        if (id) {
+          this.#inFlight.set(
+            id,
+            new Promise((r, j) => {
+              task.resolve = (val) => {
+                r(val);
+                resolve(val);
+              };
+              task.reject = (err) => {
+                j(err);
+                reject(err);
+              };
+            }),
+          );
         }
 
         // Try to process
@@ -3963,14 +4073,71 @@
     }
 
     /**
+     * Add multiple tasks at once.
+     * @param {Array<{ fn: Function, options?: object }>} tasks
+     * @returns {Promise<Array<*>>} Results in order
+     */
+    async enqueueAll(tasks) {
+      return Promise.all(
+        tasks.map(({ fn, options }) => this.enqueue(fn, options)),
+      );
+    }
+
+    /**
+     * Add multiple tasks, resolving as they complete (not in order).
+     * @param {Array<{ fn: Function, options?: object }>} tasks
+     * @param {Function} [callback] - Called with (result, index) for each completed task
+     * @returns {Promise<Array<*>>} Results in completion order
+     */
+    async enqueueAllSettled(tasks, callback) {
+      const results = [];
+      const promises = tasks.map(({ fn, options }, index) =>
+        this.enqueue(fn, options)
+          .then((result) => {
+            const entry = { status: "fulfilled", value: result, index };
+            results.push(entry);
+            callback?.(result, index);
+            return entry;
+          })
+          .catch((error) => {
+            const entry = { status: "rejected", reason: error, index };
+            results.push(entry);
+            callback?.(null, index, error);
+            return entry;
+          }),
+      );
+      await Promise.allSettled(promises);
+      return results;
+    }
+
+    /**
+     * Pause the queue. Running tasks continue, pending tasks wait.
+     */
+    pause() {
+      this.#paused = true;
+    }
+
+    /**
+     * Resume the queue.
+     */
+    resume() {
+      this.#paused = false;
+      this.#processNext();
+    }
+
+    /**
      * Get current queue stats.
-     * @returns {{ pending: number, running: number, concurrency: number }}
+     * @returns {{ pending: number, running: number, concurrency: number, completed: number, failed: number, paused: boolean }}
      */
     getStats() {
       return {
         pending: this.#queue.length,
         running: this.#running,
         concurrency: this.#concurrency,
+        completed: this.#completedCount,
+        failed: this.#failedCount,
+        paused: this.#paused,
+        destroyed: this.#destroyed,
       };
     }
 
@@ -3979,39 +4146,51 @@
       const removed = this.#queue.length;
       // Reject all pending tasks
       for (const task of this.#queue) {
+        if (task.id) this.#inFlight.delete(task.id);
         task.reject(new Error("Queue cleared"));
       }
       this.#queue.length = 0;
+      this.#emitProgress();
       return removed;
     }
 
     /** Wait until all pending + running tasks complete */
     async drain() {
-      while (this.#queue.length > 0 || this.#running > 0) {
-        await new Promise((r) => setTimeout(r, 50));
-      }
+      if (this.#destroyed) return;
+
+      return new Promise((resolve) => {
+        if (this.#queue.length === 0 && this.#running === 0) {
+          resolve();
+          return;
+        }
+        const originalDrain = this.onDrain;
+        this.onDrain = () => {
+          originalDrain?.();
+          resolve();
+        };
+      });
     }
 
     /** Destroy the queue — clear pending + prevent new tasks */
     destroy() {
       this.#destroyed = true;
       this.clear();
+      this.#inFlight.clear();
       this.#queue.length = 0;
       this.#running = 0;
+      this.#emitProgress();
     }
 
     // ── Private ──────────────────────────────
 
     #processNext() {
+      if (this.#destroyed || this.#paused) return;
+
       // Already at max concurrency or nothing to run
-      while (
-        this.#running < this.#concurrency &&
-        this.#queue.length > 0 &&
-        !this.#destroyed
-      ) {
+      while (this.#running < this.#concurrency && this.#queue.length > 0) {
         const task = this.#queue.shift();
         this.#running++;
-        this.#executeTask(task);
+        this.#executeTask(task, 0);
       }
 
       // Emit drain event if queue is completely empty
@@ -4020,30 +4199,65 @@
       }
     }
 
-    async #executeTask(task) {
-      const { fn, resolve, reject, timeout, signal } = task;
+    async #executeTask(task, attempt) {
+      const { id, fn, resolve, reject, timeout, retries, signal } = task;
+
+      if (attempt > 0) {
+        this.onTaskRetry?.(task, task._lastError, attempt);
+      }
 
       this.onTaskStart?.(task);
 
       try {
         // Create timeout controller
         const timeoutCtrl = new AbortController();
-        const timeoutId = setTimeout(() => timeoutCtrl.abort(), timeout);
+        const timeoutId = setTimeout(() => {
+          timeoutCtrl.abort(new DOMException("Task timeout", "TimeoutError"));
+        }, timeout);
 
         // Merge external signal with timeout signal
         const mergedSignal = signal
-          ? this.#combineSignals(signal, timeoutCtrl.signal)
+          ? this.#combineSignals([signal, timeoutCtrl.signal])
           : timeoutCtrl.signal;
 
         // Execute with timeout + signal
         const result = await this.#executeWithSignal(fn, mergedSignal);
 
         clearTimeout(timeoutId);
+
+        if (id) this.#inFlight.delete(id);
+        this.#completedCount++;
         resolve(result);
         this.onTaskComplete?.(task, result);
+        this.#emitProgress();
       } catch (err) {
+        task._lastError = err;
+
+        // Don't retry if:
+        // - No retries left
+        // - Task was aborted (user-initiated)
+        // - Queue was destroyed
+        if (
+          attempt < retries &&
+          err.name !== "AbortError" &&
+          !this.#destroyed
+        ) {
+          // Exponential backoff: 1s, 2s, 4s, 8s...
+          const delay = Math.min(1000 * Math.pow(2, attempt), 30_000);
+          await new Promise((r) => setTimeout(r, delay));
+
+          // Re-add task to front of queue with same priority
+          this.#queue.unshift(task);
+          this.#running--;
+          this.#processNext();
+          return;
+        }
+
+        if (id) this.#inFlight.delete(id);
+        this.#failedCount++;
         reject(err);
         this.onTaskError?.(task, err);
+        this.#emitProgress();
       } finally {
         this.#running--;
         this.#processNext();
@@ -4052,12 +4266,14 @@
 
     /**
      * Execute a function that may or may not accept an AbortSignal.
-     * Detects function signature and passes signal if supported.
      */
     async #executeWithSignal(fn, signal) {
-      // If function expects a signal parameter, pass it
+      // Detect if function expects a signal parameter
       if (fn.length >= 1) {
-        // Check if it's a fetch-like function that uses { signal }
+        // Check if already aborted
+        if (signal.aborted) {
+          throw signal.reason || new DOMException("Aborted", "AbortError");
+        }
         return fn(signal);
       }
       // Otherwise just execute normally
@@ -4065,55 +4281,156 @@
     }
 
     /**
-     * Combine two AbortSignals — aborts if either aborts.
+     * Combine multiple AbortSignals — aborts if any aborts.
      */
-    #combineSignals(signalA, signalB) {
+    #combineSignals(signals) {
       const controller = new AbortController();
 
-      const onAbort = () => {
-        controller.abort(signalA.reason || signalB.reason);
+      const onAbort = (reason) => {
+        controller.abort(reason);
+        // Clean up listeners
+        for (const sig of signals) {
+          sig.removeEventListener("abort", onAbortWrapper);
+        }
       };
 
-      signalA.addEventListener("abort", onAbort, { once: true });
-      signalB.addEventListener("abort", onAbort, { once: true });
+      const onAbortWrapper = (event) => onAbort(event.target?.reason);
 
-      // If either is already aborted
-      if (signalA.aborted || signalB.aborted) {
-        controller.abort(signalA.reason || signalB.reason);
+      for (const sig of signals) {
+        if (sig.aborted) {
+          controller.abort(sig.reason);
+          break;
+        }
+        sig.addEventListener("abort", onAbortWrapper, { once: true });
       }
 
       return controller.signal;
     }
+
+    #emitProgress() {
+      this.onProgress?.({
+        completed: this.#completedCount,
+        failed: this.#failedCount,
+        pending: this.#queue.length,
+        running: this.#running,
+        total:
+          this.#completedCount +
+          this.#failedCount +
+          this.#queue.length +
+          this.#running,
+      });
+    }
   }
 
   // ═══════════════════════════════════════════
-  // SIMPLE EVENT EMITTER (UTILITY)
+  // ENHANCED EVENT EMITTER v2.7.0
   // ═══════════════════════════════════════════
 
   /**
-   * Lightweight event emitter for internal pub/sub.
-   * Used when full CustomEvent is overkill.
+   * Enhanced event emitter with:
+   *   - Wildcard listeners (*)
+   *   - Namespace support (event:namespace)
+   *   - Listener count tracking
+   *   - Async emit support
+   *   - Memory leak detection
+   *   - Debug mode
    *
    * @example
-   *   const emitter = new EventEmitter();
-   *   emitter.on('data', (payload) => console.log(payload));
-   *   emitter.emit('data', { key: 'value' });
+   *   const emitter = new EventEmitter({ maxListeners: 20, debug: true });
+   *   emitter.on('data:cache', (payload) => console.log(payload));
+   *   emitter.on('*', (event, ...args) => console.log(`[${event}]`, args));
+   *   emitter.emit('data:cache', { key: 'value' });
    */
   class EventEmitter {
-    /** @type {Map<string, Set<Function>>} */
+    /** @type {Map<string, Map<string, Set<Function>>>} */
     #listeners = new Map();
+    /** @type {number} */
+    #maxListeners;
+    /** @type {boolean} */
+    #debug;
+    /** @type {boolean} */
+    #destroyed = false;
+
+    /**
+     * @param {object} [options]
+     * @param {number} [options.maxListeners=10] - Max listeners per event before warning
+     * @param {boolean} [options.debug=false] - Enable debug logging
+     */
+    constructor({ maxListeners = 10, debug = false } = {}) {
+      this.#maxListeners = maxListeners;
+      this.#debug = debug;
+    }
 
     /**
      * Register an event listener.
-     * @param {string} event
-     * @param {Function} callback
+     * Supports namespaced events (e.g., 'data:cache').
+     *
+     * @param {string} event - Event name, supports '*' wildcard and ':namespace'
+     * @param {Function} callback - Handler function
+     * @param {object} [options]
+     * @param {boolean} [options.once=false] - One-time listener
+     * @param {number} [options.priority=0] - Higher = executed sooner
+     * @param {*} [options.context] - 'this' context for callback
      * @returns {Function} Unsubscribe function
      */
-    on(event, callback) {
-      if (!this.#listeners.has(event)) {
-        this.#listeners.set(event, new Set());
+    on(event, callback, { once = false, priority = 0, context } = {}) {
+      if (this.#destroyed) {
+        console.warn("[EventEmitter] Cannot add listener to destroyed emitter");
+        return () => {};
       }
-      this.#listeners.get(event).add(callback);
+
+      const [baseEvent, namespace] = this.#parseEvent(event);
+
+      if (!this.#listeners.has(baseEvent)) {
+        this.#listeners.set(baseEvent, new Map());
+      }
+
+      const namespaceMap = this.#listeners.get(baseEvent);
+      const nsKey = namespace || "__default__";
+
+      if (!namespaceMap.has(nsKey)) {
+        namespaceMap.set(nsKey, new Map());
+      }
+
+      const priorityMap = namespaceMap.get(nsKey);
+      const priorityKey = String(priority);
+
+      if (!priorityMap.has(priorityKey)) {
+        priorityMap.set(priorityKey, new Set());
+      }
+
+      const listenerSet = priorityMap.get(priorityKey);
+
+      // Warn if too many listeners
+      const totalListeners = this.listenerCount(baseEvent);
+      if (totalListeners >= this.#maxListeners) {
+        console.warn(
+          `[EventEmitter] Possible memory leak: ${totalListeners} listeners for "${baseEvent}". ` +
+            `Use setMaxListeners() to increase limit.`,
+        );
+      }
+
+      // Create bound callback with context
+      const boundCallback = context ? callback.bind(context) : callback;
+      const wrapper = once
+        ? (...args) => {
+            this.off(event, callback);
+            boundCallback(...args);
+          }
+        : boundCallback;
+
+      // Store metadata
+      wrapper._original = callback;
+      wrapper._event = event;
+      wrapper._once = once;
+      wrapper._priority = priority;
+
+      listenerSet.add(wrapper);
+
+      this.#log(
+        "debug",
+        `Added listener for "${event}" (priority: ${priority})`,
+      );
 
       // Return unsubscribe function
       return () => this.off(event, callback);
@@ -4121,56 +4438,346 @@
 
     /**
      * Register a one-time listener.
-     * @param {string} event
-     * @param {Function} callback
      */
-    once(event, callback) {
-      const wrapper = (...args) => {
-        this.off(event, wrapper);
-        callback(...args);
-      };
-      return this.on(event, wrapper);
+    once(event, callback, options = {}) {
+      return this.on(event, callback, { ...options, once: true });
     }
 
     /**
-     * Remove a listener.
+     * Register multiple listeners at once.
+     * @param {Object<string, Function>} listeners - Map of event -> callback
+     * @returns {Function} Unsubscribe all function
+     */
+    onMany(listeners) {
+      const unsubscribers = [];
+      for (const [event, callback] of Object.entries(listeners)) {
+        unsubscribers.push(this.on(event, callback));
+      }
+      return () => unsubscribers.forEach((unsub) => unsub());
+    }
+
+    /**
+     * Remove a specific listener.
      * @param {string} event
-     * @param {Function} callback
+     * @param {Function} [callback] - If omitted, removes all listeners for event
      */
     off(event, callback) {
-      this.#listeners.get(event)?.delete(callback);
-      if (this.#listeners.get(event)?.size === 0) {
-        this.#listeners.delete(event);
+      const [baseEvent, namespace] = this.#parseEvent(event);
+      const namespaceMap = this.#listeners.get(baseEvent);
+
+      if (!namespaceMap) return;
+
+      if (!callback) {
+        // Remove all listeners for event (and optionally namespace)
+        if (namespace) {
+          namespaceMap.delete(namespace);
+          if (namespaceMap.size === 0) {
+            this.#listeners.delete(baseEvent);
+          }
+        } else {
+          this.#listeners.delete(baseEvent);
+        }
+        this.#log("debug", `Removed all listeners for "${event}"`);
+        return;
+      }
+
+      // Remove specific callback
+      for (const [nsKey, priorityMap] of namespaceMap) {
+        if (namespace && nsKey !== namespace) continue;
+
+        for (const [priorityKey, listenerSet] of priorityMap) {
+          for (const wrapper of listenerSet) {
+            if (wrapper._original === callback || wrapper === callback) {
+              listenerSet.delete(wrapper);
+              this.#log("debug", `Removed listener for "${event}"`);
+
+              // Clean up empty sets
+              if (listenerSet.size === 0) {
+                priorityMap.delete(priorityKey);
+                if (priorityMap.size === 0) {
+                  namespaceMap.delete(nsKey);
+                  if (namespaceMap.size === 0) {
+                    this.#listeners.delete(baseEvent);
+                  }
+                }
+              }
+              return;
+            }
+          }
+        }
       }
     }
 
     /**
-     * Emit an event to all listeners.
+     * Remove listeners by namespace.
+     * @param {string} namespace - e.g., 'cache' removes all 'event:cache' listeners
+     */
+    offNamespace(namespace) {
+      for (const [baseEvent, namespaceMap] of this.#listeners) {
+        namespaceMap.delete(namespace);
+        if (namespaceMap.size === 0) {
+          this.#listeners.delete(baseEvent);
+        }
+      }
+    }
+
+    /**
+     * Emit an event to all matching listeners.
+     * Supports wildcard listeners and namespaces.
+     *
      * @param {string} event
      * @param {...*} args
+     * @returns {boolean} True if event had listeners
      */
     emit(event, ...args) {
-      for (const cb of this.#listeners.get(event) ?? []) {
+      if (this.#destroyed) return false;
+
+      const [baseEvent, namespace] = this.#parseEvent(event);
+      let hadListeners = false;
+
+      // Collect all matching listeners
+      const listenersToCall = [];
+
+      // 1. Exact event match (including namespace)
+      this.#collectListeners(baseEvent, namespace, listenersToCall);
+
+      // 2. Base event match (without namespace, if namespace was specified)
+      if (namespace) {
+        this.#collectListeners(baseEvent, null, listenersToCall);
+      }
+
+      // 3. Wildcard listeners
+      this.#collectListeners("*", null, listenersToCall);
+
+      // Sort by priority (descending)
+      listenersToCall.sort((a, b) => (b._priority || 0) - (a._priority || 0));
+
+      // Execute all listeners
+      for (const wrapper of listenersToCall) {
         try {
-          cb(...args);
+          // Wildcard listeners get event name as first argument
+          if (wrapper._event === "*") {
+            wrapper(event, ...args);
+          } else {
+            wrapper(...args);
+          }
+          hadListeners = true;
+        } catch (err) {
+          console.error(`[EventEmitter] Error in "${event}" handler:`, err);
+          this.emit("error", err, event);
+        }
+      }
+
+      return hadListeners;
+    }
+
+    /**
+     * Emit an event asynchronously.
+     * All listeners are called, errors are collected.
+     *
+     * @param {string} event
+     * @param {...*} args
+     * @returns {Promise<Array<{ status: string, value?: *, reason?: * }>>}
+     */
+    async emitAsync(event, ...args) {
+      if (this.#destroyed) return [];
+
+      const [baseEvent, namespace] = this.#parseEvent(event);
+      const listenersToCall = [];
+
+      this.#collectListeners(baseEvent, namespace, listenersToCall);
+      if (namespace) {
+        this.#collectListeners(baseEvent, null, listenersToCall);
+      }
+      this.#collectListeners("*", null, listenersToCall);
+
+      listenersToCall.sort((a, b) => (b._priority || 0) - (a._priority || 0));
+
+      const results = await Promise.allSettled(
+        listenersToCall.map((wrapper) => {
+          if (wrapper._event === "*") {
+            return wrapper(event, ...args);
+          }
+          return wrapper(...args);
+        }),
+      );
+
+      // Log errors
+      for (const result of results) {
+        if (result.status === "rejected") {
+          console.error(
+            `[EventEmitter] Async error in "${event}" handler:`,
+            result.reason,
+          );
+        }
+      }
+
+      return results;
+    }
+
+    /**
+     * Emit an event and wait for all async listeners to complete.
+     * Useful for plugins/hooks pattern.
+     */
+    async emitSerial(event, ...args) {
+      if (this.#destroyed) return;
+
+      const [baseEvent, namespace] = this.#parseEvent(event);
+      const listenersToCall = [];
+
+      this.#collectListeners(baseEvent, namespace, listenersToCall);
+      if (namespace) {
+        this.#collectListeners(baseEvent, null, listenersToCall);
+      }
+      this.#collectListeners("*", null, listenersToCall);
+
+      listenersToCall.sort((a, b) => (b._priority || 0) - (a._priority || 0));
+
+      for (const wrapper of listenersToCall) {
+        try {
+          if (wrapper._event === "*") {
+            await wrapper(event, ...args);
+          } else {
+            await wrapper(...args);
+          }
         } catch (err) {
           console.error(`[EventEmitter] Error in "${event}" handler:`, err);
         }
       }
     }
 
+    /**
+     * Get count of listeners for an event.
+     * @param {string} [event] - If omitted, returns total listeners
+     * @returns {number}
+     */
+    listenerCount(event) {
+      if (!event) {
+        let total = 0;
+        for (const namespaceMap of this.#listeners.values()) {
+          for (const priorityMap of namespaceMap.values()) {
+            for (const listenerSet of priorityMap.values()) {
+              total += listenerSet.size;
+            }
+          }
+        }
+        return total;
+      }
+
+      const [baseEvent, namespace] = this.#parseEvent(event);
+      const namespaceMap = this.#listeners.get(baseEvent);
+      if (!namespaceMap) return 0;
+
+      let count = 0;
+      for (const [nsKey, priorityMap] of namespaceMap) {
+        if (namespace && nsKey !== namespace) continue;
+        for (const listenerSet of priorityMap.values()) {
+          count += listenerSet.size;
+        }
+      }
+      return count;
+    }
+
+    /**
+     * Get all registered event names.
+     * @returns {string[]}
+     */
+    eventNames() {
+      const names = new Set();
+      for (const [baseEvent, namespaceMap] of this.#listeners) {
+        for (const nsKey of namespaceMap.keys()) {
+          if (nsKey === "__default__") {
+            names.add(baseEvent);
+          } else {
+            names.add(`${baseEvent}:${nsKey}`);
+          }
+        }
+      }
+      return [...names];
+    }
+
+    /**
+     * Get listeners for a specific event.
+     * @param {string} event
+     * @returns {Function[]}
+     */
+    listeners(event) {
+      const [baseEvent, namespace] = this.#parseEvent(event);
+      const namespaceMap = this.#listeners.get(baseEvent);
+      if (!namespaceMap) return [];
+
+      const result = [];
+      for (const [nsKey, priorityMap] of namespaceMap) {
+        if (namespace && nsKey !== namespace) continue;
+        for (const listenerSet of priorityMap.values()) {
+          for (const wrapper of listenerSet) {
+            result.push(wrapper._original || wrapper);
+          }
+        }
+      }
+      return result;
+    }
+
+    /**
+     * Set max listeners before warning.
+     */
+    setMaxListeners(n) {
+      this.#maxListeners = n;
+    }
+
     /** Remove all listeners */
     clear() {
       this.#listeners.clear();
+      this.#log("debug", "All listeners cleared");
     }
 
-    /** Get count of listeners for an event */
-    listenerCount(event) {
-      return this.#listeners.get(event)?.size ?? 0;
-    }
-
+    /**
+     * Destroy the emitter.
+     * Removes all listeners and prevents further use.
+     */
     destroy() {
+      this.#destroyed = true;
       this.clear();
+      this.#log("debug", "EventEmitter destroyed");
+    }
+
+    // ── Private ──────────────────────────────
+
+    #parseEvent(event) {
+      const colonIndex = event.indexOf(":");
+      if (colonIndex === -1) return [event, null];
+      return [event.substring(0, colonIndex), event.substring(colonIndex + 1)];
+    }
+
+    #collectListeners(baseEvent, namespace, result) {
+      const namespaceMap = this.#listeners.get(baseEvent);
+      if (!namespaceMap) return;
+
+      for (const [nsKey, priorityMap] of namespaceMap) {
+        // Filter by namespace if specified
+        if (namespace !== undefined) {
+          if (namespace === null) {
+            // Only collect default (non-namespaced) listeners
+            if (nsKey !== "__default__") continue;
+          } else {
+            // Collect only matching namespace
+            if (nsKey !== namespace && nsKey !== "__default__") continue;
+          }
+        }
+
+        // Collect all listeners from all priorities
+        for (const listenerSet of priorityMap.values()) {
+          for (const wrapper of listenerSet) {
+            result.push(wrapper);
+          }
+        }
+      }
+    }
+
+    #log(level, message) {
+      if (this.#debug) {
+        console.log(`[EventEmitter:${level}] ${message}`);
+      }
     }
   }
 
