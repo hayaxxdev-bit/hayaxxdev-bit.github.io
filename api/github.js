@@ -1,97 +1,161 @@
 // api/github.js
-const TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_API = 'https://api.github.com';
+
+const GITHUB_API = "https://api.github.com";
 
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-  
-  // Health check
-  if (req.query.action === 'health') {
-    return res.status(200).json({ 
-      status: 'ok', 
-      token: TOKEN ? 'present' : 'missing' 
+  const allowedOrigins = [
+    "https://hayaxxdev-bit.github.io",
+    "https://hayaxxdev-bit.my.id",
+    "http://localhost:5500",
+    "http://localhost:3000",
+  ];
+
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  if (req.method !== "GET") {
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
     });
   }
 
-  const { username } = req.query;
-  
-  if (!username) {
-    return res.status(400).json({ error: 'Username required' });
-  }
+  const username = req.query.username || "hayaxxdev-bit";
+  const action = req.query.action || "repos";
+  const repo = req.query.repo;
 
   try {
-    // Fetch repos dengan pagination (3 halaman)
-    const repos = await fetchRepos(username);
-    
-    // Ambil README untuk setiap repo
-    const reposWithReadme = await Promise.all(
-      repos.map(async (repo) => {
-        const readme = await fetchReadme(username, repo.name);
-        return { ...repo, readme };
-      })
-    );
+    let githubURL;
+    let headers = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "hayaxxdev-portfolio",
+    };
 
-    return res.status(200).json(reposWithReadme);
-  } catch (error) {
-    console.error('GitHub API Error:', error);
-    return res.status(500).json({ 
-      error: 'Failed to fetch repos',
-      details: error.message 
-    });
-  }
-}
-
-async function fetchRepos(username) {
-  const headers = TOKEN ? { Authorization: `token ${TOKEN}` } : {};
-  const allRepos = [];
-  
-  // Fetch 3 pages (30 repos total)
-  for (let page = 1; page <= 3; page++) {
-    const url = `${GITHUB_API}/users/${username}/repos?per_page=10&page=${page}&sort=updated`;
-    const response = await fetch(url, { headers });
-    
-    if (!response.ok) continue;
-    
-    const data = await response.json();
-    allRepos.push(...data);
-    
-    if (data.length < 10) break; // Last page
-  }
-  
-  return allRepos;
-}
-
-async function fetchReadme(username, repo) {
-  const headers = TOKEN ? { Authorization: `token ${TOKEN}` } : {};
-  
-  try {
-    // Coba dari GitHub API dulu
-    const url = `${GITHUB_API}/repos/${username}/${repo}/readme`;
-    const response = await fetch(url, { headers });
-    
-    if (!response.ok) {
-      // Fallback ke raw.githubusercontent.com
-      const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/README.md`;
-      const rawResponse = await fetch(rawUrl);
-      
-      if (!rawResponse.ok) {
-        // Coba branch master
-        const masterUrl = `https://raw.githubusercontent.com/${username}/${repo}/master/README.md`;
-        const masterResponse = await fetch(masterUrl);
-        if (!masterResponse.ok) return null;
-        return await masterResponse.text();
-      }
-      
-      return await rawResponse.text();
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
     }
-    
+
+    switch (action) {
+      case "repos":
+        githubURL =
+          `${GITHUB_API}/users/${username}/repos` +
+          "?sort=updated&per_page=100";
+        break;
+
+      case "user":
+        githubURL =
+          `${GITHUB_API}/users/${username}`;
+        break;
+
+      case "readme":
+        if (!repo) {
+          return res.status(400).json({
+            success: false,
+            error: "repo parameter required",
+          });
+        }
+
+        githubURL =
+          `${GITHUB_API}/repos/${username}/${repo}/readme`;
+
+        headers.Accept =
+          "application/vnd.github.raw";
+        break;
+
+      case "commits":
+        githubURL =
+          `${GITHUB_API}/users/${username}/events/public`;
+        break;
+
+      default:
+        return res.status(400).json({
+          success: false,
+          error: "Unknown action",
+        });
+    }
+
+    const response = await fetch(githubURL, {
+      headers,
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        error: await response.text(),
+      });
+    }
+
+    if (action === "readme") {
+      const text = await response.text();
+
+      return res.status(200).send(text);
+    }
+
     const data = await response.json();
-    // Decode base64 content
-    return Buffer.from(data.content, 'base64').toString('utf-8');
-  } catch (error) {
-    console.log(`README fallback failed for ${repo}:`, error.message);
-    return null;
+
+    if (action === "repos") {
+      return res.status(200).json({
+        success: true,
+        repos: data.map((repo) => ({
+          id: repo.id,
+          name: repo.name,
+          description: repo.description,
+          language: repo.language,
+          homepage: repo.homepage,
+          html_url: repo.html_url,
+          stargazers_count: repo.stargazers_count,
+          forks_count: repo.forks_count,
+          has_pages: repo.has_pages,
+          topics: repo.topics,
+          created_at: repo.created_at,
+          updated_at: repo.updated_at,
+          fork: repo.fork,
+          size: repo.size,
+        })),
+      });
+    }
+
+    if (action === "user") {
+      return res.status(200).json({
+        success: true,
+        user: data,
+      });
+    }
+
+    if (action === "commits") {
+      const total = data
+        .filter((e) => e.type === "PushEvent")
+        .reduce(
+          (sum, e) =>
+            sum + (e.payload?.commits?.length || 0),
+          0
+        );
+
+      return res.status(200).json({
+        success: true,
+        total_commits: total,
+        events: data,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
   }
 }
