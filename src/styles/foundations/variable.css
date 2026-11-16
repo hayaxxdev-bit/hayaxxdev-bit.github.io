@@ -1,0 +1,274 @@
+/* =========================================
+   DESIGN TOKENS
+   Default: Dark Theme
+   Alternate: Golden White Light Theme
+========================================= */
+
+:root {
+  /* =======================================
+     DARK THEME — DEFAULT
+  ======================================= */
+
+  /* Background */
+  --bg: #050308;
+  --bg-card: #0d0818;
+  --bg-card-hover: #160c24;
+  --bg-void: #030108;
+  --bg-deep: #0a0418;
+  --bg-panel: #10081f;
+  --bg-panel-2: #160c2b;
+
+  /* Typography */
+  --text: #f0eaff;
+  --text-secondary: #b098cc;
+  --ink: #ece8f5;
+  --ink-dim: #8c849a;
+  --silver: #b8b0cc;
+
+  /* Primary accents */
+  --accent: #cc1133;
+  --accent-glow: rgba(204, 17, 51, 0.5);
+
+  --accent-gold: #7c3aed;
+  --accent-gold-glow: rgba(124, 58, 237, 0.5);
+
+  --accent-poison: #6d28d9;
+  --accent-poison-glow: rgba(109, 40, 217, 0.4);
+
+  /* Color identities */
+  --crimson: #99112a;
+  --crimson-bright: #cc1133;
+
+  --purple-deep: #5b21b6;
+  --purple-bright: #7c3aed;
+  --purple-soft: #a78bfa;
+
+  --amethyst: #6d28d9;
+
+  /* Effects */
+  --accent-glowd:
+    0 0 24px rgba(124, 58, 237, 0.5),
+    0 0 60px rgba(204, 17, 51, 0.3);
+
+  --glass-bg: rgba(16, 8, 31, 0.6);
+  --glass-border: rgba(124, 58, 237, 0.3);
+
+  --border: rgba(204, 17, 51, 0.2);
+  --border-active: rgba(124, 58, 237, 0.4);
+
+  /* =======================================
+     NAVBAR
+  ======================================= */
+
+  --navbar-bg: rgba(0, 0, 0, 0.75);
+  --navbar-bg-scrolled: rgba(3, 1, 8, 0.92);
+
+  --navbar-border: rgba(124, 58, 237, 0.15);
+
+  --navbar-shadow:
+    0 0 40px rgba(124, 58, 237, 0.05),
+    inset 0 1px 0 rgba(124, 58, 237, 0.1);
+
+  --navbar-shadow-scrolled:
+    0 0 60px rgba(124, 58, 237, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(124, 58, 237, 0.15);
+
+  --nav-link-color: var(--text-secondary);
+  --nav-link-hover-bg: rgba(124, 58, 237, 0.08);
+
+  --nav-link-active-bg:
+    linear-gradient(
+      135deg,
+      rgba(124, 58, 237, 0.15),
+      rgba(204, 17, 51, 0.08)
+    );
+
+  --nav-link-active-border: rgba(124, 58, 237, 0.25);
+
+  --cta-bg: linear-gradient(135deg, #7c3aed, #050308);
+  --cta-color: #f0eaff;
+
+  --cta-shadow:
+    0 4px 20px rgba(124, 58, 237, 0.3),
+    0 0 40px rgba(204, 17, 51, 0.1);
+
+  /* =======================================
+     TYPOGRAPHY
+  ======================================= */
+
+  --font-display: "Cinzel Decorative", serif;
+  --font-head: "Cinzel", serif;
+  --font-body: "EB Garamond", serif;
+  --font-stat: "Spectral SC", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* =======================================
+     LAYOUT
+  ======================================= */
+
+  --radius: 16px;
+  --radius-sm: 10px;
+
+  --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --navbar-height: 70px;
+  --section-padding: 80px 0;
+  --content-max-width: 1400px;
+}
+
+
+/* =========================================
+   LIGHT THEME
+   Golden White / Daylight Atmosphere
+========================================= */
+
+[data-theme="light"] {
+
+  /* =======================================
+     BACKGROUND — SKY & IVORY
+  ======================================= */
+
+  --bg: #f0f8ff;
+  --bg-card: #fffdf6;
+  --bg-card-hover: #fff8ec;
+
+  --bg-void: #fafafa;
+  --bg-deep: #f0f8ff;
+
+  --bg-panel: #fffdf6;
+  --bg-panel-2: #f7f0df;
+
+
+  /* =======================================
+     TYPOGRAPHY — WARM BROWN
+  ======================================= */
+
+  --text: #74613b;
+  --text-secondary: #81745c;
+
+  --ink: #74613b;
+  --ink-dim: #9b8b6c;
+
+  --silver: #a99a7d;
+
+
+  /* =======================================
+     PRIMARY ACCENTS — GOLDEN WHITE
+  ======================================= */
+
+  --accent: #bd9130;
+  --accent-glow: rgba(189, 145, 48, 0.24);
+
+  --accent-gold: #d4af37;
+  --accent-gold-glow: rgba(212, 175, 55, 0.3);
+
+  --accent-poison: #a27a25;
+  --accent-poison-glow: rgba(162, 122, 37, 0.2);
+
+
+  /* =======================================
+     COLOR IDENTITIES
+     Replace purple/crimson with gold tones
+  ======================================= */
+
+  --crimson: #bd9130;
+  --crimson-bright: #d4af37;
+
+  --purple-deep: #a27a25;
+  --purple-bright: #bd9130;
+  --purple-soft: #d4af37;
+
+  --amethyst: #c49a32;
+
+
+  /* =======================================
+     ADDITIONAL LIGHT PALETTE
+  ======================================= */
+
+  --gold-classic: #d4af37;
+  --gold-champagne: #e8cd83;
+  --gold-deep: #bd9130;
+  --gold-muted: #a27a25;
+
+  --sky-pale: #f0f8ff;
+  --sky-soft: #cfe8f8;
+  --sky-blue: #b8d9ef;
+
+  --ivory: #fafafa;
+  --warm-ivory: #fffdf6;
+  --cream: #fff8ec;
+
+  --sun: #ffd97a;
+
+
+  /* =======================================
+     EFFECTS — SOFT GOLDEN ATMOSPHERE
+  ======================================= */
+
+  --accent-glowd:
+    0 0 20px rgba(212, 175, 55, 0.2),
+    0 0 44px rgba(232, 205, 131, 0.12);
+
+  --glass-bg: rgba(255, 253, 246, 0.78);
+  --glass-border: rgba(212, 175, 55, 0.22);
+
+  --border: rgba(212, 175, 55, 0.2);
+  --border-active: rgba(189, 145, 48, 0.4);
+
+
+  /* =======================================
+     NAVBAR — IVORY GLASS
+  ======================================= */
+
+  --navbar-bg: rgba(255, 253, 246, 0.88);
+
+  --navbar-bg-scrolled:
+    rgba(255, 250, 235, 0.96);
+
+  --navbar-border:
+    rgba(212, 175, 55, 0.32);
+
+  --navbar-shadow:
+    0 8px 32px rgba(180, 145, 65, 0.1),
+    0 2px 8px rgba(180, 145, 65, 0.06);
+
+  --navbar-shadow-scrolled:
+    0 12px 36px rgba(180, 145, 65, 0.16),
+    0 3px 10px rgba(180, 145, 65, 0.08);
+
+
+  /* =======================================
+     NAVIGATION LINKS
+  ======================================= */
+
+  --nav-link-color: #74613b;
+
+  --nav-link-hover-bg:
+    rgba(212, 175, 55, 0.1);
+
+  --nav-link-active-bg:
+    rgba(212, 175, 55, 0.14);
+
+  --nav-link-active-border:
+    rgba(212, 175, 55, 0.42);
+
+
+  /* =======================================
+     CTA — GOLDEN GRADIENT
+  ======================================= */
+
+  --cta-bg:
+    linear-gradient(
+      135deg,
+      #f3d98b 0%,
+      #d4af37 55%,
+      #c49a32 100%
+    );
+
+  --cta-color: #fffdf5;
+
+  --cta-shadow:
+    0 4px 16px rgba(196, 154, 50, 0.22);
+}

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  
+  <!-- Halaman Utama -->
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://hayaxxdev-bit.my.id/public/image/og-image.png</image:loc>
+      <image:title>hayaxxdev-bit Portfolio</image:title>
+    </image:image>
+  </url>
+
+  <!-- Halaman Error -->
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/404.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.1</priority>
+  </url>
+
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/500.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.1</priority>
+  </url>
+
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/maintenance.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.1</priority>
+  </url>
+
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/offline.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.1</priority>
+  </url>
+
+  <!-- Character Info -->
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/character-info/maple.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Game Demo -->
+  <url>
+    <loc>https://hayaxxdev-bit.my.id/public/bofuri_maple_odyssey_game.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

@@ -1,0 +1,38 @@
+{
+  "name": "hayaxxdev-bit",
+  "private": true,
+  "version": "1.0.0",
+  "status": "planning",
+  "description": "Aku tidak mau ada bug di kode ku jadi aku max kan kode ku",
+  "main": "index.js",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "hayaxxdev-bit",
+    "portofolio",
+    "web-development",
+    "game-development"
+  ],
+  "author": "hayaxxdev-bit",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "jsdom": "^31.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}

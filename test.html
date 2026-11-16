@@ -1,0 +1,15 @@
+const menu = document.querySelector('#navMenu');
+const button = document.querySelector('#menuToggle');
+
+console.log({
+  menuFound: menu instanceof HTMLElement,
+  buttonFound: button instanceof HTMLButtonElement,
+  menuClass: menu?.className,
+  expanded: button?.getAttribute('aria-expanded'),
+});
+
+menu.classList.add('navbar__menu--open');
+
+button.addEventListener('click', () => {
+  console.log('[TEST] Hamburger click detected');
+});

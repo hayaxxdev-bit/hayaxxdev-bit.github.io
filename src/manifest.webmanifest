@@ -1,0 +1,80 @@
+{
+  "id": "__BASE_URL__",
+  "name": "hayaxxdev-bit",
+  "short_name": "HayaXx",
+  "description": "I Don't Want Any Bugs, so I'll Max Out My Code",
+  "start_url": "__BASE_URL__",
+  "scope": "__BASE_URL__",
+  "display": "standalone",
+  "background_color": "#050308",
+  "theme_color": "#050308",
+  "orientation": "any",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "__BASE_URL__assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "__BASE_URL__assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "__BASE_URL__assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Home",
+      "url": "__BASE_URL__#home",
+      "icons": [
+        {
+          "src": "__BASE_URL__assets/icons/shortcut-home-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "url": "__BASE_URL__#projects",
+      "icons": [
+        {
+          "src": "__BASE_URL__assets/icons/shortcut-projects-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "About",
+      "url": "__BASE_URL__#about",
+      "icons": [
+        {
+          "src": "__BASE_URL__assets/icons/shortcut-about-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Contact",
+      "url": "__BASE_URL__#contact",
+      "icons": [
+        {
+          "src": "__BASE_URL__assets/icons/shortcut-contact-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

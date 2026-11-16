@@ -1,0 +1,30 @@
+# [Nama Proyek Game Anda] - Fan Game & Technical Portfolio
+
+A non-commercial, open-source RPG fangame inspired by the anime/light novel series *BOFURI: I Don't Want to Get Hurt, so I'll Max Out My Defense.* (*Itai no wa Iya nano de Bougyoryoku ni Kyokufuri Shitai to Omoimasu.*). 
+
+This project was created strictly for educational purposes, personal coding practice, and as a software development portfolio piece.
+
+---
+
+## 🛠️ Technical Highlights (Sorotan Teknis)
+* **Game Engine / Framework:** [Sebutkan Engine, misal: Godot / Unity / Phaser / Python Pygame]
+* **Programming Language:** [Sebutkan Bahasa, misal: C# / GDScript / JavaScript / TypeScript]
+* **Key Features Implemented:**
+  * [Fitur 1, misal: Turn-based / Action combat mechanics]
+  * [Fitur 2, misal: Custom skill tree and defense stat calculation system]
+  * [Fitur 3, misal: Inventory and equipment management]
+
+---
+
+## 📜 Licensing & Intellectual Property Disclaimer
+
+To respect intellectual property laws and open-source standards, this repository separates the **source code** from the **visual/audio assets**:
+
+### 1. Source Code License (Open Source)
+All original source code, game logic, and system architectures written by **[Nama Anda / Username GitHub]** in this repository are licensed under the **[MIT License](LICENSE)** (or your chosen open-source license). You are free to study, fork, and use the code structure for your own projects.
+
+### 2. Visual, Character & World Assets (Copyright Notice)
+* This is an **unofficial, non-commercial fan project**. No monetization, donations, or commercial distribution are associated with this repository.
+* All characters, world settings, names, and related lore from *BOFURI* are the sole property and copyright of **Yuumikan (Author), Koin (Illustrator), KADOKAWA CORPORATION (Publisher), and SILVER LINK. (Animation Studio)**.
+* The fan-made/third-party visual assets included in this repository are **NOT** covered by the open-source code license and may not be redistributed or used for commercial purposes.
+* If you are a copyright holder and wish for any specific assets to be removed, please contact me directly and they will be taken down immediately.

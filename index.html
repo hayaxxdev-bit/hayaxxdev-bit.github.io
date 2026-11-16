@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" id="theme-color" content="#030208" />
+
+    <script src="%BASE_URL%warp-boot.js"></script>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var theme = "dark";
+
+        function getSystemTheme() {
+          try {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          } catch (error) {
+            return "dark";
+          }
+        }
+
+        try {
+          var savedTheme = localStorage.getItem("theme");
+
+          if (savedTheme === "light" || savedTheme === "dark") {
+            theme = savedTheme;
+          } else {
+            theme = getSystemTheme();
+          }
+        } catch (error) {
+          theme = getSystemTheme();
+        }
+
+        root.dataset.theme = theme;
+        root.style.colorScheme = theme;
+
+        var themeColor = document.getElementById("theme-color");
+
+        if (themeColor) {
+          themeColor.content = theme === "light" ? "#f0f8ff" : "#030208";
+        }
+      })();
+    </script>
+    <!-- ========== SEO ========== -->
+    <title>
+      hayaxxdev-bit | I Don't Want Any Bugs, so I'll Max Out My Code
+    </title>
+    <meta
+      name="description"
+      content="Portfolio hayaxxdev-bit | I Don't Want Any Bugs, so I'll Max Out My Code"
+    />
+    <meta
+      name="keywords"
+      content="hayaxxdev, hayaxxdev-bit, fullstack developer, game developer, UI/UX, web developer, portfolio, bofuri, maple, anime, manga, digital art, kreator digital, web design, frontend, backend, indonesia, github, open source"
+    />
+    <meta name="author" content="hayaxxdev-bit" />
+    <meta name="rating" content="general" />
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large"
+    />
+    <link rel="canonical" href="https://hayaxxdev-bit.my.id/" />
+
+    <!-- ========== Open Graph ========== -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hayaxxdev-bit.my.id/" />
+    <meta
+      property="og:title"
+      content="hayaxxdev-bit | Portfolio & Game Developer"
+    />
+    <meta
+      property="og:description"
+      content="Fullstack Developer & Game Developer - Membangun pengalaman web imersif dengan estetika manga dan performa optimal."
+    />
+    <meta
+      property="og:image"
+      content="https://hayaxxdev-bit.my.id/assets/images/Futuristic%20Hayaxxdev-bit%20Logo%20Lockup.png"
+    />
+    <meta property="og:image:width" content="1254" />
+    <meta property="og:image:height" content="1254" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:site_name" content="hayaxxdev-bit Portfolio" />
+
+    <!-- ========== Twitter ========== -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://hayaxxdev-bit.my.id/" />
+    <meta
+      name="twitter:title"
+      content="hayaxxdev-bit | Portfolio & Game Developer"
+    />
+    <meta
+      name="twitter:description"
+      content="Fullstack Developer & Game Developer - UI/UX, Game Art, Web Development"
+    />
+    <meta
+      name="twitter:image"
+      content="https://hayaxxdev-bit.my.id/assets/images/Futuristic%20Hayaxxdev-bit%20Logo%20Lockup.png"
+    />
+    <meta name="twitter:creator" content="@hayaxxdev" />
+
+    <!-- ========== Structured data ========== -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "hayaxxdev-bit",
+        "url": "https://hayaxxdev-bit.my.id/",
+        "jobTitle": "Fullstack Developer & Game Developer",
+        "description": "Fullstack Developer & Game Developer spesialis UI interaktif, desain game, dan kreasi digital.",
+        "sameAs": [
+          "https://github.com/hayaxxdev-bit",
+          "https://linkedin.com/in/hayaxxdev",
+          "https://twitter.com/hayaxxdev"
+        ],
+        "address": { "@type": "PostalAddress", "addressCountry": "Indonesia" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "hayaxxdev-bit Portfolio",
+        "url": "https://hayaxxdev-bit.my.id/",
+        "description": "Portfolio & Game Developer - UI/UX Designer",
+        "author": { "@type": "Person", "name": "hayaxxdev-bit" }
+      }
+    </script>
+    <noscript
+      ><style>
+        [data-reveal] {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      </style></noscript
+    >
+
+    <!-- ========== PWA / tema ========== -->
+    <meta name="msapplication-TileColor" content="#030208" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="hayaxxdev" />
+
+    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="%BASE_URL%assets/icons/favicon.svg"
+    />
+
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="%BASE_URL%assets/icons/favicon-32x32.png"
+    />
+
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="%BASE_URL%assets/icons/favicon-16x16.png"
+    />
+
+    <link rel="shortcut icon" href="%BASE_URL%assets/icons/favicon.ico" />
+
+    <!-- Apple Touch Icon -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%BASE_URL%assets/icons/apple-touch-icon.png"
+    />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="%BASE_URL%site.webmanifest" />
+    <!-- ========== Font & CSS (urutan penting) ========== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:wght@400;500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Spectral+SC:wght@400;600&display=swap"
+    />
+    <style>
+      html {
+        background-color: #030208;
+        color-scheme: dark;
+      }
+      html[data-theme="light"] {
+        background-color: #f0f8ff;
+        color-scheme: light;
+      }
+    </style>
+    <!-- main.css meng-import variable, reset, layout, komponen, dan semua pages -->
+    <link rel="stylesheet" href="/src/styles/main.css" />
+
+    <!-- Pra-render halaman Vault saat kursor mendekati link (Chrome/Edge) -->
+    <script type="speculationrules">
+      {
+        "prerender": [
+          { "where": { "href_matches": "/maple/*" }, "eagerness": "moderate" }
+        ],
+        "prefetch": [
+          { "where": { "href_matches": "/maple/*" }, "eagerness": "moderate" }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <!-- ========== Latar kosmik ========== -->
+    <div class="cosmic-background" aria-hidden="true">
+      <div class="bg-nebula"></div>
+
+      <div class="bg-stars bg-stars--far"></div>
+      <div class="bg-stars bg-stars--mid"></div>
+      <div class="bg-stars bg-stars--near"></div>
+      <!-- <div class="bg-stars bg-stars--twinkle-a"></div> -->
+      <div class="bg-stars bg-stars--twinkle-b"></div>
+
+      <div class="bg-comets">
+        <span class="comet"></span>
+        <span class="comet"></span>
+        <span class="comet"></span>
+        <span class="comet"></span>
+        <span class="comet"></span>
+        <span class="comet"></span>
+        <span class="comet"></span>
+        <span class="comet"></span>
+      </div>
+      <div class="bg-birds">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="bg-blackhole">
+        <div class="blackhole__disk"></div>
+        <div class="blackhole__stream"></div>
+        <div class="blackhole__core"></div>
+        <div class="blackhole__disk blackhole__disk--front"></div>
+      </div>
+
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+      <div class="bg-noise"></div>
+    </div>
+
+    <!-- Overlay transisi warp (kosong, di luar .app-container) -->
+    <div class="warp" aria-hidden="true"></div>
+
+    <div class="app-container">
+      <!-- ========== Navbar ========== -->
+      <header class="navbar" id="navbar" aria-label="Navigasi utama">
+        <a
+          href="#home"
+          class="navbar__brand"
+          data-route="home"
+          aria-label="Beranda"
+        >
+          <span class="navbar__logo navbar__logo--image" aria-hidden="true">
+            <img
+              class="navbar__logo-image is-active"
+              id="navbar-logo-current"
+              src="%BASE_URL%assets/images/logo/logo.png"
+              alt=""
+            />
+            <img
+              class="navbar__logo-image"
+              id="navbar-logo-next"
+              src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+              alt=""
+            />
+          </span>
+
+          <div class="navbar__brand-text">
+            <span class="brand-main">楓の木</span>
+            <span class="brand-sub">
+              ✦ Digital Artisan
+              <span class="brand-version" data-app-version>v-</span>
+            </span>
+          </div>
+
+          <span
+            class="navbar__dot"
+            aria-hidden="true"
+            title="Status: online"
+          ></span>
+        </a>
+
+        <nav class="navbar__menu" id="navMenu" aria-label="Menu utama">
+          <button class="nav-link active" data-route="home" aria-current="page">
+            <span class="nav-link__icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 7h18M5 7v13M19 7v13M2 4h20M7 4v3M17 4v3" />
+              </svg>
+            </span>
+            <span class="nav-link__label">Beranda</span>
+            <span class="nav-link__tier" aria-hidden="true">一</span>
+            <span class="nav-link__jp" aria-hidden="true">ホーム</span>
+          </button>
+
+          <button class="nav-link" data-route="maple">
+            <span class="nav-link__icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 6l8-3 8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </span>
+            <span class="nav-link__label">Maple's Vault</span>
+            <span class="nav-link__tier" aria-hidden="true">二</span>
+            <span class="nav-link__jp" aria-hidden="true">ヴォールト</span>
+          </button>
+
+          <button class="nav-link" data-route="project">
+            <span class="nav-link__icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M6 3h9a3 3 0 0 1 3 3v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V3z"
+                />
+                <path d="M6 3a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2" />
+                <path d="M9 8h6M9 12h6M9 16h3" />
+              </svg>
+            </span>
+            <span class="nav-link__label">Karya</span>
+            <span class="nav-link__tier" aria-hidden="true">三</span>
+            <span class="nav-link__jp" aria-hidden="true">作品集</span>
+          </button>
+
+          <button class="nav-link" data-route="about">
+            <span class="nav-link__icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 3l4 3-1 5-3 3-3-3-1-5 4-3z" />
+                <circle
+                  cx="10"
+                  cy="9"
+                  r=".6"
+                  fill="currentColor"
+                  stroke="none"
+                />
+                <circle
+                  cx="14"
+                  cy="9"
+                  r=".6"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </svg>
+            </span>
+            <span class="nav-link__label">Tentang</span>
+            <span class="nav-link__tier" aria-hidden="true">四</span>
+            <span class="nav-link__jp" aria-hidden="true">プロフィール</span>
+          </button>
+
+          <!-- Theme Toggle -->
+          <button
+            class="nav-link nav-link--theme"
+            data-theme-toggle
+            aria-label="Ganti tema terang / gelap"
+            title="Ganti tema"
+          >
+            <span class="nav-link__icon theme-icon" aria-hidden="true">
+              <!-- Icon Moon (dark mode) -->
+              <svg
+                class="icon-moon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z" />
+              </svg>
+              <!-- Icon Sun (light mode) -->
+              <svg
+                class="icon-sun"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path
+                  d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                />
+              </svg>
+            </span>
+            <span class="nav-link__label theme-label">Tema</span>
+          </button>
+
+          <button
+            class="nav-link nav-link--cta"
+            data-route="contact"
+            data-magnetic
+            data-ripple
+          >
+            <span class="nav-link__icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 3L3 10.5l7 2.5m11-10L13 21l-3-8m11-10L10 13" />
+              </svg>
+            </span>
+            <span class="nav-link__label">
+              Kontak<span class="cta-cursor" aria-hidden="true">_</span>
+            </span>
+          </button>
+        </nav>
+
+        <button
+          class="navbar__toggle"
+          id="menuToggle"
+          aria-label="Buka atau tutup menu navigasi"
+          aria-expanded="false"
+          aria-controls="navMenu"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </header>
+
+      <main class="main">
+        <!-- ========== HOME ========== -->
+        <section class="hero" id="home" data-section>
+          <p class="hero__kicker" data-reveal style="--i: 0">
+            Fullstack &amp; Game Developer
+          </p>
+          <h1 class="hero__title" data-reveal style="--i: 1">
+            Tanpa bug,<br />kode dimaksimalkan.
+          </h1>
+          <p class="hero__lead" data-reveal style="--i: 2">
+            Saya membangun web interaktif dan game fan-project dengan estetika
+            manga dan performa yang dijaga ketat.
+          </p>
+          <div class="hero__actions" data-reveal style="--i: 3">
+            <button
+              class="btn btn--primary"
+              data-magnetic
+              data-ripple
+              data-route="project"
+            >
+              Lihat karya
+            </button>
+            <button
+              class="btn btn--ghost"
+              data-magnetic
+              data-ripple
+              data-route="contact"
+            >
+              Hubungi saya
+            </button>
+          </div>
+        </section>
+
+        <!-- ========== MAPLE'S VAULT ========== -->
+        <section
+          class="section vault"
+          id="maple"
+          data-section
+          aria-labelledby="maple-title"
+        >
+          <header class="vault__head">
+            <span class="vault__kicker" data-reveal style="--i: 0"
+              >// BOFURI FAN ARCHIVE</span
+            >
+            <h2
+              class="section__title"
+              id="maple-title"
+              data-reveal
+              style="--i: 1"
+            >
+              Maple's Vault
+            </h2>
+            <p class="section__text" data-reveal style="--i: 2">
+              Gerbang menuju koleksi game, karakter, dan proyek fan bertema
+              Bofuri.
+            </p>
+          </header>
+
+          <div class="card-grid vault__grid">
+            <!-- Kartu utama: gerbang ke Vault -->
+            <article
+              class="card card--featured"
+              data-tilt
+              data-reveal
+              style="--i: 3"
+            >
+              <span class="card__index" aria-hidden="true">01</span>
+
+              <div class="card__body">
+                <span class="card__tag">Web</span>
+                <h3 class="card__title">Maple's Vault</h3>
+                <p class="card__text">
+                  Arsip karakter dan proyek fan dalam satu koleksi interaktif.
+                </p>
+                <ul class="card__meta">
+                  <li>Karakter</li>
+                  <li>Proyek fan</li>
+                  <li>Interaktif</li>
+                </ul>
+
+                <a
+                  class="card__link card__cta"
+                  href="%BASE_URL%maple/"
+                  data-warp
+                  aria-label="Masuk ke Maple's Vault"
+                >
+                  <span>Masuk ke Vault</span>
+                  <svg
+                    class="card__arrow"
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </a>
+              </div>
+
+              <figure class="card__media" aria-hidden="true">
+                <img
+                  class="card__img"
+                  src="%BASE_URL%assets/images/maple/vault.webp"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="vault-orb"></span>
+              </figure>
+            </article>
+
+            <article class="card" data-tilt data-reveal style="--i: 4">
+              <span class="card__index" aria-hidden="true">02</span>
+              <figure class="card__media" aria-hidden="true">
+                <img
+                  class="card__img"
+                  src="%BASE_URL%assets/images/maple/odyssey.webp"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+
+              <div class="card__body">
+                <span class="card__tag">Game</span>
+                <h3 class="card__title">Maple's Odyssey</h3>
+                <p class="card__text">
+                  Petualangan web bertema Bofuri dengan sistem karakter dan
+                  skill.
+                </p>
+                <ul class="card__meta">
+                  <li>Karakter</li>
+                  <li>Skill</li>
+                </ul>
+
+                <a
+                  class="card__link card__cta"
+                  href="%BASE_URL%maple/"
+                  data-warp
+                  aria-label="Buka Maple's Odyssey di Vault"
+                >
+                  <span>Buka</span>
+                  <svg
+                    class="card__arrow"
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </a>
+              </div>
+            </article>
+
+            <article class="card" data-tilt data-reveal style="--i: 5">
+              <span class="card__index" aria-hidden="true">03</span>
+              <figure class="card__media" aria-hidden="true">
+                <img
+                  class="card__img"
+                  src="%BASE_URL%assets/images/maple/syrup.webp"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+
+              <div class="card__body">
+                <span class="card__tag">Game</span>
+                <h3 class="card__title">Syrup's Adventure</h3>
+                <p class="card__text">
+                  Mini-game ringan yang berjalan mulus di desktop dan mobile.
+                </p>
+                <ul class="card__meta">
+                  <li>Desktop</li>
+                  <li>Mobile</li>
+                </ul>
+
+                <a
+                  class="card__link card__cta"
+                  href="%BASE_URL%maple/"
+                  data-warp
+                  aria-label="Buka Syrup's Adventure di Vault"
+                >
+                  <span>Buka</span>
+                  <svg
+                    class="card__arrow"
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ========== KARYA (dirender oleh project-catalog.ts) ========== -->
+        <section
+          class="section projects"
+          id="project"
+          data-section
+          aria-labelledby="project-title"
+        >
+          <header class="projects__head">
+            <span class="projects__kicker" data-reveal style="--i: 0"
+              >// SELECTED WORKS</span
+            >
+            <h2
+              class="section__title"
+              id="project-title"
+              data-reveal
+              style="--i: 1"
+            >
+              Karya
+            </h2>
+            <p class="section__text" data-reveal style="--i: 2">
+              Aplikasi, game, dan library yang saya bangun. Filter berdasarkan
+              tipe atau fandom.
+            </p>
+          </header>
+
+          <div
+            class="projects__filters"
+            id="project-filters"
+            data-reveal
+            style="--i: 3"
+          ></div>
+
+          <p class="projects__count" id="project-count" aria-live="polite"></p>
+
+          <div class="card-grid projects__grid" id="project-grid"></div>
+
+          <p class="projects__empty" id="project-empty" hidden></p>
+        </section>
+
+        <!-- ========== TENTANG ========== -->
+        <section
+          class="section about"
+          id="about"
+          data-section
+          aria-labelledby="about-title"
+        >
+          <div class="about__grid">
+            <div class="about__main">
+              <span class="about__kicker" data-reveal style="--i: 0"
+                >// TENTANG SAYA</span
+              >
+              <h2
+                class="section__title"
+                id="about-title"
+                data-reveal
+                style="--i: 1"
+              >
+                Tentang
+              </h2>
+
+              <p class="about__lead" data-reveal style="--i: 2">
+                Developer independen yang membangun web interaktif dan game
+                fan-project dengan estetika manga, dan menjaga performanya tetap
+                ringan.
+              </p>
+              <p class="section__text" data-reveal style="--i: 3">
+                Saya mengerjakan proyek pribadi dan fan project secara mandiri,
+                dari antarmuka sampai backend serverless. Prinsipnya sederhana:
+                tidak mau ada bug, jadi kodenya dimaksimalkan.
+              </p>
+
+              <ul class="about__pillars">
+                <li class="about-pillar" data-reveal style="--i: 4">
+                  <svg
+                    class="about-pillar__icon"
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />
+                  </svg>
+                  <h3 class="about-pillar__title">Performa dijaga</h3>
+                  <p class="about-pillar__text">
+                    Animasi hanya memakai transform dan opacity agar tetap mulus
+                    di desktop maupun mobile.
+                  </p>
+                </li>
+
+                <li class="about-pillar" data-reveal style="--i: 5">
+                  <svg
+                    class="about-pillar__icon"
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"
+                    />
+                  </svg>
+                  <h3 class="about-pillar__title">Estetika manga</h3>
+                  <p class="about-pillar__text">
+                    Antarmuka bernuansa kosmik dan manga, dari kartu sampai
+                    transisi antar-halaman.
+                  </p>
+                </li>
+
+                <li class="about-pillar" data-reveal style="--i: 6">
+                  <svg
+                    class="about-pillar__icon"
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 3l9 5-9 5-9-5 9-5z" />
+                    <path d="M3 13l9 5 9-5" />
+                  </svg>
+                  <h3 class="about-pillar__title">Fullstack</h3>
+                  <p class="about-pillar__text">
+                    Dari UI interaktif sampai API serverless, semuanya
+                    dikerjakan sendiri.
+                  </p>
+                </li>
+              </ul>
+
+              <div
+                class="hero__actions about__actions"
+                data-reveal
+                style="--i: 7"
+              >
+                <button
+                  class="btn btn--primary"
+                  data-magnetic
+                  data-ripple
+                  data-route="project"
+                >
+                  Lihat karya
+                </button>
+                <a
+                  class="btn btn--ghost"
+                  href="https://github.com/hayaxxdev-bit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-magnetic
+                  data-ripple
+                  >GitHub</a
+                >
+              </div>
+            </div>
+
+            <aside
+              class="card about-card"
+              data-tilt
+              data-reveal
+              style="--i: 3"
+              aria-label="Profil dan tech stack"
+            >
+              <div class="about-card__avatar">
+                <img
+                  src="%BASE_URL%assets/images/logo/logo.png"
+                  alt="Foto hayaxxdev-bit"
+                  width="112"
+                  height="112"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+
+              <h3 class="about-card__name">hayaxxdev-bit</h3>
+              <p class="about-card__role">Fullstack &amp; Game Developer</p>
+              <p class="about-card__place">Indonesia</p>
+
+              <div class="about-stack">
+                <div class="about-stack__group">
+                  <p class="about-stack__label">Frontend</p>
+                  <ul class="about-stack__list">
+                    <li>HTML / CSS / JS</li>
+                    <li>TypeScript</li>
+                    <li>React</li>
+                    <li>Tailwind CSS</li>
+                  </ul>
+                </div>
+
+                <div class="about-stack__group">
+                  <p class="about-stack__label">Backend &amp; Data</p>
+                  <ul class="about-stack__list">
+                    <li>Node.js</li>
+                    <li>Express</li>
+                    <li>Supabase</li>
+                  </ul>
+                </div>
+
+                <div class="about-stack__group">
+                  <p class="about-stack__label">Deploy</p>
+                  <ul class="about-stack__list">
+                    <li>Vercel</li>
+                  </ul>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ========== KONTAK ========== -->
+        <section
+          class="section section--last contact"
+          id="contact"
+          data-section
+          aria-labelledby="contact-title"
+        >
+          <header class="contact__head">
+            <span class="contact__kicker" data-reveal style="--i: 0"
+              >// KONTAK</span
+            >
+            <h2
+              class="section__title"
+              id="contact-title"
+              data-reveal
+              style="--i: 1"
+            >
+              Kontak
+            </h2>
+            <p class="section__text" data-reveal style="--i: 2">
+              Tertarik berkolaborasi atau sekadar ingin menyapa? Pilih jalur
+              yang paling nyaman.
+            </p>
+          </header>
+
+          <ul class="contact__grid">
+            <li>
+              <article
+                class="card contact-card"
+                data-tilt
+                data-reveal
+                style="--i: 3"
+              >
+                <span class="contact-card__icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M9 19c-4 1.5-4-2-6-2m12 4v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"
+                    />
+                  </svg>
+                </span>
+                <span class="contact-card__text">
+                  <span class="contact-card__label">GitHub</span>
+                  <span class="contact-card__handle">hayaxxdev-bit</span>
+                </span>
+                <svg
+                  class="contact-card__arrow"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 17L17 7M8 7h9v9" />
+                </svg>
+                <a
+                  class="contact-card__link"
+                  href="https://github.com/hayaxxdev-bit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Buka GitHub hayaxxdev-bit (tab baru)"
+                ></a>
+              </article>
+            </li>
+
+            <li>
+              <article
+                class="card contact-card"
+                data-tilt
+                data-reveal
+                style="--i: 4"
+              >
+                <span class="contact-card__icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                    />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                </span>
+                <span class="contact-card__text">
+                  <span class="contact-card__label">LinkedIn</span>
+                  <span class="contact-card__handle">in/hayaxxdev</span>
+                </span>
+                <svg
+                  class="contact-card__arrow"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 17L17 7M8 7h9v9" />
+                </svg>
+                <a
+                  class="contact-card__link"
+                  href="https://linkedin.com/in/hayaxxdev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Buka LinkedIn hayaxxdev (tab baru)"
+                ></a>
+              </article>
+            </li>
+
+            <li>
+              <article
+                class="card contact-card"
+                data-tilt
+                data-reveal
+                style="--i: 5"
+              >
+                <span class="contact-card__icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 4l16 16M20 4L4 20" />
+                  </svg>
+                </span>
+                <span class="contact-card__text">
+                  <span class="contact-card__label">X / Twitter</span>
+                  <span class="contact-card__handle">@hayaxxdev</span>
+                </span>
+                <svg
+                  class="contact-card__arrow"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 17L17 7M8 7h9v9" />
+                </svg>
+                <a
+                  class="contact-card__link"
+                  href="https://twitter.com/hayaxxdev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Buka X hayaxxdev (tab baru)"
+                ></a>
+              </article>
+            </li>
+          </ul>
+
+          <footer class="contact__footer" data-reveal style="--i: 7">
+            <span>hayaxxdev-bit</span>
+            <span aria-hidden="true">·</span>
+            <span>Tanpa bug, kode dimaksimalkan.</span>
+          </footer>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

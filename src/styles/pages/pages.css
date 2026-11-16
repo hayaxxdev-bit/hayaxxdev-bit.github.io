@@ -1,0 +1,809 @@
+
+/* ---------- Header ---------- */
+.projects__head {
+  max-width: 62ch;
+  margin-bottom: 28px;
+}
+
+.projects__kicker {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--font-stat);
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: var(--purple-soft);
+}
+
+.projects .section__title {
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--text) 40%, var(--purple-soft) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Filter ---------- */
+.projects__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.projects__filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.projects__filter-label {
+  min-width: 64px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.filter-chip {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-panel);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease-out;
+}
+
+.filter-chip:hover {
+  color: var(--text);
+  border-color: var(--border-active);
+}
+
+.filter-chip[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--border-active);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(76, 29, 149, 0.35));
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.25);
+}
+
+.filter-chip:active {
+  transform: scale(0.96);
+}
+
+.filter-chip:focus-visible {
+  outline: 2px solid var(--purple-bright);
+  outline-offset: 3px;
+}
+
+.projects__count {
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.projects__empty {
+  padding: 40px 0;
+  color: var(--text-secondary);
+}
+
+.projects__empty[hidden] {
+  display: none;
+}
+
+/* ---------- Grid ---------- */
+.projects__grid {
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 22px;
+}
+
+/* ---------- Kartu ---------- */
+.projects .project-card {
+  --accent-rgb: 124, 58, 237;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+
+  /* Muncul tiap kali kartu tampil (juga setelah filter).
+     fill-mode "backwards": setelah selesai, transform inline dari tilt tetap bekerja. */
+  animation: project-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.projects .project-card[hidden] {
+  display: none;
+}
+
+.projects .project-card[data-type="game"] {
+  --accent-rgb: 204, 17, 51;
+}
+
+.projects .project-card[data-type="library"] {
+  --accent-rgb: 168, 85, 247;
+}
+
+.projects .project-card[data-type="web"] {
+  --accent-rgb: 99, 102, 241;
+}
+
+.projects .project-card[data-type="tool"] {
+  --accent-rgb: 139, 92, 246;
+}
+
+.projects .project-card.is-visible {
+  transition:
+    transform 0.12s ease-out,
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  transition-delay: 0s;
+}
+
+@keyframes project-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Border gradien saat hover / fokus */
+.projects .project-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+
+  background: linear-gradient(
+    135deg,
+    rgba(196, 148, 255, 0.85),
+    rgba(var(--accent-rgb), 0.15) 45%,
+    rgba(204, 17, 51, 0.55)
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+.projects .project-card:hover::after,
+.projects .project-card:focus-within::after {
+  opacity: 1;
+}
+
+/* ---------- Media ---------- */
+.project-card__media {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  isolation: isolate;
+
+  /* Art cadangan bila foto belum ada */
+  background:
+    radial-gradient(60% 80% at 25% 20%, rgba(var(--accent-rgb), 0.55), transparent 70%),
+    radial-gradient(50% 70% at 85% 90%, rgba(204, 17, 51, 0.28), transparent 70%),
+    linear-gradient(rgba(var(--accent-rgb), 0.14) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.14) 1px, transparent 1px) 0 0 / 28px 28px,
+    #07030f;
+}
+
+.project-card__img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.95;
+  transition: opacity 0.35s ease;
+
+  background:
+    linear-gradient(180deg, rgba(5, 3, 8, 0) 40%, rgba(5, 3, 8, 0.85) 100%),
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.32), transparent 60%);
+}
+
+.project-card__badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-active);
+  border-radius: 999px;
+  background: rgba(5, 3, 8, 0.65);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  color: var(--purple-soft);
+}
+
+/* ---------- Badan ---------- */
+.project-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  padding: 20px 24px 24px;
+}
+
+.project-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* .card__tag sudah punya margin-bawah dari gaya kartu umum */
+.project-card__tags .card__tag {
+  margin-bottom: 0;
+}
+
+.project-card__fandom {
+  padding: 2px 8px;
+  border: 1px solid rgba(204, 17, 51, 0.35);
+  border-radius: 6px;
+  background: rgba(204, 17, 51, 0.1);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--crimson-bright);
+}
+
+.project-card__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.project-card__stats[hidden] {
+  display: none;
+}
+
+.project-card__lang {
+  color: var(--purple-soft);
+}
+
+.project-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.project-card__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-panel);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  color: var(--text);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.15s ease-out;
+}
+
+.project-card__btn:hover {
+  border-color: var(--border-active);
+  background-color: var(--bg-panel-2);
+}
+
+.project-card__btn--primary {
+  border-color: var(--border-active);
+  background: linear-gradient(135deg, var(--purple-bright), var(--bg));
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.28);
+}
+
+.project-card__btn:active {
+  transform: scale(0.96);
+}
+
+.project-card__btn:focus-visible {
+  outline: 2px solid var(--purple-bright);
+  outline-offset: 3px;
+}
+
+/* ---------- Hover (hanya perangkat dengan mouse) ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .projects .project-card:hover {
+    box-shadow: 0 22px 60px -24px rgba(var(--accent-rgb), 0.65);
+  }
+
+  .projects .project-card:hover .project-card__img {
+    transform: scale(1.07);
+  }
+
+  .projects .project-card:hover .project-card__media::after {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 720px) {
+  .projects__filter-label {
+    flex-basis: 100%;
+  }
+
+  .projects__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projects .project-card {
+    animation: none;
+  }
+
+  .projects .project-card.is-visible,
+  .project-card__img,
+  .project-card__media::after,
+  .filter-chip,
+  .project-card__btn {
+    transition: none;
+  }
+}
+
+/* ---------- Layout ---------- */
+.about__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.about__kicker {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--font-stat);
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: var(--purple-soft);
+}
+
+.about .section__title {
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, var(--text) 40%, var(--purple-soft) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.about__lead {
+  max-width: 56ch;
+  margin-bottom: 16px;
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ---------- Pilar ---------- */
+.about__pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-pillar {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.about-pillar:hover {
+  border-color: var(--border-active);
+  background-color: var(--bg-panel-2);
+}
+
+.about-pillar__icon {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--purple-soft);
+}
+
+.about-pillar__title {
+  margin-bottom: 6px;
+  font-family: var(--font-head);
+  font-size: 1.02rem;
+  color: var(--text);
+}
+
+.about-pillar__text {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.about__actions {
+  margin-top: 28px;
+}
+
+/* ---------- Kartu profil ---------- */
+.about .about-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 28px 28px;
+  text-align: center;
+  background-image: radial-gradient(
+    420px circle at 50% 0%,
+    rgba(124, 58, 237, 0.2),
+    transparent 65%
+  );
+}
+
+/* Avatar dengan cincin cahaya berputar (selaras dengan black hole) */
+.about-card__avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  margin-bottom: 18px;
+}
+
+.about-card__avatar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+  animation: avatar-spin 9s linear infinite;
+
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(216, 180, 254, 0.95) 60deg,
+    transparent 140deg,
+    rgba(147, 51, 234, 0.85) 230deg,
+    transparent 310deg,
+    rgba(204, 17, 51, 0.55) 345deg,
+    transparent 360deg
+  );
+
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 82%, #000 85%, #000 100%);
+  mask-image: radial-gradient(circle closest-side, transparent 82%, #000 85%, #000 100%);
+}
+
+.about-card__avatar img {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #07030f;
+  box-shadow: 0 0 28px rgba(124, 58, 237, 0.35);
+}
+
+@keyframes avatar-spin {
+  to { transform: rotate(360deg); }
+}
+
+.about-card__name {
+  font-family: var(--font-head);
+  font-size: 1.4rem;
+  color: var(--text);
+}
+
+.about-card__role {
+  margin-top: 4px;
+  font-size: 0.92rem;
+  color: var(--purple-soft);
+}
+
+.about-card__place {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Tech stack ---------- */
+.about-stack {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.about-stack__label {
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.about-stack__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-stack__list li {
+  padding: 5px 12px;
+  border: 1px solid rgba(124, 58, 237, 0.28);
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-stack__list li:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-active);
+    background-color: rgba(124, 58, 237, 0.2);
+  }
+}
+
+/* ---------- Responsif ---------- */
+@media (max-width: 860px) {
+  .about__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-card__avatar::before {
+    animation: none;
+  }
+
+  .about-pillar,
+  .about-stack__list li {
+    transition: none;
+  }
+}
+
+/* =========================================
+   KONTAK — styling saja (src/styles/pages/contact.css)
+   Tambahkan ke main.css:  @import "./pages/contact.css";
+========================================= */
+
+.contact__head {
+  max-width: 62ch;
+  margin-bottom: 32px;
+}
+
+.contact__kicker {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--font-stat);
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: var(--purple-soft);
+}
+
+.contact .section__title {
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--text) 40%, var(--purple-soft) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Grid ---------- */
+.contact__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  perspective: 1000px;
+}
+
+/* ---------- Kartu kanal ---------- */
+.contact .contact-card {
+  --accent-rgb: 124, 58, 237;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+}
+
+.contact__grid li:nth-child(2) .contact-card {
+  --accent-rgb: 99, 102, 241;
+}
+
+.contact__grid li:nth-child(3) .contact-card {
+  --accent-rgb: 204, 17, 51;
+}
+
+.contact__grid li:nth-child(4) .contact-card {
+  --accent-rgb: 168, 85, 247;
+}
+
+.contact .contact-card.is-visible {
+  transition:
+    transform 0.12s ease-out,
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  transition-delay: 0s;
+}
+
+/* Border gradien saat hover / fokus */
+.contact .contact-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+
+  background: linear-gradient(
+    135deg,
+    rgba(196, 148, 255, 0.85),
+    rgba(var(--accent-rgb), 0.15) 45%,
+    rgba(204, 17, 51, 0.55)
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+.contact .contact-card:hover::after,
+.contact .contact-card:focus-within::after {
+  opacity: 1;
+}
+
+.contact-card__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  border-radius: 14px;
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--text);
+}
+
+.contact-card__text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contact-card__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.contact-card__handle {
+  overflow: hidden;
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-card__arrow {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+  color: var(--purple-soft);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Link meregang menutupi seluruh kartu */
+.contact-card__link {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: var(--radius);
+}
+
+.contact-card__link:focus-visible {
+  outline: 2px solid var(--purple-bright);
+  outline-offset: -2px;
+}
+
+/* ---------- Footer ---------- */
+.contact__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Hover (hanya perangkat dengan mouse) ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .contact .contact-card:hover {
+    box-shadow: 0 22px 60px -24px rgba(var(--accent-rgb), 0.65);
+  }
+
+  .contact .contact-card:hover .contact-card__arrow {
+    transform: translate(3px, -3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact .contact-card.is-visible,
+  .contact-card__arrow {
+    transition: none;
+  }
+}

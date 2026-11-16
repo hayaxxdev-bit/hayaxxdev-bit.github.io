@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Warna</title>
+    <link rel="stylesheet" href="../../src/css/panel_warna.css" />
+  </head>
+
+  <body>
+    <div class="wrap">
+      <header>
+        <small
+          style="
+            letter-spacing: 0.2em;
+            font-size: 0.72rem;
+            color: var(--color-accent);
+          "
+          >PORTFOLIO · COLOR SYSTEM v0.1</small
+        >
+        <h1>Dark Red, Purple Glass &amp; <em>Golden White</em></h1>
+        <p class="lead">
+          Panel warna interaktif: klik warna untuk menyalin hex, geser slider
+          untuk menggradasi setiap warna sampai super terang, dan lihat rasio
+          kontras yang dihitung langsung.
+        </p>
+        <div class="hero">
+          <div class="glass red">
+            <b>Dark Red Glass</b><span>Penekanan &amp; elemen interaktif</span>
+          </div>
+          <div class="glass purple">
+            <b>Dark Purple Glass</b><span>Permukaan, ilustrasi, atmosfer</span>
+          </div>
+          <div class="glass gold">
+            <b>Golden White</b><span>Highlight &amp; garis dekoratif</span>
+          </div>
+        </div>
+      </header>
+
+      <h2><small>3.1</small>Token Warna</h2>
+      <p class="note">
+        Klik kartu untuk menyalin hex. Palet masih awal, belum final.
+      </p>
+      <div class="tokens" id="tokens"></div>
+
+      <h2><small>3.1b</small>Gradasi ke Super Terang</h2>
+      <p class="note">
+        Setiap warna utama dipecah 10 tingkat: gelap → warna dasar (●) → hampir
+        putih. Klik untuk menyalin.
+      </p>
+      <div id="ramps"></div>
+      <div class="slider-row">
+        <label for="lift">Tingkat terang: <b id="liftVal">0%</b></label>
+        <input type="range" id="lift" min="0" max="100" value="0" />
+      </div>
+      <div class="demo" id="liveDemo"></div>
+
+      <h2><small>3.2</small>Pembagian Penggunaan</h2>
+      <div class="demo">
+        <div class="glass card red">
+          <h3>Dark red — penekanan</h3>
+          <p>
+            Tombol utama, tautan penting, status aktif. Gunakan seperlunya agar
+            tetap bermakna.
+          </p>
+          <div class="btns"><button class="btn p">Lihat Proyek</button></div>
+        </div>
+        <div class="glass card purple">
+          <h3>Dark purple — atmosfer</h3>
+          <p>
+            Variasi permukaan, ilustrasi, dan latar kartu agar halaman punya
+            kedalaman.
+          </p>
+          <div class="btns"><button class="btn s">Tentang Saya</button></div>
+        </div>
+        <div class="glass card gold">
+          <h3>Golden white — detail</h3>
+          <p>Dipakai terbatas: garis dekoratif, highlight, dan detail kecil.</p>
+          <div class="btns"><button class="btn g">Kontak</button></div>
+        </div>
+      </div>
+      <div class="gold-line"></div>
+      <div class="demo">
+        <div class="card glass purple">
+          <h3>Form &amp; Status</h3>
+          <p>Fokus memakai glow emas tipis.</p>
+          <input class="field" placeholder="Nama kamu…" aria-label="Nama" />
+          <div class="badges">
+            <span class="badge ok">Berhasil</span
+            ><span class="badge warn">Peringatan</span
+            ><span class="badge err">Kesalahan</span>
+          </div>
+        </div>
+      </div>
+
+      <h2><small>3.3</small>Sistem Gradien</h2>
+      <div class="grads">
+        <div class="grad a">Primary — merah gelap → ungu gelap</div>
+        <div class="grad b">Atmospheric — ungu gelap → background</div>
+        <div class="grad c">Highlight — golden white → transparan</div>
+      </div>
+
+      <h2><small>3.4</small>Sistem Transparansi</h2>
+      <div class="alpha">
+        <div class="al1">1. Border transparan untuk pemisah panel</div>
+        <div class="al2">2. Overlay gelap untuk gambar latar</div>
+        <div class="al3">3. Permukaan transparan untuk elemen dekoratif</div>
+        <div class="al4">4. Glow tipis pada elemen fokus</div>
+      </div>
+
+      <h2><small>Uji</small>Kontras (WCAG)</h2>
+      <p class="note">
+        Dihitung otomatis dari token. AA teks normal ≥ 4.5, teks besar/UI ≥ 3,
+        AAA ≥ 7.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pasangan</th>
+              <th>Contoh</th>
+              <th>Rasio</th>
+              <th>Hasil</th>
+            </tr>
+          </thead>
+          <tbody id="contrast"></tbody>
+        </table>
+      </div>
+
+      <h2><small>Ekspor</small>CSS Variables</h2>
+      <p class="note">
+        Salin dan tempel ke <code>tokens.css</code> di proyek portofoliomu.
+      </p>
+      <div class="btns" style="margin: 0 0 12px">
+        <button class="btn g" id="copyCss">Salin CSS</button>
+      </div>
+      <pre id="cssOut"></pre>
+    </div>
+    <div class="toast" id="toast" role="status">Disalin</div>
+    <script src="../../src/js/panel_warna.js"></script>
+  </body>
+</html>

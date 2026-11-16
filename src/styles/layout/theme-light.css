@@ -1,0 +1,1397 @@
+/* ==========================================================================
+   THEME LIGHT — GOLDEN WHITE
+   Atmosphere: Langit Siang, Awan Tipis, Cahaya Matahari, Golden White UI
+   Scope: seluruh perubahan visual hanya aktif ketika [data-theme="light"].
+   Dark theme: tidak diubah oleh stylesheet ini.
+   ========================================================================== */
+
+/* ==========================================================================
+   01. LIGHT THEME TOKENS
+   ========================================================================== */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Atmosphere */
+  --sky-pale: #f0f8ff;
+  --sky-soft: #cfe8f8;
+  --sky-blue: #b8d9ef;
+  --ivory: #fafafa;
+  --warm-ivory: #fffdf6;
+  --cream: #fff8ec;
+  --sun: #ffd97a;
+
+  /* Gold palette */
+  --gold-classic: #d4af37;
+  --gold-champagne: #e8cd83;
+  --gold-deep: #bd9130;
+  --gold-muted: #a27a25;
+  --gold-focus: #c49a32;
+  --gold-highlight: #f3d98b;
+
+  /* Text */
+  --text: #74613b;
+  --text-secondary: #81745c;
+  --text-muted: #968363;
+  --text-on-accent: #fffdf5;
+
+  /* Surfaces */
+  --bg: var(--sky-pale);
+  --bg-card: var(--warm-ivory);
+  --bg-card-hover: var(--cream);
+  --bg-panel: var(--warm-ivory);
+  --bg-panel-soft: #f7f0df;
+
+  /* Semantic accents */
+  --accent: var(--gold-deep);
+  --accent-bright: var(--gold-classic);
+  --accent-soft: var(--gold-champagne);
+  --accent-rgb: 189, 145, 48;
+  --accent-gold: var(--gold-classic);
+  --accent-poison: var(--gold-muted);
+
+  /* Borders and focus */
+  --border: rgba(212, 175, 55, 0.24);
+  --border-strong: rgba(212, 175, 55, 0.48);
+  --focus-ring: var(--gold-focus);
+
+  /* Shadows and glass */
+  --shadow-soft: 0 8px 24px rgba(150, 120, 50, 0.06);
+  --shadow-card: 0 12px 30px rgba(150, 120, 50, 0.10);
+  --glass-bg: rgba(255, 253, 246, 0.82);
+  --glass-border: rgba(212, 175, 55, 0.22);
+
+  /* Button tokens */
+  --btn-primary-start: var(--gold-champagne);
+  --btn-primary-mid: var(--gold-classic);
+  --btn-primary-end: var(--gold-deep);
+  --btn-primary-text: var(--text-on-accent);
+  --btn-primary-shadow: rgba(196, 154, 50, 0.25);
+  --btn-ghost-bg: rgba(255, 253, 246, 0.85);
+  --btn-ghost-bg-hover: rgba(212, 175, 55, 0.12);
+  --btn-ghost-text: var(--text);
+  --btn-focus: var(--gold-focus);
+
+  /* Navbar tokens */
+  --navbar-bg: rgba(255, 253, 246, 0.82);
+  --navbar-border: rgba(212, 175, 55, 0.24);
+  --navbar-text: var(--text);
+  --navbar-accent: var(--gold-muted);
+}
+
+/* ==========================================================================
+   02. DAYLIGHT BACKGROUND
+   ========================================================================== */
+
+[data-theme="light"] .cosmic-background {
+  background: var(--sky-pale);
+}
+
+[data-theme="light"] .bg-nebula {
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 82% 8%,
+      rgba(255, 233, 180, 0.55),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 40% at 15% 20%,
+      rgba(207, 232, 248, 0.70),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 90% 35% at 50% 100%,
+      rgba(255, 240, 214, 0.90),
+      transparent 75%
+    ),
+    linear-gradient(
+      180deg,
+      #e3f1fc 0%,
+      #f0f8ff 35%,
+      #fafafa 70%,
+      #fff8ec 100%
+    );
+}
+
+/* Star layers become soft cloud layers in daylight mode. */
+[data-theme="light"] .bg-stars--far {
+  opacity: 0.70;
+  background-image:
+    radial-gradient(
+      ellipse 140px 22px at 120px 90px,
+      rgba(255, 255, 255, 0.85),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 90px 16px at 220px 105px,
+      rgba(255, 255, 255, 0.70),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 160px 24px at 520px 40px,
+      rgba(255, 255, 255, 0.75),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 110px 18px at 640px 170px,
+      rgba(255, 255, 255, 0.60),
+      transparent 70%
+    );
+  background-size: 800px 260px;
+  background-repeat: repeat;
+  --shift: 800px;
+  left: calc(var(--shift) * -1);
+  right: auto;
+  width: calc(100% + var(--shift));
+  will-change: transform;
+  animation: cloud-drift 220s linear infinite;
+}
+
+[data-theme="light"] .bg-stars--mid {
+  opacity: 0.80;
+  background-image:
+    radial-gradient(
+      ellipse 220px 34px at 160px 60px,
+      rgba(255, 255, 255, 0.90),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 130px 22px at 300px 78px,
+      rgba(255, 255, 255, 0.75),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 200px 30px at 700px 190px,
+      rgba(255, 255, 255, 0.80),
+      transparent 70%
+    );
+  background-size: 1000px 320px;
+  background-repeat: repeat;
+  --shift: 1000px;
+  left: calc(var(--shift) * -1);
+  right: auto;
+  width: calc(100% + var(--shift));
+  will-change: transform;
+  animation: cloud-drift 150s linear infinite;
+}
+
+[data-theme="light"] .bg-stars--near {
+  opacity: 0.55;
+  background-image:
+    radial-gradient(
+      ellipse 320px 46px at 240px 120px,
+      rgba(255, 255, 255, 0.90),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 180px 30px at 420px 140px,
+      rgba(255, 255, 255, 0.75),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 280px 40px at 900px 60px,
+      rgba(255, 255, 255, 0.80),
+      transparent 72%
+    );
+  background-size: 1200px 380px;
+  background-repeat: repeat;
+  --shift: 1200px;
+  left: calc(var(--shift) * -1);
+  right: auto;
+  width: calc(100% + var(--shift));
+  will-change: transform;
+  animation: cloud-drift 100s linear infinite;
+}
+
+/* Tiny star particles become warm daylight dust. */
+[data-theme="light"] .bg-stars--twinkle-b {
+  opacity: 0.35;
+  background-image:
+    radial-gradient(
+      2px 2px at 60px 70px,
+      rgba(255, 214, 120, 0.90) 99%,
+      transparent
+    ),
+    radial-gradient(
+      1.5px 1.5px at 180px 160px,
+      rgba(255, 255, 255, 1) 99%,
+      transparent
+    ),
+    radial-gradient(
+      2px 2px at 300px 40px,
+      rgba(255, 224, 150, 0.80) 99%,
+      transparent
+    );
+}
+
+/* Comets are hidden during daytime. */
+[data-theme="light"] .bg-comets,
+[data-theme="light"] .comet {
+  display: none !important;
+}
+
+/* ==========================================================================
+   03. BLACK HOLE → MAIN SUN
+   ========================================================================== */
+
+[data-theme="light"] .bg-blackhole {
+  opacity: 0.95;
+  filter: none;
+}
+
+[data-theme="light"] .bg-blackhole::before {
+  background: radial-gradient(
+    circle,
+    transparent 28%,
+    rgba(255, 236, 179, 0.45) 42%,
+    rgba(255, 217, 122, 0.20) 56%,
+    rgba(255, 244, 214, 0.10) 68%,
+    transparent 80%
+  );
+  animation: sun-halo 8s ease-in-out infinite;
+}
+
+[data-theme="light"] .blackhole__disk {
+  background: radial-gradient(
+    circle,
+    transparent 30%,
+    rgba(255, 250, 230, 0.55) 40%,
+    rgba(255, 228, 150, 0.35) 50%,
+    rgba(255, 244, 214, 0.15) 60%,
+    transparent 72%
+  );
+  transform: none;
+}
+
+[data-theme="light"] .blackhole__disk--front {
+  background: radial-gradient(
+    circle,
+    transparent 36%,
+    rgba(255, 255, 255, 0.40) 44%,
+    rgba(255, 233, 180, 0.22) 54%,
+    transparent 66%
+  );
+}
+
+[data-theme="light"] .blackhole__disk::before {
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 240, 190, 0.50) 0deg 4deg,
+    transparent 4deg 18deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle,
+    transparent 28%,
+    #000 40%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(
+    circle,
+    transparent 28%,
+    #000 40%,
+    transparent 72%
+  );
+  animation: disk-spin 120s linear infinite;
+}
+
+[data-theme="light"] .blackhole__disk::after {
+  background: repeating-conic-gradient(
+    from 9deg,
+    rgba(255, 225, 150, 0.30) 0deg 2deg,
+    transparent 2deg 24deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle,
+    transparent 30%,
+    #000 45%,
+    transparent 75%
+  );
+  mask-image: radial-gradient(
+    circle,
+    transparent 30%,
+    #000 45%,
+    transparent 75%
+  );
+  animation: disk-spin 180s linear infinite reverse;
+  opacity: 0.80;
+}
+
+[data-theme="light"] .bg-blackhole::after {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.80) 0%,
+    rgba(255, 244, 214, 0.45) 35%,
+    rgba(255, 233, 180, 0.15) 55%,
+    transparent 75%
+  );
+  animation: sun-arc 8s ease-in-out infinite;
+}
+
+[data-theme="light"] .blackhole__core {
+  width: 44%;
+  height: 44%;
+  background: radial-gradient(
+    circle,
+    #fff 12%,
+    #fffbe8 38%,
+    #ffefb8 62%,
+    #ffd97a 88%,
+    rgba(255, 217, 122, 0.50) 100%
+  );
+  box-shadow:
+    0 0 24px 10px rgba(255, 255, 255, 0.95),
+    0 0 60px 24px rgba(255, 236, 179, 0.60),
+    0 0 110px 44px rgba(255, 217, 122, 0.28),
+    0 0 180px 80px rgba(255, 244, 214, 0.20);
+  animation: sun-breathe 7s ease-in-out infinite;
+}
+
+[data-theme="light"] .blackhole__stream i {
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  opacity: 0.85;
+  background: #fff3c4;
+  box-shadow: 0 0 8px 2px rgba(255, 224, 150, 0.70);
+}
+
+[data-theme="light"] .blackhole__stream i:nth-child(3),
+[data-theme="light"] .blackhole__stream i:nth-child(5),
+[data-theme="light"] .blackhole__stream i:nth-child(8) {
+  background: #fff;
+  box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.90);
+}
+
+/* ==========================================================================
+   04. GRID, SPOTLIGHT AND BODY
+   ========================================================================== */
+
+[data-theme="light"] .bg-grid {
+  background-image:
+    linear-gradient(rgba(100, 160, 210, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 160, 210, 0.05) 1px, transparent 1px);
+  -webkit-mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 15%,
+    #000 10%,
+    transparent 85%
+  );
+  mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 15%,
+    #000 10%,
+    transparent 85%
+  );
+}
+
+[data-theme="light"] .bg-spotlight {
+  background:
+    conic-gradient(
+      from 200deg at 82% -5%,
+      transparent 0deg,
+      rgba(255, 240, 190, 0.22) 8deg,
+      transparent 16deg,
+      rgba(255, 245, 210, 0.16) 26deg,
+      transparent 36deg,
+      rgba(255, 240, 190, 0.18) 48deg,
+      transparent 60deg
+    ),
+    radial-gradient(
+      circle,
+      rgba(255, 244, 214, 0.25),
+      transparent 70%
+    );
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(
+      ellipse 900px 500px at 85% 0%,
+      rgba(255, 236, 179, 0.30),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 900px 600px at 10% 10%,
+      rgba(207, 232, 248, 0.45),
+      transparent 65%
+    ),
+    linear-gradient(
+      180deg,
+      #f0f8ff 0%,
+      #fafafa 60%,
+      #fff8ec 100%
+    );
+}
+
+/* ==========================================================================
+   05. DISTANT BIRDS
+   ========================================================================== */
+
+/* Keep the bird layer absent unless light mode is active. */
+.bg-birds {
+  display: none;
+}
+
+[data-theme="light"] .bg-birds {
+  display: block;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+[data-theme="light"] .bg-birds span {
+  position: absolute;
+  left: -60px;
+  width: 22px;
+  height: 10px;
+  opacity: 0;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 10'><path d='M1 8 Q6 0 11 6 Q16 0 21 8' fill='none' stroke='%23587a96' stroke-width='1.4' stroke-linecap='round'/></svg>")
+    center / contain no-repeat;
+  will-change: transform, opacity;
+  animation: bird-fly 48s linear infinite;
+}
+
+[data-theme="light"] .bg-birds span:nth-child(1) {
+  top: 14%;
+  --s: 1;
+  animation-delay: -4s;
+}
+
+[data-theme="light"] .bg-birds span:nth-child(2) {
+  top: 18%;
+  --s: 0.8;
+  animation-delay: -9s;
+  animation-duration: 56s;
+}
+
+[data-theme="light"] .bg-birds span:nth-child(3) {
+  top: 11%;
+  --s: 0.65;
+  animation-delay: -22s;
+  animation-duration: 64s;
+}
+
+[data-theme="light"] .bg-birds span:nth-child(4) {
+  top: 24%;
+  --s: 0.9;
+  animation-delay: -35s;
+  animation-duration: 52s;
+}
+
+/* ==========================================================================
+   06. ATMOSPHERE ANIMATIONS
+   ========================================================================== */
+
+@keyframes cloud-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--shift), 0, 0);
+  }
+}
+
+@keyframes bird-fly {
+  0% {
+    transform: translate3d(0, 0, 0) scale(var(--s, 1));
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.55;
+  }
+  94% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate3d(calc(100vw + 120px), -50px, 0)
+      scale(var(--s, 1));
+    opacity: 0;
+  }
+}
+
+@keyframes sun-halo {
+  0%,
+  100% {
+    transform: scale(0.97);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes sun-arc {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes sun-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+/* ==========================================================================
+   07. NAVBAR — GOLDEN WHITE
+   ========================================================================== */
+
+[data-theme="light"] .navbar::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(212, 175, 55, 0.65),
+    rgba(255, 248, 220, 0.95),
+    rgba(212, 175, 55, 0.55)
+  );
+  opacity: 0.85;
+}
+
+[data-theme="light"] .navbar__logo {
+  background: linear-gradient(
+    135deg,
+    #fffdf5,
+    #f3dfaa,
+    #d4af37
+  );
+  color: #8a6b28;
+  box-shadow:
+    0 0 24px rgba(212, 175, 55, 0.20),
+    0 4px 12px rgba(180, 145, 65, 0.14);
+}
+
+[data-theme="light"] .navbar__brand-text .brand-main {
+  background: linear-gradient(
+    135deg,
+    #8a6b28,
+    #c49a32,
+    #e0bd67
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .navbar__brand-text .brand-sub {
+  color: #a18a60;
+  -webkit-text-fill-color: #a18a60;
+}
+
+/* Preserve source logo colors; do not apply a colorizing filter. */
+[data-theme="light"] .navbar__logo-image {
+  filter: none;
+}
+
+[data-theme="light"] .nav-link:hover,
+[data-theme="light"] .nav-link:focus-visible {
+  color: #a27a25;
+}
+
+[data-theme="light"] .nav-link.active {
+  color: #a27a25;
+  background: rgba(212, 175, 55, 0.13);
+  border-color: rgba(212, 175, 55, 0.38);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.08),
+    inset 0 0 16px rgba(212, 175, 55, 0.05);
+}
+
+[data-theme="light"] .nav-link__icon svg {
+  color: #b18a37;
+}
+
+[data-theme="light"] .nav-link__jp,
+[data-theme="light"] .nav-link__tier {
+  color: #b18a37;
+}
+
+[data-theme="light"] .nav-link--cta {
+  background: linear-gradient(
+    135deg,
+    #e8cd83,
+    #d4af37,
+    #bd9130
+  ) !important;
+  color: #fffdf5 !important;
+  box-shadow: 0 4px 14px rgba(196, 154, 50, 0.22);
+}
+
+[data-theme="light"] .navbar__toggle span {
+  background: linear-gradient(90deg, #c49a32, #e8cd83);
+}
+
+[data-theme="light"] .nav-link--theme {
+  color: #b18a37;
+}
+
+[data-theme="light"] .navbar__dot {
+  background: #e8cd83;
+}
+
+[data-theme="light"] .brand-version {
+  background: linear-gradient(140deg, #e8cd83 90%, #c49a32);
+}
+
+/* ==========================================================================
+   08. BUTTONS
+   ========================================================================== */
+
+[data-theme="light"] .btn--primary {
+  background: linear-gradient(
+    135deg,
+    var(--btn-primary-start),
+    var(--btn-primary-mid),
+    var(--btn-primary-end)
+  );
+  color: var(--btn-primary-text);
+  border-color: rgba(196, 154, 50, 0.45);
+  box-shadow:
+    0 4px 16px var(--btn-primary-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+[data-theme="light"] .btn--ghost {
+  background: var(--btn-ghost-bg);
+  color: var(--btn-ghost-text);
+  border-color: rgba(212, 175, 55, 0.35);
+}
+
+[data-theme="light"] .btn--ghost:hover {
+  background: var(--btn-ghost-bg-hover);
+  border-color: rgba(212, 175, 55, 0.60);
+}
+
+[data-theme="light"] .btn--primary:hover {
+  filter: brightness(1.04);
+  box-shadow:
+    0 6px 20px rgba(196, 154, 50, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+[data-theme="light"] .btn:active {
+  transform: scale(0.96);
+}
+
+[data-theme="light"] .btn:focus-visible {
+  outline: 2px solid var(--btn-focus);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   09. HERO, SECTIONS, GENERIC CARDS AND INTERACTIONS
+   ========================================================================== */
+
+[data-theme="light"] .hero__kicker {
+  color: #b18a37;
+}
+
+[data-theme="light"] .hero__title {
+  background: linear-gradient(
+    135deg,
+    #74613b 15%,
+    #c49a32 55%,
+    #e8cd83 85%,
+    #a27a25
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .section__title {
+  color: #74613b;
+}
+
+[data-theme="light"] .section__text {
+  color: #81745c;
+}
+
+[data-theme="light"] .card {
+  background: rgba(255, 253, 246, 0.88);
+  border-color: rgba(212, 175, 55, 0.24);
+  box-shadow:
+    0 8px 24px rgba(150, 120, 50, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
+}
+
+[data-theme="light"] .card:hover {
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow:
+    0 12px 30px rgba(150, 120, 50, 0.10),
+    0 0 0 1px rgba(212, 175, 55, 0.08);
+}
+
+[data-theme="light"] .card::before {
+  background: radial-gradient(
+    240px circle at var(--px) var(--py),
+    rgba(212, 175, 55, 0.16),
+    transparent 65%
+  );
+}
+
+[data-theme="light"] .card__tag {
+  color: #a27a25;
+  background: rgba(212, 175, 55, 0.10);
+  border-color: rgba(212, 175, 55, 0.30);
+}
+
+[data-theme="light"] .card__title {
+  color: #74613b;
+}
+
+[data-theme="light"] .card__text {
+  color: #81745c;
+}
+
+[data-theme="light"] .cursor--dot::before {
+  background: #c49a32;
+}
+
+[data-theme="light"] .cursor--ring::before {
+  border-color: rgba(196, 154, 50, 0.65);
+}
+
+[data-theme="light"].cursor-hover .cursor--ring::before {
+  background-color: rgba(212, 175, 55, 0.12);
+}
+
+[data-theme="light"] .ripple {
+  background: radial-gradient(
+    circle,
+    rgba(212, 175, 55, 0.35),
+    transparent 70%
+  );
+}
+
+/* ==========================================================================
+   10. PROJECTS
+   ========================================================================== */
+
+[data-theme="light"] .projects__kicker {
+  color: #b18a37;
+}
+
+[data-theme="light"] .projects .section__title {
+  background: linear-gradient(
+    135deg,
+    #74613b 20%,
+    #c49a32 65%,
+    #e8cd83 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .projects__filter-label {
+  color: #968363;
+}
+
+[data-theme="light"] .filter-chip {
+  background: rgba(255, 253, 246, 0.85);
+  border-color: rgba(212, 175, 55, 0.25);
+  color: #81745c;
+}
+
+[data-theme="light"] .filter-chip:hover {
+  color: #a27a25;
+  border-color: rgba(212, 175, 55, 0.60);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+[data-theme="light"] .filter-chip[aria-pressed="true"] {
+  color: #806020;
+  border-color: rgba(196, 154, 50, 0.65);
+  background: linear-gradient(
+    135deg,
+    rgba(243, 217, 139, 0.55),
+    rgba(212, 175, 55, 0.22)
+  );
+  box-shadow: 0 4px 16px rgba(196, 154, 50, 0.16);
+}
+
+[data-theme="light"] .filter-chip:focus-visible {
+  outline-color: #c49a32;
+}
+
+[data-theme="light"] .projects__count,
+[data-theme="light"] .projects__empty {
+  color: #81745c;
+}
+
+[data-theme="light"] .projects .project-card {
+  background: #fffdf6;
+  border-color: rgba(212, 175, 55, 0.22);
+}
+
+[data-theme="light"] .projects .project-card::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 190, 0.95),
+    rgba(212, 175, 55, 0.55) 45%,
+    rgba(162, 122, 37, 0.35)
+  );
+}
+
+[data-theme="light"] .project-card__media {
+  background:
+    radial-gradient(
+      60% 80% at 25% 20%,
+      rgba(var(--accent-rgb), 0.25),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 70% at 85% 90%,
+      rgba(212, 175, 55, 0.18),
+      transparent 70%
+    ),
+    linear-gradient(
+      rgba(212, 175, 55, 0.12) 1px,
+      transparent 1px
+    ) 0 0 / 28px 28px,
+    linear-gradient(
+      90deg,
+      rgba(212, 175, 55, 0.12) 1px,
+      transparent 1px
+    ) 0 0 / 28px 28px,
+    #f7f0df;
+}
+
+/* The lower dark fade is intentional: it preserves text contrast over photos. */
+[data-theme="light"] .project-card__media::after {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(35, 27, 12, 0) 35%,
+      rgba(35, 27, 12, 0.76) 100%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--accent-rgb), 0.18),
+      transparent 60%
+    );
+}
+
+[data-theme="light"] .project-card__badge {
+  background: rgba(255, 253, 246, 0.92);
+  border-color: rgba(212, 175, 55, 0.45);
+  color: #8a6b28;
+}
+
+[data-theme="light"] .project-card__tags .card__tag {
+  color: #a27a25;
+  background: rgba(212, 175, 55, 0.10);
+  border-color: rgba(212, 175, 55, 0.30);
+}
+
+[data-theme="light"] .project-card__fandom {
+  color: #a27a25;
+  background: rgba(212, 175, 55, 0.09);
+  border-color: rgba(196, 154, 50, 0.35);
+}
+
+[data-theme="light"] .project-card__stats {
+  color: #81745c;
+}
+
+[data-theme="light"] .project-card__lang {
+  color: #a27a25;
+}
+
+[data-theme="light"] .project-card__btn {
+  background: #fffdf6;
+  border-color: rgba(212, 175, 55, 0.30);
+  color: #74613b;
+}
+
+[data-theme="light"] .project-card__btn:hover {
+  background: rgba(212, 175, 55, 0.10);
+  border-color: rgba(212, 175, 55, 0.65);
+}
+
+[data-theme="light"] .project-card__btn--primary {
+  background: linear-gradient(
+    135deg,
+    #e8cd83,
+    #d4af37,
+    #bd9130
+  );
+  border-color: rgba(196, 154, 50, 0.45);
+  color: #fffdf5;
+  box-shadow: 0 4px 16px rgba(196, 154, 50, 0.22);
+}
+
+[data-theme="light"] .project-card__btn:focus-visible {
+  outline-color: #c49a32;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .projects .project-card:hover {
+    box-shadow: 0 18px 45px -24px rgba(180, 145, 65, 0.30);
+  }
+}
+
+/* ==========================================================================
+   11. ABOUT
+   ========================================================================== */
+
+[data-theme="light"] .about__kicker {
+  color: #b18a37;
+}
+
+[data-theme="light"] .about .section__title {
+  background: linear-gradient(
+    135deg,
+    #74613b 20%,
+    #c49a32 65%,
+    #e8cd83 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .about__lead {
+  color: #74613b;
+}
+
+[data-theme="light"] .about-pillar {
+  background: rgba(255, 253, 246, 0.88);
+  border-color: rgba(212, 175, 55, 0.24);
+}
+
+[data-theme="light"] .about-pillar:hover {
+  border-color: rgba(212, 175, 55, 0.55);
+  background: #fffdf6;
+}
+
+[data-theme="light"] .about-pillar__icon {
+  color: #b18a37;
+}
+
+[data-theme="light"] .about-pillar__title {
+  color: #74613b;
+}
+
+[data-theme="light"] .about-pillar__text {
+  color: #81745c;
+}
+
+[data-theme="light"] .about .about-card {
+  background-color: #fffdf6;
+  background-image: radial-gradient(
+    420px circle at 50% 0%,
+    rgba(212, 175, 55, 0.16),
+    transparent 65%
+  );
+  border-color: rgba(212, 175, 55, 0.28);
+}
+
+[data-theme="light"] .about-card__avatar::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 239, 190, 0.95) 60deg,
+    transparent 140deg,
+    rgba(212, 175, 55, 0.85) 230deg,
+    transparent 310deg,
+    rgba(162, 122, 37, 0.55) 345deg,
+    transparent 360deg
+  );
+}
+
+[data-theme="light"] .about-card__avatar img {
+  background: #f7f0df;
+  box-shadow: 0 0 28px rgba(196, 154, 50, 0.24);
+}
+
+[data-theme="light"] .about-card__name {
+  color: #74613b;
+}
+
+[data-theme="light"] .about-card__role {
+  color: #a27a25;
+}
+
+[data-theme="light"] .about-card__place {
+  color: #968363;
+}
+
+[data-theme="light"] .about-stack {
+  border-top-color: rgba(212, 175, 55, 0.25);
+}
+
+[data-theme="light"] .about-stack__label {
+  color: #968363;
+}
+
+[data-theme="light"] .about-stack__list li {
+  color: #806020;
+  background: rgba(212, 175, 55, 0.09);
+  border-color: rgba(212, 175, 55, 0.28);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .about-stack__list li:hover {
+    border-color: rgba(212, 175, 55, 0.65);
+    background-color: rgba(212, 175, 55, 0.17);
+  }
+}
+
+/* ==========================================================================
+   12. CONTACT
+   ========================================================================== */
+
+[data-theme="light"] .contact__kicker {
+  color: #b18a37;
+}
+
+[data-theme="light"] .contact .section__title {
+  background: linear-gradient(
+    135deg,
+    #74613b 20%,
+    #c49a32 65%,
+    #e8cd83 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .contact .contact-card {
+  background: rgba(255, 253, 246, 0.88);
+  border-color: rgba(212, 175, 55, 0.24);
+}
+
+[data-theme="light"] .contact .contact-card::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 190, 0.95),
+    rgba(212, 175, 55, 0.55) 45%,
+    rgba(162, 122, 37, 0.35)
+  );
+}
+
+[data-theme="light"] .contact-card__icon {
+  background: rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.28);
+  color: #a27a25;
+}
+
+[data-theme="light"] .contact-card__label {
+  color: #968363;
+}
+
+[data-theme="light"] .contact-card__handle {
+  color: #74613b;
+}
+
+[data-theme="light"] .contact-card__arrow {
+  color: #b18a37;
+}
+
+[data-theme="light"] .contact-card__link:focus-visible {
+  outline-color: #c49a32;
+}
+
+[data-theme="light"] .contact__footer {
+  border-top-color: rgba(212, 175, 55, 0.25);
+  color: #968363;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .contact .contact-card:hover {
+    box-shadow: 0 18px 45px -24px rgba(180, 145, 65, 0.30);
+  }
+}
+
+/* ==========================================================================
+   13. MAPLE'S VAULT
+   ========================================================================== */
+
+[data-theme="light"] .vault__kicker {
+  color: #b18a37;
+}
+
+[data-theme="light"] .vault .section__title {
+  background: linear-gradient(
+    135deg,
+    #74613b 20%,
+    #c49a32 65%,
+    #e8cd83 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .vault .card {
+  background-color: #fffdf6;
+  border-color: rgba(212, 175, 55, 0.25);
+}
+
+[data-theme="light"] .vault .card:hover {
+  border-color: rgba(212, 175, 55, 0.55);
+}
+
+[data-theme="light"] .vault .card::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 190, 0.95),
+    rgba(212, 175, 55, 0.55) 45%,
+    rgba(162, 122, 37, 0.35)
+  );
+}
+
+[data-theme="light"] .vault .card__media {
+  background:
+    radial-gradient(
+      60% 80% at 25% 20%,
+      rgba(var(--accent-rgb), 0.25),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 70% at 85% 90%,
+      rgba(212, 175, 55, 0.20),
+      transparent 70%
+    ),
+    linear-gradient(
+      rgba(212, 175, 55, 0.12) 1px,
+      transparent 1px
+    ) 0 0 / 28px 28px,
+    linear-gradient(
+      90deg,
+      rgba(212, 175, 55, 0.12) 1px,
+      transparent 1px
+    ) 0 0 / 28px 28px,
+    #f7f0df;
+}
+
+/* The dark lower gradient is retained only to keep media text readable. */
+[data-theme="light"] .vault .card__media::after {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(35, 27, 12, 0) 40%,
+      rgba(35, 27, 12, 0.78) 100%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--accent-rgb), 0.18),
+      transparent 60%
+    );
+}
+
+[data-theme="light"] .vault .card__index {
+  background: rgba(255, 253, 246, 0.92);
+  border-color: rgba(212, 175, 55, 0.45);
+  color: #8a6b28;
+}
+
+[data-theme="light"] .vault .card__title {
+  color: #74613b;
+}
+
+[data-theme="light"] .vault .card__text {
+  color: #81745c;
+}
+
+[data-theme="light"] .vault .card__meta li {
+  color: #81745c;
+  background: rgba(212, 175, 55, 0.06);
+  border-color: rgba(212, 175, 55, 0.28);
+}
+
+[data-theme="light"] .vault .card__cta {
+  color: #a27a25;
+}
+
+[data-theme="light"] .vault .card__arrow {
+  color: #c49a32;
+}
+
+[data-theme="light"] .vault .card--featured {
+  background-color: #fffdf6;
+  background-image: radial-gradient(
+    520px circle at 100% 50%,
+    rgba(212, 175, 55, 0.16),
+    transparent 62%
+  );
+}
+
+[data-theme="light"] .vault .card--featured .card__cta {
+  color: #fffdf5;
+  background: linear-gradient(
+    135deg,
+    #e8cd83,
+    #d4af37,
+    #bd9130
+  );
+  border-color: rgba(196, 154, 50, 0.45);
+  box-shadow:
+    0 4px 16px rgba(196, 154, 50, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .vault .card:hover {
+    box-shadow: 0 18px 45px -24px rgba(180, 145, 65, 0.30);
+  }
+}
+
+/* ==========================================================================
+   14. MAPLE'S VAULT — MINI SUN
+   The original dark core is intentionally replaced in light mode.
+   ========================================================================== */
+
+[data-theme="light"] .vault-orb {
+  background: radial-gradient(
+    circle closest-side,
+    rgba(255, 217, 122, 0.35) 0%,
+    rgba(255, 236, 179, 0.20) 45%,
+    rgba(255, 248, 236, 0.08) 68%,
+    transparent 100%
+  );
+  filter: none;
+}
+
+[data-theme="light"] .vault-orb::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.90) 35deg,
+    rgba(255, 217, 122, 0.95) 65deg,
+    transparent 110deg,
+    rgba(255, 236, 179, 0.85) 155deg,
+    rgba(255, 190, 90, 0.75) 205deg,
+    transparent 255deg,
+    rgba(255, 244, 214, 0.90) 310deg,
+    transparent 360deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle closest-side,
+    transparent 55%,
+    #000 62%,
+    #000 78%,
+    transparent 96%
+  );
+  mask-image: radial-gradient(
+    circle closest-side,
+    transparent 55%,
+    #000 62%,
+    #000 78%,
+    transparent 96%
+  );
+  animation: orb-spin 24s linear infinite;
+}
+
+[data-theme="light"] .vault-orb::after {
+  content: "";
+  position: absolute;
+  /* inset: 18%; */
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 251, 232, 0.90) 22%,
+    rgba(255, 217, 122, 0.55) 48%,
+    rgba(255, 236, 179, 0.15) 72%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 20px 8px rgba(255, 255, 255, 0.50),
+    0 0 45px 15px rgba(255, 217, 122, 0.25);
+  animation: sun-breathe 7s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   15. REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="light"] .bg-stars--far,
+  [data-theme="light"] .bg-stars--mid,
+  [data-theme="light"] .bg-stars--near,
+  [data-theme="light"] .bg-birds span,
+  [data-theme="light"] .bg-blackhole::before,
+  [data-theme="light"] .bg-blackhole::after,
+  [data-theme="light"] .blackhole__core,
+  [data-theme="light"] .blackhole__disk::before,
+  [data-theme="light"] .blackhole__disk::after,
+  [data-theme="light"] .vault-orb::before,
+  [data-theme="light"] .vault-orb::after {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   PROJECTS — GOLDEN WHITE ACCENT OVERRIDE
+   Menetralkan aksen merah, ungu, dan warna kategori lama.
+   ========================================================================== */
+
+[data-theme="light"] .projects .project-card {
+  --accent-rgb: 189, 145, 48 !important;
+  --accent: #bd9130 !important;
+  --accent-bright: #d4af37 !important;
+  --accent-soft: #e8cd83 !important;
+}
+
+/* Project media */
+[data-theme="light"] .projects .project-card__media {
+  background:
+    radial-gradient(
+      60% 80% at 25% 20%,
+      rgba(212, 175, 55, 0.20),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 70% at 85% 90%,
+      rgba(232, 205, 131, 0.22),
+      transparent 70%
+    ),
+    linear-gradient(
+      rgba(212, 175, 55, 0.10) 1px,
+      transparent 1px
+    ) 0 0 / 28px 28px,
+    linear-gradient(
+      90deg,
+      rgba(212, 175, 55, 0.10) 1px,
+      transparent 1px
+    ) 0 0 / 28px 28px,
+    #f7f0df;
+}
+
+/* Project media accent */
+[data-theme="light"] .projects .project-card__media::after {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(35, 27, 12, 0) 35%,
+      rgba(35, 27, 12, 0.76) 100%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0.16),
+      transparent 60%
+    );
+}
+
+/* Project card border */
+[data-theme="light"] .projects .project-card::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 190, 0.95),
+    rgba(212, 175, 55, 0.55) 45%,
+    rgba(162, 122, 37, 0.35)
+  );
+}

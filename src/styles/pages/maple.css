@@ -1,0 +1,406 @@
+/* =========================================
+   MAPLE'S VAULT — styling saja (src/styles/pages/maple.css)
+   Kartu sekarang punya area foto (.card__media).
+   Foto = elemen <img class="card__img"> di dalam .card__media.
+   Jika foto belum ada / gagal dimuat, <img> disembunyikan dan
+   tampil art kosmik bawaan (gradien + grid) di belakangnya.
+   Logika klik/transisi: src/features/navigation/page-transition.ts
+========================================= */
+
+/* ---------- Header section ---------- */
+.vault__head {
+  max-width: 62ch;
+  margin-bottom: 40px;
+}
+
+.vault__kicker {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--font-stat);
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: var(--purple-soft);
+}
+
+.vault .section__title {
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--text) 40%, var(--purple-soft) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Grid ---------- */
+.vault__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+/* ---------- Kartu ---------- */
+.vault .card {
+  --accent-rgb: 124, 58, 237;
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* padding dipindah ke .card__body agar foto bisa full-bleed */
+}
+
+.vault .card:nth-child(2) {
+  --accent-rgb: 168, 85, 247;
+}
+
+.vault .card:nth-child(3) {
+  --accent-rgb: 204, 17, 51;
+}
+
+.vault .card.is-visible {
+  transition:
+    transform 0.12s ease-out,
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  transition-delay: 0s;
+}
+
+/* Border gradien yang muncul saat hover / fokus */
+.vault .card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+
+  background: linear-gradient(
+    135deg,
+    rgba(196, 148, 255, 0.85),
+    rgba(var(--accent-rgb), 0.15) 45%,
+    rgba(204, 17, 51, 0.55)
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+.vault .card:hover::after,
+.vault .card:focus-within::after {
+  opacity: 1;
+}
+
+/* ---------- Foto / media kartu ---------- */
+.card__media {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  isolation: isolate;
+
+  /* Art cadangan bila foto belum ada */
+  background:
+    radial-gradient(60% 80% at 25% 20%, rgba(var(--accent-rgb), 0.55), transparent 70%),
+    radial-gradient(50% 70% at 85% 90%, rgba(204, 17, 51, 0.28), transparent 70%),
+    linear-gradient(rgba(var(--accent-rgb), 0.14) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.14) 1px, transparent 1px) 0 0 / 28px 28px,
+    #07030f;
+}
+
+/* Foto (<img> sungguhan; di-zoom lewat transform saja) */
+.card__img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 10%;
+  transform: scale(1);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tint ungu + gradasi bawah agar menyatu dengan badan kartu */
+.card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.95;
+  transition: opacity 0.35s ease;
+
+  background:
+    linear-gradient(180deg, rgba(5, 3, 8, 0) 40%, rgba(5, 3, 8, 0.85) 100%),
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.32), transparent 60%);
+}
+
+/* Nomor kartu: kini mengambang di atas foto */
+.card__index {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  z-index: 3;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(5, 3, 8, 0.6);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: var(--purple-soft);
+  pointer-events: none;
+}
+
+/* ---------- Badan kartu ---------- */
+.card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  padding: 22px 28px 28px;
+}
+
+.vault .card__text {
+  max-width: 46ch;
+}
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 22px;
+  padding: 0;
+  list-style: none;
+}
+
+.card__meta li {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+/* ---------- Link: seluruh kartu bisa diklik ---------- */
+.card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* .card__link tidak diberi position, jadi ::after meregang ke .card */
+.card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: var(--radius);
+}
+
+.card__link:focus-visible {
+  outline: none;
+}
+
+.card__link:focus-visible::after {
+  outline: 2px solid var(--purple-bright);
+  outline-offset: -2px;
+}
+
+.card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--purple-soft);
+}
+
+.card__arrow {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Kartu utama: foto di sisi kanan ---------- */
+.vault .card--featured {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 300px;
+
+  background-image: radial-gradient(
+    520px circle at 100% 50%,
+    rgba(124, 58, 237, 0.2),
+    transparent 62%
+  );
+}
+
+.card--featured .card__body {
+  flex: 1 1 54%;
+  justify-content: center;
+  padding: 40px 44px;
+}
+
+.card--featured .card__title {
+  font-size: clamp(1.6rem, 3.5vw, 2.3rem);
+}
+
+.card--featured .card__meta {
+  margin-bottom: 26px;
+}
+
+.card--featured .card__cta {
+  margin-top: 0;
+  padding: 12px 24px;
+  border: 1px solid var(--border-active);
+  border-radius: 999px;
+  color: var(--text);
+  background: linear-gradient(135deg, var(--purple-bright), var(--bg));
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.card--featured .card__media {
+  flex: 0 0 46%;
+  aspect-ratio: auto;
+
+  /* foto memudar ke kiri menuju teks */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+}
+
+/* Mini black hole di atas foto kartu utama */
+.vault-orb {
+  position: absolute;
+  top: 50%;
+  left: 80%;
+  display: grid;
+  place-items: center;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: radial-gradient(circle closest-side, rgba(124, 58, 237, 0.3), transparent 72%);
+}
+
+.vault-orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+  animation: orb-spin 8s linear infinite;
+
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(216, 180, 254, 0.95) 60deg,
+    transparent 130deg,
+    rgba(147, 51, 234, 0.85) 220deg,
+    transparent 300deg,
+    rgba(109, 40, 217, 0.6) 340deg,
+    transparent 360deg
+  );
+
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 55%, #000 66%, #000 80%, transparent 96%);
+  mask-image: radial-gradient(circle closest-side, transparent 55%, #000 66%, #000 80%, transparent 96%);
+}
+
+.vault-orb::after {
+  content: "";
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 50%, #07010f 72%, rgba(20, 5, 40, 0.3) 100%);
+  box-shadow:
+    0 0 20px 6px rgba(10, 0, 25, 0.95),
+    0 0 36px 4px rgba(124, 58, 237, 0.4);
+}
+
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Hover (hanya perangkat dengan mouse) ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .vault .card:hover {
+    box-shadow: 0 22px 60px -24px rgba(var(--accent-rgb), 0.65);
+  }
+
+  .vault .card:hover .card__img {
+    transform: scale(1.07);
+  }
+
+  .vault .card:hover .card__media::after {
+    opacity: 0.6;
+  }
+
+  .vault .card:hover .card__arrow {
+    transform: translateX(5px);
+  }
+
+  .card--featured:hover .vault-orb {
+    transform: translate(-50%, -50%) scale(1.1) rotate(10deg);
+  }
+}
+
+/* ---------- Responsif ---------- */
+@media (max-width: 720px) {
+  .vault__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vault .card--featured {
+    flex-direction: column-reverse;
+    min-height: 0;
+  }
+
+  .card--featured .card__body {
+    padding: 24px 24px 28px;
+  }
+
+  .card--featured .card__media {
+    flex: none;
+    aspect-ratio: 16 / 10;
+    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  }
+
+  .vault-orb {
+    left: 50%;
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-orb::before {
+    animation: none;
+  }
+
+  .vault .card.is-visible,
+  .card__img,
+  .card__media::after,
+  .card__arrow,
+  .vault-orb {
+    transition: none;
+  }
+}
+/* =========================================
+   MAPLE'S VAULT — LIGHT ACCENT PALETTE
+========================================= */
+
+[data-theme="light"] .vault .card {
+  --accent-rgb: 212, 175, 55;
+}
+
+[data-theme="light"] .vault .card--featured {
+  --accent-rgb: 232, 205, 131;
+}

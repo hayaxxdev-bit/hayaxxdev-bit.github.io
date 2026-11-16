@@ -1,0 +1,41 @@
+/* ---------- Tombol ---------- */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border-active);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.15s ease-out, background-color 0.2s ease;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--purple-bright), var(--bg));
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.btn--ghost {
+  background: var(--bg-panel);
+}
+
+.btn--ghost:hover {
+  background-color: var(--bg-panel-2);
+}
+
+.btn:active {
+  transform: scale(0.96) !important;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--purple-bright);
+  outline-offset: 3px;
+}

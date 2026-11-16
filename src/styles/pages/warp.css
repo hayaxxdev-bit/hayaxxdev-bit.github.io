@@ -1,0 +1,125 @@
+/* =========================================
+   WARP TRANSITION
+   Dark Theme  : Black Hole
+   Light Theme : White Hole
+
+   Animasi bersama, visual mengikuti theme.
+   ========================================= */
+
+/* ---------- OVERLAY BASE ---------- */
+
+.warp {
+  position: fixed;
+  left: var(--wx, 50vw);
+  top: var(--wy, 50vh);
+  z-index: 2000;
+
+  width: 40vmax;
+  height: 40vmax;
+  margin: -20vmax 0 0 -20vmax;
+
+  border-radius: 50%;
+  pointer-events: none;
+
+  opacity: 0;
+  transform: scale(0);
+  will-change: transform, opacity;
+
+  /* Dark theme: Black Hole */
+  background: radial-gradient(
+    circle closest-side,
+    #000 0,
+    #000 52%,
+    rgba(168, 85, 247, 0.95) 58%,
+    rgba(91, 33, 182, 0.55) 68%,
+    rgba(76, 29, 149, 0.15) 85%,
+    transparent 100%
+  );
+}
+
+/* ---------- LIGHT THEME: WHITE HOLE ---------- */
+
+html[data-theme="light"] .warp {
+  background: radial-gradient(
+    circle closest-side,
+    #ffffff 0,
+    #ffffff 52%,
+    rgba(240, 217, 137, 0.98) 58%,
+    rgba(212, 175, 55, 0.75) 68%,
+    rgba(178, 95, 230, 0.28) 85%,
+    transparent 100%
+  );
+}
+
+/* ---------- KELUAR: HALAMAN DISERAP ---------- */
+
+.is-leaving {
+  pointer-events: none;
+}
+
+.is-leaving .warp {
+  opacity: 1;
+  animation: warp-out 0.65s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
+}
+
+.is-leaving .app-container {
+  opacity: 0;
+  transition: opacity 0.4s ease-in 0.1s;
+}
+
+@keyframes warp-out {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(12);
+  }
+}
+
+/* ---------- MASUK: PORTAL MENUTUP ---------- */
+
+.warp-arrive .warp {
+  opacity: 1;
+  transform: scale(12);
+  animation: warp-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.warp-arrive .app-container {
+  animation: warp-content-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes warp-in {
+  from {
+    transform: scale(12);
+  }
+
+  to {
+    transform: scale(0);
+  }
+}
+
+@keyframes warp-content-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- AKSESIBILITAS ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .warp {
+    display: none;
+  }
+
+  .is-leaving .app-container,
+  .warp-arrive .app-container {
+    opacity: 1;
+    animation: none;
+    transition: none;
+  }
+}

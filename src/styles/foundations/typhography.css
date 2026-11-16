@@ -1,0 +1,20 @@
+#brand-main-text,
+#brand-sub-text,
+#hero__title-text {
+  display: inline-block;
+}
+
+#brand-main-text::after,
+#brand-sub-text::after,
+#hero__title-text::after {
+  content: '|';
+  margin-left: 2px;
+  font-weight: 300;
+  animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
