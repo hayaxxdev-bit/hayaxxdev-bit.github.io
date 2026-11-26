@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# 1. Alihkan URL yang masih memakai .html ke versi tanpa .html
+RewriteCond %{THE_REQUEST} /([^.]+)\.html [NC]
+RewriteRule ^ /%1 [NC,L,R=301]
+
+# 2. Tampilkan file .html di balik layar saat URL tanpa ekstensi diakses
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [NC,L]

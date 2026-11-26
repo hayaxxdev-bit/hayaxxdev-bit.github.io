@@ -21,8 +21,7 @@ const isGithubActions = process.env.GITHUB_ACTIONS === "true";
 
 const repositoryName = repository?.split("/")[1];
 
-const isUserOrOrganizationSite =
-  repository?.endsWith(".github.io") ?? false;
+const isUserOrOrganizationSite = repository?.endsWith(".github.io") ?? false;
 
 /**
  * Deployment base:
@@ -41,9 +40,7 @@ const isUserOrOrganizationSite =
  */
 
 const base =
-  isGithubActions &&
-  repositoryName &&
-  !isUserOrOrganizationSite
+  isGithubActions && repositoryName && !isUserOrOrganizationSite
     ? `/${repositoryName}/`
     : "/";
 
@@ -76,15 +73,9 @@ function manifestPlugin(): Plugin {
     async generateBundle() {
       const manifestPath = fromRoot("./src/manifest.webmanifest");
 
-      const manifest = await readFile(
-        manifestPath,
-        "utf-8",
-      );
+      const manifest = await readFile(manifestPath, "utf-8");
 
-      const generatedManifest = manifest.replaceAll(
-        "__BASE_URL__",
-        base,
-      );
+      const generatedManifest = manifest.replaceAll("__BASE_URL__", base);
 
       this.emitFile({
         type: "asset",
@@ -110,16 +101,14 @@ export default defineConfig({
 
   /* ---------- Plugins ---------- */
 
-  plugins: [
-    manifestPlugin(),
-  ],
+  plugins: [manifestPlugin()],
 
   /* ---------- Development Server ---------- */
 
   server: {
     host: true,
     port: 5173,
-    allowedHosts : ["buffer-absentee-regalia.ngrok-free.dev"],
+    allowedHosts: ["buffer-absentee-regalia.ngrok-free.dev"],
     strictPort: true,
     open: true,
   },
@@ -148,9 +137,8 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         main: fromRoot("./index.html"),
-
-        // maple: fromRoot("./public/html/maple/index.html"),
-        // palette: fromRoot("./public/html/pallet_color.html"),
+        notFound: fromRoot("./404.html"),
+        serverError: fromRoot("./500.html"),
       },
 
       output: {
