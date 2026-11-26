@@ -11,6 +11,7 @@
 
     <script src="%BASE_URL%warp-boot.js"></script>
     <script>
+      // Tentukan tema sebelum halaman dirender agar tidak terjadi kedipan.
       (function () {
         var root = document.documentElement;
         var theme = "dark";
@@ -47,20 +48,14 @@
         }
       })();
     </script>
+
     <!-- ========== SEO ========== -->
-    <title>
-      hayaxxdev-bit | I Don't Want Any Bugs, so I'll Max Out My Code
-    </title>
+    <title>hayaxxdev-bit | Fullstack &amp; Game Developer</title>
     <meta
       name="description"
-      content="Portfolio hayaxxdev-bit | I Don't Want Any Bugs, so I'll Max Out My Code"
-    />
-    <meta
-      name="keywords"
-      content="hayaxxdev, hayaxxdev-bit, fullstack developer, game developer, UI/UX, web developer, portfolio, bofuri, maple, anime, manga, digital art, kreator digital, web design, frontend, backend, indonesia, github, open source"
+      content="Portfolio hayaxxdev-bit: web interaktif dan game fan-project bertema manga, dengan performa yang dijaga dan kode tanpa kompromi."
     />
     <meta name="author" content="hayaxxdev-bit" />
-    <meta name="rating" content="general" />
     <meta
       name="robots"
       content="index, follow, max-snippet:-1, max-image-preview:large"
@@ -72,35 +67,42 @@
     <meta property="og:url" content="https://hayaxxdev-bit.my.id/" />
     <meta
       property="og:title"
-      content="hayaxxdev-bit | Portfolio & Game Developer"
+      content="hayaxxdev-bit | Fullstack &amp; Game Developer"
     />
     <meta
       property="og:description"
-      content="Fullstack Developer & Game Developer - Membangun pengalaman web imersif dengan estetika manga dan performa optimal."
+      content="Membangun pengalaman web imersif dengan estetika manga dan performa optimal."
     />
     <meta
       property="og:image"
-      content="https://hayaxxdev-bit.my.id/assets/images/Futuristic%20Hayaxxdev-bit%20Logo%20Lockup.png"
+      content="https://hayaxxdev-bit.my.id/assets/images/og-cover-1200x630.png"
     />
-    <meta property="og:image:width" content="1254" />
-    <meta property="og:image:height" content="1254" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Logo hayaxxdev-bit dengan latar kosmik bergaya manga"
+    />
     <meta property="og:locale" content="id_ID" />
     <meta property="og:site_name" content="hayaxxdev-bit Portfolio" />
 
     <!-- ========== Twitter ========== -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://hayaxxdev-bit.my.id/" />
     <meta
       name="twitter:title"
-      content="hayaxxdev-bit | Portfolio & Game Developer"
+      content="hayaxxdev-bit | Fullstack &amp; Game Developer"
     />
     <meta
       name="twitter:description"
-      content="Fullstack Developer & Game Developer - UI/UX, Game Art, Web Development"
+      content="UI interaktif, game fan-project, dan web development dengan estetika manga."
     />
     <meta
       name="twitter:image"
-      content="https://hayaxxdev-bit.my.id/assets/images/Futuristic%20Hayaxxdev-bit%20Logo%20Lockup.png"
+      content="https://hayaxxdev-bit.my.id/assets/images/og-cover-1200x630.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Logo hayaxxdev-bit dengan latar kosmik bergaya manga"
     />
     <meta name="twitter:creator" content="@hayaxxdev" />
 
@@ -127,18 +129,24 @@
         "@type": "WebSite",
         "name": "hayaxxdev-bit Portfolio",
         "url": "https://hayaxxdev-bit.my.id/",
+        "inLanguage": "id",
         "description": "Portfolio & Game Developer - UI/UX Designer",
         "author": { "@type": "Person", "name": "hayaxxdev-bit" }
       }
     </script>
-    <noscript
-      ><style>
+
+    <!-- Tanpa JavaScript: tampilkan konten langsung, sembunyikan skeleton -->
+    <noscript>
+      <style>
         [data-reveal] {
           opacity: 1 !important;
           transform: none !important;
         }
-      </style></noscript
-    >
+        [data-skeleton] {
+          display: none !important;
+        }
+      </style>
+    </noscript>
 
     <!-- ========== PWA / tema ========== -->
     <meta name="msapplication-TileColor" content="#030208" />
@@ -149,31 +157,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="hayaxxdev" />
 
-    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
     <!-- Favicon -->
+    <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
     <link
       rel="icon"
       type="image/svg+xml"
       href="%BASE_URL%assets/icons/favicon.svg"
     />
-
     <link
       rel="icon"
       type="image/png"
       sizes="32x32"
       href="%BASE_URL%assets/icons/favicon-32x32.png"
     />
-
     <link
       rel="icon"
       type="image/png"
       sizes="16x16"
       href="%BASE_URL%assets/icons/favicon-16x16.png"
     />
-
-    <link rel="shortcut icon" href="%BASE_URL%assets/icons/favicon.ico" />
-
-    <!-- Apple Touch Icon -->
     <link
       rel="apple-touch-icon"
       sizes="180x180"
@@ -182,6 +184,7 @@
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="%BASE_URL%site.webmanifest" />
+
     <!-- ========== Font & CSS (urutan penting) ========== -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -202,28 +205,36 @@
     <!-- main.css meng-import variable, reset, layout, komponen, dan semua pages -->
     <link rel="stylesheet" href="/src/styles/main.css" />
 
-    <!-- Pra-render halaman Vault saat kursor mendekati link (Chrome/Edge) -->
+    <!-- Pra-render halaman Vault saat kursor mendekati tautan (Chrome/Edge) -->
     <script type="speculationrules">
       {
         "prerender": [
-          { "where": { "href_matches": "/maple/*" }, "eagerness": "moderate" }
+          {
+            "where": { "href_matches": "%BASE_URL%maple/*" },
+            "eagerness": "moderate"
+          }
         ],
         "prefetch": [
-          { "where": { "href_matches": "/maple/*" }, "eagerness": "moderate" }
+          {
+            "where": { "href_matches": "%BASE_URL%maple/*" },
+            "eagerness": "moderate"
+          }
         ]
       }
     </script>
   </head>
 
   <body>
-    <!-- ========== Latar kosmik ========== -->
+    <!-- Tautan lompat untuk pengguna keyboard dan pembaca layar -->
+    <a class="skip-link" href="#main">Lewati ke konten utama</a>
+
+    <!-- ========== Latar kosmik (dekoratif) ========== -->
     <div class="cosmic-background" aria-hidden="true">
       <div class="bg-nebula"></div>
 
       <div class="bg-stars bg-stars--far"></div>
       <div class="bg-stars bg-stars--mid"></div>
       <div class="bg-stars bg-stars--near"></div>
-      <!-- <div class="bg-stars bg-stars--twinkle-a"></div> -->
       <div class="bg-stars bg-stars--twinkle-b"></div>
 
       <div class="bg-comets">
@@ -257,12 +268,12 @@
 
     <div class="app-container">
       <!-- ========== Navbar ========== -->
-      <header class="navbar" id="navbar" aria-label="Navigasi utama">
+      <header class="navbar" id="navbar">
         <a
           href="#home"
           class="navbar__brand"
           data-route="home"
-          aria-label="Beranda"
+          aria-label="hayaxxdev-bit, kembali ke beranda"
         >
           <span class="navbar__logo navbar__logo--image" aria-hidden="true">
             <img
@@ -279,23 +290,25 @@
             />
           </span>
 
-          <div class="navbar__brand-text">
-            <span class="brand-main">楓の木</span>
+          <span class="navbar__brand-text">
+            <span class="brand-main" lang="ja">楓の木</span>
             <span class="brand-sub">
               ✦ Digital Artisan
-              <span class="brand-version" data-app-version>v-</span>
+              <!-- Atribut hidden dihapus oleh main.ts setelah versi terisi -->
+              <span class="brand-version" data-app-version hidden>v-</span>
             </span>
-          </div>
+          </span>
 
-          <span
-            class="navbar__dot"
-            aria-hidden="true"
-            title="Status: online"
-          ></span>
+          <span class="navbar__dot" aria-hidden="true"></span>
         </a>
 
         <nav class="navbar__menu" id="navMenu" aria-label="Menu utama">
-          <button class="nav-link active" data-route="home" aria-current="page">
+          <a
+            class="nav-link active"
+            href="#home"
+            data-route="home"
+            aria-current="location"
+          >
             <span class="nav-link__icon" aria-hidden="true">
               <svg
                 viewBox="0 0 24 24"
@@ -310,9 +323,9 @@
             <span class="nav-link__label">Beranda</span>
             <span class="nav-link__tier" aria-hidden="true">一</span>
             <span class="nav-link__jp" aria-hidden="true">ホーム</span>
-          </button>
+          </a>
 
-          <button class="nav-link" data-route="maple">
+          <a class="nav-link" href="#maple" data-route="maple">
             <span class="nav-link__icon" aria-hidden="true">
               <svg
                 viewBox="0 0 24 24"
@@ -328,9 +341,9 @@
             <span class="nav-link__label">Maple's Vault</span>
             <span class="nav-link__tier" aria-hidden="true">二</span>
             <span class="nav-link__jp" aria-hidden="true">ヴォールト</span>
-          </button>
+          </a>
 
-          <button class="nav-link" data-route="project">
+          <a class="nav-link" href="#project" data-route="project">
             <span class="nav-link__icon" aria-hidden="true">
               <svg
                 viewBox="0 0 24 24"
@@ -349,9 +362,9 @@
             <span class="nav-link__label">Karya</span>
             <span class="nav-link__tier" aria-hidden="true">三</span>
             <span class="nav-link__jp" aria-hidden="true">作品集</span>
-          </button>
+          </a>
 
-          <button class="nav-link" data-route="about">
+          <a class="nav-link" href="#about" data-route="about">
             <span class="nav-link__icon" aria-hidden="true">
               <svg
                 viewBox="0 0 24 24"
@@ -380,17 +393,18 @@
             <span class="nav-link__label">Tentang</span>
             <span class="nav-link__tier" aria-hidden="true">四</span>
             <span class="nav-link__jp" aria-hidden="true">プロフィール</span>
-          </button>
+          </a>
 
-          <!-- Theme Toggle -->
+          <!-- Tombol tema: main.ts memperbarui aria-pressed saat tema berganti -->
           <button
+            type="button"
             class="nav-link nav-link--theme"
             data-theme-toggle
-            aria-label="Ganti tema terang / gelap"
-            title="Ganti tema"
+            aria-label="Mode gelap"
+            aria-pressed="true"
           >
             <span class="nav-link__icon theme-icon" aria-hidden="true">
-              <!-- Icon Moon (dark mode) -->
+              <!-- Ikon bulan (mode gelap) -->
               <svg
                 class="icon-moon"
                 viewBox="0 0 24 24"
@@ -401,7 +415,7 @@
               >
                 <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z" />
               </svg>
-              <!-- Icon Sun (light mode) -->
+              <!-- Ikon matahari (mode terang) -->
               <svg
                 class="icon-sun"
                 viewBox="0 0 24 24"
@@ -419,8 +433,9 @@
             <span class="nav-link__label theme-label">Tema</span>
           </button>
 
-          <button
+          <a
             class="nav-link nav-link--cta"
+            href="#contact"
             data-route="contact"
             data-magnetic
             data-ripple
@@ -439,10 +454,11 @@
             <span class="nav-link__label">
               Kontak<span class="cta-cursor" aria-hidden="true">_</span>
             </span>
-          </button>
+          </a>
         </nav>
 
         <button
+          type="button"
           class="navbar__toggle"
           id="menuToggle"
           aria-label="Buka atau tutup menu navigasi"
@@ -453,13 +469,18 @@
         </button>
       </header>
 
-      <main class="main">
+      <main class="main" id="main" tabindex="-1">
         <!-- ========== HOME ========== -->
-        <section class="hero" id="home" data-section>
+        <section
+          class="hero"
+          id="home"
+          data-section
+          aria-labelledby="hero-title"
+        >
           <p class="hero__kicker" data-reveal style="--i: 0">
             Fullstack &amp; Game Developer
           </p>
-          <h1 class="hero__title" data-reveal style="--i: 1">
+          <h1 class="hero__title" id="hero-title" data-reveal style="--i: 1">
             Tanpa bug,<br />kode dimaksimalkan.
           </h1>
           <p class="hero__lead" data-reveal style="--i: 2">
@@ -468,6 +489,7 @@
           </p>
           <div class="hero__actions" data-reveal style="--i: 3">
             <button
+              type="button"
               class="btn btn--primary"
               data-magnetic
               data-ripple
@@ -476,6 +498,7 @@
               Lihat karya
             </button>
             <button
+              type="button"
               class="btn btn--ghost"
               data-magnetic
               data-ripple
@@ -537,7 +560,7 @@
                   class="card__link card__cta"
                   href="%BASE_URL%maple/"
                   data-warp
-                  aria-label="Masuk ke Maple's Vault"
+                  aria-label="Masuk ke Vault: Maple's Vault"
                 >
                   <span>Masuk ke Vault</span>
                   <svg
@@ -574,7 +597,7 @@
               <figure class="card__media" aria-hidden="true">
                 <img
                   class="card__img"
-                  src="%BASE_URL%assets/images/maple/odyssey.webp"
+                  src="%BASE_URL%assets/images/maple/vault.webp"
                   alt=""
                   loading="lazy"
                   decoding="async"
@@ -623,7 +646,7 @@
               <figure class="card__media" aria-hidden="true">
                 <img
                   class="card__img"
-                  src="%BASE_URL%assets/images/maple/syrup.webp"
+                  src="%BASE_URL%assets/images/maple/vault.webp"
                   alt=""
                   loading="lazy"
                   decoding="async"
@@ -696,15 +719,96 @@
           <div
             class="projects__filters"
             id="project-filters"
+            role="group"
+            aria-label="Filter karya"
             data-reveal
             style="--i: 3"
           ></div>
 
-          <p class="projects__count" id="project-count" aria-live="polite"></p>
+          <p class="projects__count" id="project-count" role="status"></p>
 
-          <div class="card-grid projects__grid" id="project-grid"></div>
+          <!--
+            Skeleton ditampilkan selagi data dimuat. project-catalog.ts:
+            hapus [data-skeleton] dan set aria-busy="false" setelah render.
+          -->
+          <div
+            class="card-grid projects__grid"
+            id="project-grid"
+            aria-busy="true"
+          >
+            <article
+              class="card card--skeleton"
+              data-skeleton
+              aria-hidden="true"
+            >
+              <div class="skeleton skeleton--media"></div>
+              <div class="card__body">
+                <div class="skeleton skeleton--tag"></div>
+                <div class="skeleton skeleton--title"></div>
+                <div class="skeleton skeleton--line"></div>
+                <div class="skeleton skeleton--line skeleton--short"></div>
+              </div>
+            </article>
+            <article
+              class="card card--skeleton"
+              data-skeleton
+              aria-hidden="true"
+            >
+              <div class="skeleton skeleton--media"></div>
+              <div class="card__body">
+                <div class="skeleton skeleton--tag"></div>
+                <div class="skeleton skeleton--title"></div>
+                <div class="skeleton skeleton--line"></div>
+                <div class="skeleton skeleton--line skeleton--short"></div>
+              </div>
+            </article>
+            <article
+              class="card card--skeleton"
+              data-skeleton
+              aria-hidden="true"
+            >
+              <div class="skeleton skeleton--media"></div>
+              <div class="card__body">
+                <div class="skeleton skeleton--tag"></div>
+                <div class="skeleton skeleton--title"></div>
+                <div class="skeleton skeleton--line"></div>
+                <div class="skeleton skeleton--line skeleton--short"></div>
+              </div>
+            </article>
+          </div>
 
-          <p class="projects__empty" id="project-empty" hidden></p>
+          <!-- Empty state: filter tidak menghasilkan karya -->
+          <div class="projects__empty" id="project-empty" hidden>
+            <p class="projects__state-title">Belum ada karya di kategori ini</p>
+            <p class="projects__state-text">
+              Coba pilih filter lain, atau tampilkan semua karya.
+            </p>
+            <button
+              type="button"
+              class="btn btn--ghost"
+              id="project-reset"
+              data-ripple
+            >
+              Tampilkan semua karya
+            </button>
+          </div>
+
+          <!-- Error state: data gagal dimuat -->
+          <div class="projects__error" id="project-error" role="alert" hidden>
+            <p class="projects__state-title">Karya belum bisa dimuat</p>
+            <p class="projects__state-text">
+              Sepertinya ada gangguan koneksi. Periksa jaringanmu, lalu coba
+              lagi.
+            </p>
+            <button
+              type="button"
+              class="btn btn--primary"
+              id="project-retry"
+              data-ripple
+            >
+              Muat ulang karya
+            </button>
+          </div>
         </section>
 
         <!-- ========== TENTANG ========== -->
@@ -816,6 +920,7 @@
                 style="--i: 7"
               >
                 <button
+                  type="button"
                   class="btn btn--primary"
                   data-magnetic
                   data-ripple
@@ -830,7 +935,9 @@
                   rel="noopener noreferrer"
                   data-magnetic
                   data-ripple
-                  >GitHub</a
+                  >GitHub<span class="visually-hidden">
+                    (buka di tab baru)</span
+                  ></a
                 >
               </div>
             </div>
@@ -845,7 +952,7 @@
               <div class="about-card__avatar">
                 <img
                   src="%BASE_URL%assets/images/logo/logo.png"
-                  alt="Foto hayaxxdev-bit"
+                  alt="Logo hayaxxdev-bit"
                   width="112"
                   height="112"
                   loading="lazy"
@@ -1075,6 +1182,13 @@
           </footer>
         </section>
       </main>
+
+      <!-- Footer di luar <main> agar terbaca sebagai landmark contentinfo -->
+      <footer class="site-footer" data-reveal style="--i: 7">
+        <span>hayaxxdev-bit</span>
+        <span aria-hidden="true">·</span>
+        <span>Tanpa bug, kode dimaksimalkan.</span>
+      </footer>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

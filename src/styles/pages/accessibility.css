@@ -1,0 +1,162 @@
+/* =========================================
+   ACCESSIBILITY
+   Impor SETELAH tokens, reset/base, navbar, dan button.
+   Selector setara dengan aturan lama, jadi urutan impor
+   (yang terakhir menang) menentukan hasilnya.
+========================================= */
+
+/* ── Token tambahan ───────────────────────
+   Kontras di tema terang diperbaiki di sini
+   supaya file token asli tidak perlu diedit. */
+:root {
+  --focus-ring: var(--purple-soft);
+  --nav-accent: var(--purple-soft);
+  --state-error: #f0707f;
+}
+
+[data-theme="light"] {
+  /* Emas #d4af37 di atas gading hanya ±2:1. Cokelat emas ini ±6:1 */
+  --focus-ring: #7a5a12;
+  --nav-accent: #7a5a12;
+  --state-error: #b3261e;
+
+  /* Teks kecil (caption, brand-sub, footer) sebelumnya ±3–4:1 */
+  --text-secondary: #6b5a35;
+  --ink-dim: #7d6d49;
+
+  /* Teks putih di atas emas muda tidak terbaca */
+  --cta-color: #3d2c05;
+}
+
+/* ── Fokus keyboard ───────────────────── */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.nav-link:focus-visible,
+.navbar__toggle:focus-visible,
+.navbar__brand:focus-visible,
+.btn:focus-visible {
+  outline-color: var(--focus-ring);
+}
+
+/* <main tabindex="-1"> menerima fokus dari skip link, tanpa cincin */
+.main:focus {
+  outline: none;
+}
+
+/* ── Skip link ────────────────────────── */
+.skip-link {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  z-index: 1000;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border-active);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* ── Teks khusus pembaca layar ────────── */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Navbar: item kini <a>, bukan <button> ── */
+.nav-link {
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Warna aksen yang lolos kontras di kedua tema */
+.nav-link:hover,
+.nav-link:focus-visible,
+.nav-link.active {
+  color: var(--nav-accent);
+}
+
+.nav-link__jp,
+.brand-version {
+  color: var(--nav-accent);
+}
+
+[data-theme="light"] .navbar__brand-text .brand-main {
+  background-image: linear-gradient(135deg, var(--text), var(--nav-accent));
+}
+
+/* Menu mobile yang tertutup tidak boleh bisa difokus keyboard */
+@media (max-width: 768px) {
+  .navbar__menu {
+    visibility: hidden;
+  }
+
+  .navbar__menu.navbar__menu--open {
+    visibility: visible;
+  }
+}
+
+/* ── Tombol utama: pakai token CTA agar kontras di dua tema ── */
+.btn--primary {
+  background: var(--cta-bg);
+  color: var(--cta-color);
+  box-shadow: var(--cta-shadow);
+}
+
+/* ── Override tema terang ─────────────────
+   theme-light.css memakai [data-theme="light"] .x (specificity lebih
+   tinggi). Selector di bawah menyamai specificity-nya dan menang
+   karena diimpor belakangan. */
+[data-theme="light"] .nav-link:hover,
+[data-theme="light"] .nav-link:focus-visible,
+[data-theme="light"] .nav-link.active {
+  /* sebelumnya #a27a25, ±3,8:1 */
+  color: var(--nav-accent);
+}
+
+[data-theme="light"] .navbar__brand-text .brand-sub {
+  /* sebelumnya #a18a60, ±3:1 untuk teks 0,5–0,6rem */
+  color: var(--ink-dim);
+  -webkit-text-fill-color: var(--ink-dim);
+}
+
+[data-theme="light"] .projects__count {
+  /* sebelumnya #81745c, ±4,3:1 */
+  color: var(--text-secondary);
+}
+
+/* Cincin fokus: sebelumnya #c49a32, ±2,6:1 (di bawah 3:1) */
+[data-theme="light"] .btn:focus-visible,
+[data-theme="light"] .filter-chip:focus-visible,
+[data-theme="light"] .project-card__btn:focus-visible {
+  outline-color: var(--focus-ring);
+}
+
+/* Tombol utama tema terang: teks putih di atas gradasi emas ±1,5–2,8:1.
+   Teks cokelat tua ±4,6:1 di bagian emas tergelap. */
+[data-theme="light"] .btn--primary,
+[data-theme="light"] .btn--primary:hover,
+[data-theme="light"] .project-card__btn--primary,
+[data-theme="light"] .project-card__btn--primary:hover {
+  color: var(--cta-color);
+}

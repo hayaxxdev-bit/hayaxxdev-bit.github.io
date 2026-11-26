@@ -1,0 +1,173 @@
+/* =========================================
+   STATES & KOMPONEN BARU
+   Impor setelah file komponen (card, button, projects, contact).
+========================================= */
+
+/* ── Skeleton ─────────────────────────── */
+.card--skeleton {
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.skeleton {
+  --skeleton-base: color-mix(in srgb, var(--text) 8%, transparent);
+  --skeleton-shine: color-mix(in srgb, var(--text) 16%, transparent);
+
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-shine) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+
+.skeleton--media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.skeleton--tag {
+  width: 56px;
+  height: 22px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+}
+
+.skeleton--title {
+  width: 70%;
+  height: 24px;
+  margin-bottom: 14px;
+}
+
+.skeleton--line {
+  width: 100%;
+  height: 14px;
+  margin-bottom: 10px;
+}
+
+.skeleton--short {
+  width: 55%;
+}
+
+@keyframes skeleton-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* ── Empty & error state (halaman Karya) ──
+   Hapus aturan lama .projects__empty kalau ada:
+   dulu elemennya <p>, sekarang <div>. */
+.projects__empty,
+.projects__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 48px auto 0;
+  padding: 40px 28px;
+  text-align: center;
+  border-radius: var(--radius);
+  background: var(--glass-bg);
+  border: 1px dashed var(--border-active);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.projects__error {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--state-error) 55%, transparent);
+}
+
+/* display: flex di atas akan mengalahkan atribut [hidden] */
+.projects__empty[hidden],
+.projects__error[hidden] {
+  display: none;
+}
+
+.projects__state-title {
+  font-family: var(--font-head);
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.projects__state-text {
+  max-width: 42ch;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.projects__empty .btn,
+.projects__error .btn {
+  margin-top: 8px;
+}
+
+/* ── Kartu kontak: teks terlihat menjadi isi tautan ──
+   Gantikan aturan lama .contact-card__link (dulu absolute, kosong)
+   dan sesuaikan .contact-card__text jika masih dipakai. */
+.contact-card {
+  position: relative;
+}
+
+.contact-card__link {
+  /* Meniadakan aturan lama (position: absolute; inset: 0; z-index: 2) */
+  position: static;
+  inset: auto;
+  z-index: auto;
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Memperluas area klik ke seluruh kartu */
+.contact-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+/* Ikon dan panah berada di atas ::after, jadi klik harus diteruskan */
+.contact-card__icon,
+.contact-card__arrow {
+  pointer-events: none;
+}
+
+/* Cincin fokus pada kartu, bukan pada teks di dalamnya */
+.contact-card__link:focus-visible {
+  outline: none;
+}
+
+.contact-card:has(.contact-card__link:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ── Footer (landmark contentinfo, di luar <main>) ──
+   Hapus aturan lama .contact__footer. */
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 32px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}

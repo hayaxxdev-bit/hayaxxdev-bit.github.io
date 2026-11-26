@@ -1,13 +1,14 @@
 ### Brand Identity
 
-``` Brand: PROGABOFUN
-    Username: hayaxxdev-bit
-    Bidang: Software Engineering, Web Development, Game Development, UI/UX, dan Open Source
-    Tagline: Code , Create, Explore, Build
-    Teknologi: html, css, javascript dan typescript
-    Pendekatan: Membangun sendiri, memahami struktur dan merubah dunia menjadi kreasi digital 
-    repository: https://github.com/hayaxxdev-bit/hayaxxdev-bit.github.io```
-```
+Identitas: hayaxxdev-bit.
+Domain: hayaxxdev-bit.my.id.
+Konsep: Personal Digital Ecosystem.
+Model: Hybrid Portfolio + Digital Hub + Creative Platform.
+Visual: Futuristic.
+Experience: Interactive + Explorative.
+Audiens: Developer, komunitas teknologi, gamer, dan komunitas kreatif.
+Konten: 12 kategori.
+Implementasi: Greenfield Rebuild.
 
 # 2.1 Brand Speficification
 nama brand: PROGABOFUN

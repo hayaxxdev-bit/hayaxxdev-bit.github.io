@@ -10,4 +10,6 @@
 @import "./pages/home.css";
 @import "./pages/maple.css";
 @import "./pages/warp.css";
-@import "./pages/maple.css";
+
+@import "./pages/accessibility.css";
+@import "./pages/states.css";

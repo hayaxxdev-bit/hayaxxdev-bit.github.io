@@ -10,8 +10,8 @@
   align-items: center;
   justify-content: space-between;
   background: var(--navbar-bg);
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
   border: 1px solid var(--navbar-border);
   border-radius: 60px;
   padding: 6px 8px 6px 24px;
@@ -623,8 +623,8 @@
     left: 8px;
     right: 8px;
     background: var(--navbar-bg-scrolled);
-    backdrop-filter: blur(32px) saturate(1.5);
-    -webkit-backdrop-filter: blur(32px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
     border: 1px solid var(--navbar-border);
     border-radius: 28px;
     flex-direction: column;

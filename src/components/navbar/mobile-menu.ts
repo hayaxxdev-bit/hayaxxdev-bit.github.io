@@ -98,7 +98,6 @@ export class MobileMenu {
 
     this.toggle.classList.remove(TOGGLE_OPEN_CLASS);
     this.toggle.setAttribute("aria-expanded", "false");
-    this.toggle.setAttribute("aria-label", "Buka menu navigasi");
   }
 
   private isOpen(): boolean {
@@ -115,7 +114,6 @@ export class MobileMenu {
 
     this.toggle.classList.add(TOGGLE_OPEN_CLASS);
     this.toggle.setAttribute("aria-expanded", "true");
-    this.toggle.setAttribute("aria-label", "Tutup menu navigasi");
   }
 
   private close(): void {
@@ -126,6 +124,5 @@ export class MobileMenu {
 
     this.toggle.classList.remove(TOGGLE_OPEN_CLASS);
     this.toggle.setAttribute("aria-expanded", "false");
-    this.toggle.setAttribute("aria-label", "Buka menu navigasi");
   }
 }

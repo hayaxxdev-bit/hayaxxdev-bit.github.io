@@ -6,11 +6,13 @@
 
 .cosmic-background {
   position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-  background: #030208;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  height: 100vh;
+  height: 100lvh;
+  contain: strict;
 }
 
 /* =========================================
@@ -22,9 +24,21 @@
   inset: 0;
 
   background:
-    radial-gradient(ellipse at 15% 25%, rgba(92, 35, 145, 0.19), transparent 45%),
-    radial-gradient(ellipse at 85% 30%, rgba(155, 25, 65, 0.14), transparent 42%),
-    radial-gradient(ellipse at 50% 85%, rgba(48, 31, 115, 0.16), transparent 50%),
+    radial-gradient(
+      ellipse at 15% 25%,
+      rgba(92, 35, 145, 0.19),
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 85% 30%,
+      rgba(155, 25, 65, 0.14),
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 50% 85%,
+      rgba(48, 31, 115, 0.16),
+      transparent 50%
+    ),
     linear-gradient(180deg, #030208 0%, #090513 50%, #030208 100%);
 }
 
@@ -73,16 +87,38 @@
 .bg-stars--twinkle-a {
   opacity: 1;
   background-image:
-    radial-gradient(18px 18px at 130px 90px, rgba(196, 181, 253, 0.22), transparent),
-    radial-gradient(9px 9px at 130px 90px, rgba(221, 214, 254, 0.6), transparent),
+    radial-gradient(
+      18px 18px at 130px 90px,
+      rgba(196, 181, 253, 0.22),
+      transparent
+    ),
+    radial-gradient(
+      9px 9px at 130px 90px,
+      rgba(221, 214, 254, 0.6),
+      transparent
+    ),
     radial-gradient(3px 3px at 130px 90px, #fff 99%, transparent),
-
-    radial-gradient(20px 20px at 380px 260px, rgba(255, 205, 225, 0.2), transparent),
-    radial-gradient(10px 10px at 380px 260px, rgba(255, 225, 240, 0.6), transparent),
+    radial-gradient(
+      20px 20px at 380px 260px,
+      rgba(255, 205, 225, 0.2),
+      transparent
+    ),
+    radial-gradient(
+      10px 10px at 380px 260px,
+      rgba(255, 225, 240, 0.6),
+      transparent
+    ),
     radial-gradient(3.5px 3.5px at 380px 260px, #fff 99%, transparent),
-
-    radial-gradient(16px 16px at 470px 70px, rgba(196, 181, 253, 0.22), transparent),
-    radial-gradient(8px 8px at 470px 70px, rgba(221, 214, 254, 0.6), transparent),
+    radial-gradient(
+      16px 16px at 470px 70px,
+      rgba(196, 181, 253, 0.22),
+      transparent
+    ),
+    radial-gradient(
+      8px 8px at 470px 70px,
+      rgba(221, 214, 254, 0.6),
+      transparent
+    ),
     radial-gradient(3px 3px at 470px 70px, #fff 99%, transparent);
   background-size: 530px 370px;
 }
@@ -154,31 +190,125 @@
 }
 
 /* Komet: ekor panjang, melaju agak pelan (~2 dtk, ulang tiap 8-15 dtk) */
-.comet:nth-child(1) { --x: 4%;   --y: 6%;   --angle: 28deg; --len: 170px; --dist: 1150px; --dur: 9s;  --delay: 1s; }
-.comet:nth-child(2) { --x: 38%;  --y: -4%;  --angle: 36deg; --len: 130px; --dist: 950px;  --dur: 12s; --delay: 4s; }
-.comet:nth-child(3) { --x: -6%;  --y: 38%;  --angle: 18deg; --len: 190px; --dist: 1300px; --dur: 14s; --delay: 7s; }
-.comet:nth-child(4) { --x: 62%;  --y: 2%;   --angle: 42deg; --len: 120px; --dist: 850px;  --dur: 11s; --delay: 10s; }
+.comet:nth-child(1) {
+  --x: 4%;
+  --y: 6%;
+  --angle: 28deg;
+  --len: 170px;
+  --dist: 1150px;
+  --dur: 9s;
+  --delay: 1s;
+}
+.comet:nth-child(2) {
+  --x: 38%;
+  --y: -4%;
+  --angle: 36deg;
+  --len: 130px;
+  --dist: 950px;
+  --dur: 12s;
+  --delay: 4s;
+}
+.comet:nth-child(3) {
+  --x: -6%;
+  --y: 38%;
+  --angle: 18deg;
+  --len: 190px;
+  --dist: 1300px;
+  --dur: 14s;
+  --delay: 7s;
+}
+.comet:nth-child(4) {
+  --x: 62%;
+  --y: 2%;
+  --angle: 42deg;
+  --len: 120px;
+  --dist: 850px;
+  --dur: 11s;
+  --delay: 10s;
+}
 
 /* Meteor: lebih pendek & kencang (~0,6 dtk, ulang tiap 4-8 dtk) */
-.comet:nth-child(5) { --x: 20%;  --y: -2%;  --angle: 32deg; --len: 90px;  --dist: 900px;  --dur: 5s;  --delay: 0.5s; animation-name: meteor-fly; }
-.comet:nth-child(6) { --x: 70%;  --y: 20%;  --angle: 25deg; --len: 80px;  --dist: 800px;  --dur: 7s;  --delay: 2.5s; animation-name: meteor-fly; }
-.comet:nth-child(7) { --x: 8%;   --y: 55%;  --angle: 38deg; --len: 100px; --dist: 950px;  --dur: 6s;  --delay: 3.5s; animation-name: meteor-fly; }
-.comet:nth-child(8) { --x: 48%;  --y: 12%;  --angle: 22deg; --len: 70px;  --dist: 700px;  --dur: 8s;  --delay: 5.5s; animation-name: meteor-fly; }
+.comet:nth-child(5) {
+  --x: 20%;
+  --y: -2%;
+  --angle: 32deg;
+  --len: 90px;
+  --dist: 900px;
+  --dur: 5s;
+  --delay: 0.5s;
+  animation-name: meteor-fly;
+}
+.comet:nth-child(6) {
+  --x: 70%;
+  --y: 20%;
+  --angle: 25deg;
+  --len: 80px;
+  --dist: 800px;
+  --dur: 7s;
+  --delay: 2.5s;
+  animation-name: meteor-fly;
+}
+.comet:nth-child(7) {
+  --x: 8%;
+  --y: 55%;
+  --angle: 38deg;
+  --len: 100px;
+  --dist: 950px;
+  --dur: 6s;
+  --delay: 3.5s;
+  animation-name: meteor-fly;
+}
+.comet:nth-child(8) {
+  --x: 48%;
+  --y: 12%;
+  --angle: 22deg;
+  --len: 70px;
+  --dist: 700px;
+  --dur: 8s;
+  --delay: 5.5s;
+  animation-name: meteor-fly;
+}
 
 @keyframes comet-fly {
-  0%   { transform: translateX(0); opacity: 0; }
-  3%   { opacity: 1; }
-  17%  { opacity: 1; }
-  22%  { transform: translateX(var(--dist)); opacity: 0; }
-  100% { transform: translateX(var(--dist)); opacity: 0; }
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  17% {
+    opacity: 1;
+  }
+  22% {
+    transform: translateX(var(--dist));
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(var(--dist));
+    opacity: 0;
+  }
 }
 
 @keyframes meteor-fly {
-  0%   { transform: translateX(0); opacity: 0; }
-  2%   { opacity: 1; }
-  9%   { opacity: 1; }
-  12%  { transform: translateX(var(--dist)); opacity: 0; }
-  100% { transform: translateX(var(--dist)); opacity: 0; }
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  2% {
+    opacity: 1;
+  }
+  9% {
+    opacity: 1;
+  }
+  12% {
+    transform: translateX(var(--dist));
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(var(--dist));
+    opacity: 0;
+  }
 }
 
 /* =========================================
@@ -268,8 +398,18 @@
     rgba(76, 29, 149, 0.2) 60%
   );
 
-  -webkit-mask-image: radial-gradient(circle closest-side, transparent 80%, #000 88%, transparent 100%);
-  mask-image: radial-gradient(circle closest-side, transparent 80%, #000 88%, transparent 100%);
+  -webkit-mask-image: radial-gradient(
+    circle closest-side,
+    transparent 80%,
+    #000 88%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    circle closest-side,
+    transparent 80%,
+    #000 88%,
+    transparent 100%
+  );
   clip-path: inset(0 0 42% 0);
 
   will-change: opacity;
@@ -285,8 +425,20 @@
   border-radius: 50%;
   will-change: transform;
 
-  -webkit-mask-image: radial-gradient(circle, transparent 36%, #000 44%, #000 58%, transparent 70%);
-  mask-image: radial-gradient(circle, transparent 36%, #000 44%, #000 58%, transparent 70%);
+  -webkit-mask-image: radial-gradient(
+    circle,
+    transparent 36%,
+    #000 44%,
+    #000 58%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(
+    circle,
+    transparent 36%,
+    #000 44%,
+    #000 58%,
+    transparent 70%
+  );
 }
 
 .blackhole__disk::before {
@@ -367,14 +519,44 @@
   animation: absorb 5.5s cubic-bezier(0.45, 0, 0.9, 0.6) var(--delay) infinite;
 }
 
-.blackhole__stream i:nth-child(1) { --a: 0deg;   --delay: 0s; }
-.blackhole__stream i:nth-child(2) { --a: 45deg;  --delay: -0.7s; }
-.blackhole__stream i:nth-child(3) { --a: 90deg;  --delay: -1.4s; background: #7c3aed; box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.85); }
-.blackhole__stream i:nth-child(4) { --a: 135deg; --delay: -2.1s; }
-.blackhole__stream i:nth-child(5) { --a: 180deg; --delay: -2.8s; background: #7c3aed; box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.85); }
-.blackhole__stream i:nth-child(6) { --a: 225deg; --delay: -3.5s; }
-.blackhole__stream i:nth-child(7) { --a: 270deg; --delay: -4.2s; }
-.blackhole__stream i:nth-child(8) { --a: 315deg; --delay: -4.9s; background: #7c3aed; box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.85); }
+.blackhole__stream i:nth-child(1) {
+  --a: 0deg;
+  --delay: 0s;
+}
+.blackhole__stream i:nth-child(2) {
+  --a: 45deg;
+  --delay: -0.7s;
+}
+.blackhole__stream i:nth-child(3) {
+  --a: 90deg;
+  --delay: -1.4s;
+  background: #7c3aed;
+  box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.85);
+}
+.blackhole__stream i:nth-child(4) {
+  --a: 135deg;
+  --delay: -2.1s;
+}
+.blackhole__stream i:nth-child(5) {
+  --a: 180deg;
+  --delay: -2.8s;
+  background: #7c3aed;
+  box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.85);
+}
+.blackhole__stream i:nth-child(6) {
+  --a: 225deg;
+  --delay: -3.5s;
+}
+.blackhole__stream i:nth-child(7) {
+  --a: 270deg;
+  --delay: -4.2s;
+}
+.blackhole__stream i:nth-child(8) {
+  --a: 315deg;
+  --delay: -4.9s;
+  background: #7c3aed;
+  box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.85);
+}
 
 @keyframes absorb {
   0% {
@@ -394,22 +576,41 @@
 }
 
 @keyframes disk-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes arc-glow {
-  0%, 100% { opacity: 0.55; }
-  50%      { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes core-breathe {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes lens-pulse {
-  0%, 100% { transform: scale(0.96); opacity: 0.6; }
-  50%      { transform: scale(1.06); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
 }
 
 /* =========================================
@@ -427,8 +628,16 @@
   background-size: 100px 100px;
   background-position: -1px -1px;
 
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 15%, #000 20%, transparent 95%);
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 15%, #000 20%, transparent 95%);
+  -webkit-mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 15%,
+    #000 20%,
+    transparent 95%
+  );
+  mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 15%,
+    #000 20%,
+    transparent 95%
+  );
 }
 
 /* =========================================
@@ -477,8 +686,8 @@ body.has-pointer .bg-spotlight {
 
   display: flex;
   flex-direction: column;
-
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .main {
@@ -516,10 +725,20 @@ body.has-pointer .bg-spotlight {
 }
 
 @keyframes absorb-sm {
-  0%   { transform: rotate(var(--a)) translateX(130px) scale(1.1); opacity: 0; }
-  15%  { opacity: 1; }
-  85%  { opacity: 0.9; }
-  100% { transform: rotate(calc(var(--a) + 320deg)) translateX(18px) scale(0.2); opacity: 0; }
+  0% {
+    transform: rotate(var(--a)) translateX(130px) scale(1.1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(calc(var(--a) + 320deg)) translateX(18px) scale(0.2);
+    opacity: 0;
+  }
 }
 
 /* =========================================

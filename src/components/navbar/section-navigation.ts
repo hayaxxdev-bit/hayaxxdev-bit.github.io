@@ -15,7 +15,7 @@ export class SectionNavigation {
   );
 
   private readonly navLinks = Array.from(
-    document.querySelectorAll<HTMLButtonElement>(NAV_LINK_SELECTOR),
+    document.querySelectorAll<HTMLElement>(NAV_LINK_SELECTOR),
   );
 
   private readonly sections = Array.from(
@@ -36,6 +36,15 @@ export class SectionNavigation {
     const target = event.target;
 
     if (!(target instanceof Element)) return;
+
+    const isModifiedClick =
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey;
+
+    if (isModifiedClick) return;
 
     const routeElement = target.closest<HTMLElement>(ROUTE_SELECTOR);
 
@@ -65,6 +74,13 @@ export class SectionNavigation {
     );
 
     this.setActiveSection(sectionId);
+    this.focusSection(section);
+  };
+
+  private readonly handleHashChange = (): void => {
+    const section = this.getInitialHashSection();
+
+    if (section) this.setActiveSection(section.id);
   };
 
   private readonly handleScroll = (): void => {
@@ -102,6 +118,7 @@ export class SectionNavigation {
     this.initialized = true;
 
     document.addEventListener("click", this.handleRouteClick);
+    window.addEventListener("hashchange", this.handleHashChange);
 
     window.addEventListener("scroll", this.handleScroll, {
       passive: true,
@@ -126,6 +143,7 @@ export class SectionNavigation {
     if (!this.initialized) return;
 
     document.removeEventListener("click", this.handleRouteClick);
+    window.removeEventListener("hashchange", this.handleHashChange);
     window.removeEventListener("scroll", this.handleScroll);
 
     this.observer?.disconnect();
@@ -138,6 +156,16 @@ export class SectionNavigation {
     this.clearActiveSection();
 
     this.initialized = false;
+  }
+
+  /**
+   * preventDefault() mematikan perpindahan fokus bawaan anchor, jadi
+   * dipulihkan di sini agar pengguna keyboard dan pembaca layar ikut pindah.
+   */
+  private focusSection(section: HTMLElement): void {
+    if (!section.hasAttribute("tabindex")) section.tabIndex = -1;
+
+    section.focus({ preventScroll: true });
   }
 
   private getInitialHashSection(): HTMLElement | undefined {

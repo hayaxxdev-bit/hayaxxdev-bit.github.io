@@ -1,12 +1,15 @@
 /**
  * Bagian "Karya": render kartu dari data manual, filter tipe/fandom,
  * lalu lengkapi statistik GitHub secara asinkron.
- * Hanya logika. Tampilan ada di src/styles/pages/projects.css.
+ * Hanya logika. Tampilan ada di src/styles/pages/pages.css dan states.css.
  *
- * Pasang di main.ts SEBELUM inisialisasi interactions (tilt/reveal),
- * supaya kartu yang dirender ikut dikenali:
- *   initProjects();
- *   initInteractions();
+ * State UI (markup ada di index.html):
+ *  - loading : skeleton di #project-grid, diganti saat render selesai
+ *  - empty   : #project-empty (filter tidak menghasilkan karya)
+ *  - error   : #project-error (render gagal), dengan tombol coba lagi
+ *
+ * Setelah render, event `catalog:rendered` dikirim supaya interactions.ts
+ * bisa memasang tilt pada kartu yang baru dibuat.
  */
 
 import { FANDOM_LABELS, PROJECTS, TYPE_LABELS } from '../../data/projects';
@@ -35,12 +38,33 @@ interface UiStrings {
   demo: string;
   code: string;
   updated: string;
-  empty: string;
+  emptyTitle: string;
+  emptyText: string;
+  resetFilters: string;
+  errorTitle: string;
+  errorText: string;
+  retry: string;
   count: (shown: number, total: number) => string;
+}
+
+interface FilterGroup {
+  element: HTMLElement;
+  reset: () => void;
+}
+
+interface CatalogElements {
+  grid: HTMLElement;
+  filtersRoot: HTMLElement | null;
+  countText: HTMLElement | null;
+  emptyState: HTMLElement | null;
+  errorState: HTMLElement | null;
+  resetButton: HTMLElement | null;
+  retryButton: HTMLElement | null;
 }
 
 const BASE_URL = import.meta.env.BASE_URL;
 const SUPPORTED_LANGS: readonly LangCode[] = ['id', 'en', 'ja', 'ko'];
+const CATALOG_RENDERED_EVENT = 'catalog:rendered';
 
 const STRINGS: Record<'id' | 'en', UiStrings> = {
   id: {
@@ -51,7 +75,12 @@ const STRINGS: Record<'id' | 'en', UiStrings> = {
     demo: 'Buka',
     code: 'Kode',
     updated: 'Update',
-    empty: 'Belum ada karya untuk kombinasi filter ini.',
+    emptyTitle: 'Belum ada karya di kategori ini',
+    emptyText: 'Coba pilih filter lain, atau tampilkan semua karya.',
+    resetFilters: 'Tampilkan semua karya',
+    errorTitle: 'Karya belum bisa ditampilkan',
+    errorText: 'Terjadi masalah saat menyiapkan daftar karya. Coba muat ulang.',
+    retry: 'Muat ulang karya',
     count: (shown, total) => `Menampilkan ${shown} dari ${total} karya`,
   },
   en: {
@@ -62,7 +91,12 @@ const STRINGS: Record<'id' | 'en', UiStrings> = {
     demo: 'Open',
     code: 'Code',
     updated: 'Updated',
-    empty: 'No projects match this filter combination.',
+    emptyTitle: 'No projects in this category yet',
+    emptyText: 'Try a different filter, or show all projects.',
+    resetFilters: 'Show all projects',
+    errorTitle: "Projects couldn't be shown",
+    errorText: 'Something went wrong while preparing the list. Please try again.',
+    retry: 'Reload projects',
     count: (shown, total) => `Showing ${shown} of ${total} projects`,
   },
 };
@@ -222,6 +256,27 @@ function fillStats(
   list.hidden = list.childElementCount === 0;
 }
 
+/** Statistik GitHub hanya pelengkap: gagal = diam, kartu tetap tampil. */
+function loadRepoStats(
+  statsLists: ReadonlyMap<string, HTMLUListElement>,
+  lang: LangCode,
+  ui: UiStrings,
+): void {
+  const repos = [...statsLists.keys()];
+  if (repos.length === 0) return;
+
+  fetchRepoStats(repos)
+    .then((data) => {
+      for (const [repo, list] of statsLists) {
+        const stats = data[repo];
+        if (stats) fillStats(list, stats, lang, ui);
+      }
+    })
+    .catch(() => {
+      // Sengaja diabaikan.
+    });
+}
+
 /* ---------- Filter ---------- */
 
 function buildFilterGroup<T extends string>(
@@ -229,7 +284,7 @@ function buildFilterGroup<T extends string>(
   allLabel: string,
   options: ReadonlyArray<{ value: T; label: string }>,
   onSelect: (value: FilterValue<T>) => void,
-): HTMLElement {
+): FilterGroup {
   const group = el('div', 'projects__filter-group');
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', label);
@@ -254,28 +309,75 @@ function buildFilterGroup<T extends string>(
     buttons.push(button);
     group.appendChild(button);
   }
-  return group;
+
+  /** Mengembalikan tampilan ke "Semua" tanpa memanggil onSelect. */
+  const reset = (): void => {
+    buttons.forEach((button, position) => {
+      button.setAttribute('aria-pressed', String(position === 0));
+    });
+  };
+
+  return { element: group, reset };
 }
 
 function uniqueInOrder<T>(values: readonly T[]): T[] {
   return [...new Set(values)];
 }
 
-/* ---------- Entry point ---------- */
+function buildFilters(
+  root: HTMLElement,
+  state: FilterState,
+  ui: UiStrings,
+  onChange: () => void,
+): FilterGroup[] {
+  const groups: FilterGroup[] = [];
+  const types = uniqueInOrder(PROJECTS.map((project) => project.type));
+  const fandoms = uniqueInOrder(
+    PROJECTS.flatMap((project) => (project.fandom ? [project.fandom] : [])),
+  );
 
-export function initProjects(): void {
-  const grid = document.querySelector<HTMLElement>('#project-grid');
-  if (!grid) return;
+  root.replaceChildren();
 
-  const filtersRoot = document.querySelector<HTMLElement>('#project-filters');
-  const countEl = document.querySelector<HTMLElement>('#project-count');
-  const emptyEl = document.querySelector<HTMLElement>('#project-empty');
+  if (types.length > 1) {
+    groups.push(
+      buildFilterGroup(
+        ui.typeLabel,
+        ui.all,
+        types.map((value) => ({ value, label: TYPE_LABELS[value] })),
+        (value) => {
+          state.type = value;
+          onChange();
+        },
+      ),
+    );
+  }
 
-  const lang = getLang();
-  const ui = getStrings(lang);
+  if (fandoms.length > 0) {
+    groups.push(
+      buildFilterGroup(
+        ui.fandomLabel,
+        ui.all,
+        fandoms.map((value) => ({ value, label: FANDOM_LABELS[value] })),
+        (value) => {
+          state.fandom = value;
+          onChange();
+        },
+      ),
+    );
+  }
 
-  if (emptyEl) emptyEl.textContent = ui.empty;
+  root.append(...groups.map((group) => group.element));
+  return groups;
+}
 
+/* ---------- Render ---------- */
+
+/** Merender kartu + filter. Mengembalikan fungsi untuk mereset semua filter. */
+function renderCatalog(
+  elements: CatalogElements,
+  lang: LangCode,
+  ui: UiStrings,
+): () => void {
   /* Render semua kartu sekali (filter hanya toggle atribut hidden) */
   const entries: Array<{ project: Project; card: HTMLElement }> = [];
   const statsLists = new Map<string, HTMLUListElement>();
@@ -287,9 +389,10 @@ export function initProjects(): void {
     if (project.repo) statsLists.set(project.repo, stats);
     fragment.appendChild(card);
   });
-  grid.replaceChildren(fragment);
 
-  /* Filter */
+  // Mengganti isi grid sekaligus menghapus skeleton.
+  elements.grid.replaceChildren(fragment);
+
   const state: FilterState = { type: 'all', fandom: 'all' };
 
   const applyFilter = (): void => {
@@ -301,57 +404,103 @@ export function initProjects(): void {
       card.hidden = !visible;
       if (visible) shown += 1;
     }
-    if (countEl) countEl.textContent = ui.count(shown, entries.length);
-    if (emptyEl) emptyEl.hidden = shown > 0;
+    if (elements.countText) elements.countText.textContent = ui.count(shown, entries.length);
+    if (elements.emptyState) elements.emptyState.hidden = shown > 0;
   };
 
-  if (filtersRoot) {
-    const types = uniqueInOrder(PROJECTS.map((project) => project.type));
-    const fandoms = uniqueInOrder(
-      PROJECTS.flatMap((project) => (project.fandom ? [project.fandom] : [])),
-    );
-
-    filtersRoot.replaceChildren();
-
-    if (types.length > 1) {
-      filtersRoot.appendChild(
-        buildFilterGroup(
-          ui.typeLabel,
-          ui.all,
-          types.map((value) => ({ value, label: TYPE_LABELS[value] })),
-          (value) => {
-            state.type = value;
-            applyFilter();
-          },
-        ),
-      );
-    }
-
-    if (fandoms.length > 0) {
-      filtersRoot.appendChild(
-        buildFilterGroup(
-          ui.fandomLabel,
-          ui.all,
-          fandoms.map((value) => ({ value, label: FANDOM_LABELS[value] })),
-          (value) => {
-            state.fandom = value;
-            applyFilter();
-          },
-        ),
-      );
-    }
-  }
+  const filterGroups = elements.filtersRoot
+    ? buildFilters(elements.filtersRoot, state, ui, applyFilter)
+    : [];
 
   applyFilter();
+  loadRepoStats(statsLists, lang, ui);
+  document.dispatchEvent(new CustomEvent(CATALOG_RENDERED_EVENT));
 
-  /* Pengayaan GitHub (tidak memblokir tampilan; gagal = diam) */
-  const repos = [...statsLists.keys()];
-  if (repos.length === 0) return;
+  return (): void => {
+    state.type = 'all';
+    state.fandom = 'all';
+    filterGroups.forEach((group) => group.reset());
+    applyFilter();
+  };
+}
 
-  void fetchRepoStats(repos).then((data) => {
-    for (const [repo, list] of statsLists) {
-      const stats = data[repo];
-      if (stats) fillStats(list, stats, lang, ui);
+/* ---------- Teks state UI ---------- */
+
+function setStateCopy(block: HTMLElement | null, title: string, text: string): void {
+  if (!block) return;
+
+  const titleNode = block.querySelector<HTMLElement>('.projects__state-title');
+  const textNode = block.querySelector<HTMLElement>('.projects__state-text');
+
+  if (titleNode) titleNode.textContent = title;
+  if (textNode) textNode.textContent = text;
+}
+
+function queryElements(): CatalogElements | null {
+  const grid = document.querySelector<HTMLElement>('#project-grid');
+  if (!grid) return null;
+
+  return {
+    grid,
+    filtersRoot: document.querySelector<HTMLElement>('#project-filters'),
+    countText: document.querySelector<HTMLElement>('#project-count'),
+    emptyState: document.querySelector<HTMLElement>('#project-empty'),
+    errorState: document.querySelector<HTMLElement>('#project-error'),
+    resetButton: document.querySelector<HTMLElement>('#project-reset'),
+    retryButton: document.querySelector<HTMLElement>('#project-retry'),
+  };
+}
+
+/** Fokus tidak boleh hilang saat tombol yang sedang fokus ikut tersembunyi. */
+function focusFirstFilter(root: HTMLElement | null): void {
+  root?.querySelector<HTMLButtonElement>('.filter-chip')?.focus();
+}
+
+/* ---------- Entry point ---------- */
+
+export function initProjects(): void {
+  const elements = queryElements();
+  if (!elements) return;
+
+  const lang = getLang();
+  const ui = getStrings(lang);
+
+  setStateCopy(elements.emptyState, ui.emptyTitle, ui.emptyText);
+  setStateCopy(elements.errorState, ui.errorTitle, ui.errorText);
+  if (elements.resetButton) elements.resetButton.textContent = ui.resetFilters;
+  if (elements.retryButton) elements.retryButton.textContent = ui.retry;
+
+  let resetFilters: () => void = (): void => undefined;
+
+  const showError = (): void => {
+    elements.grid.replaceChildren();
+    if (elements.filtersRoot) elements.filtersRoot.replaceChildren();
+    if (elements.countText) elements.countText.textContent = '';
+    if (elements.emptyState) elements.emptyState.hidden = true;
+    if (elements.errorState) elements.errorState.hidden = false;
+  };
+
+  const render = (): void => {
+    try {
+      resetFilters = renderCatalog(elements, lang, ui);
+      if (elements.errorState) elements.errorState.hidden = true;
+    } catch (error: unknown) {
+      console.error('[projects] gagal merender karya:', error);
+      showError();
+    } finally {
+      elements.grid.setAttribute('aria-busy', 'false');
     }
+  };
+
+  elements.resetButton?.addEventListener('click', () => {
+    resetFilters();
+    focusFirstFilter(elements.filtersRoot);
   });
+
+  elements.retryButton?.addEventListener('click', () => {
+    render();
+    focusFirstFilter(elements.filtersRoot);
+  });
+
+  render();
 }
